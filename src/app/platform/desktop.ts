@@ -6,6 +6,13 @@ export interface LogViewerApi {
   readFile: (filePath: string) => Promise<{ ok: boolean; content?: string; error?: string }>;
   readClipboard: () => Promise<string>;
   openExternal: (url: string) => Promise<void>;
+  showItemInFolder?: (filePath: string) => Promise<{ ok: boolean; error?: string }>;
+  selectFolderDialog?: () => Promise<string | null>;
+  readDirLogs?: (dirPath: string) => Promise<{
+    ok: boolean;
+    error?: string;
+    files: Array<{ name: string; fullPath: string; size: number; mtime: number }>;
+  }>;
   getPathForFile?: (file: File) => string;
 }
 

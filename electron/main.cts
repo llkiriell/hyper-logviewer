@@ -8,7 +8,7 @@ import {
   nativeTheme,
   shell,
 } from 'electron';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 const DEV_URL = process.env.LOGVIEWER_DEV_URL ?? null;
@@ -123,6 +123,52 @@ app.whenReady().then(() => {
   ipcMain.handle('logviewer:open-external', async (_event, url: string) => {
     if (url.startsWith('https://') || url.startsWith('http://')) {
       await shell.openExternal(url);
+    }
+  });
+
+  ipcMain.handle('logviewer:show-item-in-folder', (_event, filePath: string) => {
+    try {
+      shell.showItemInFolder(filePath);
+      return { ok: true };
+    } catch (err: unknown) {
+      return { ok: false, error: String(err) };
+    }
+  });
+
+  ipcMain.handle('logviewer:select-folder-dialog', async () => {
+    if (!mainWindow) return null;
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: 'Select Folder to Watch',
+      properties: ['openDirectory'],
+    });
+    if (result.canceled || result.filePaths.length === 0) return null;
+    return result.filePaths[0];
+  });
+
+  ipcMain.handle('logviewer:read-dir-logs', async (_event, dirPath: string) => {
+    try {
+      const entries = await readdir(dirPath, { withFileTypes: true });
+      const logFiles: Array<{ name: string; fullPath: string; size: number; mtime: number }> = [];
+      for (const entry of entries) {
+        if (entry.isFile() && entry.name.toLowerCase().endsWith('.log')) {
+          const fullPath = path.join(dirPath, entry.name);
+          try {
+            const s = await stat(fullPath);
+            logFiles.push({
+              name: entry.name,
+              fullPath,
+              size: s.size,
+              mtime: s.mtimeMs,
+            });
+          } catch {
+            // ignore unreadable files
+          }
+        }
+      }
+      logFiles.sort((a, b) => b.mtime - a.mtime);
+      return { ok: true, files: logFiles };
+    } catch (err: unknown) {
+      return { ok: false, error: String(err), files: [] };
     }
   });
 

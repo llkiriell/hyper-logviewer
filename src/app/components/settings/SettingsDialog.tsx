@@ -2,7 +2,9 @@ import { useState } from 'react';
 import type { ComponentType } from 'react';
 import {
   IconAdjustmentsHorizontal,
+  IconArrowDownCircle,
   IconCode,
+  IconFolder,
   IconInfoCircle,
   IconKeyboard,
   IconPalette,
@@ -17,10 +19,19 @@ import {
 import type { AccentColor, ThemePreference } from '../../platform/preferences.ts';
 import { Dialog, Segmented, Select, Switch } from '../primitives.tsx';
 import { AboutSettings } from './AboutSettings.tsx';
+import { AutoscrollSettings } from './AutoscrollSettings.tsx';
 import { ParserSettings } from './ParserSettings.tsx';
 import { SettingRow, SettingsGroup } from './SettingsRows.tsx';
+import { WatchedFoldersSettings } from './WatchedFoldersSettings.tsx';
 
-type SettingsSection = 'general' | 'appearance' | 'parser' | 'shortcuts' | 'about';
+type SettingsSection =
+  | 'general'
+  | 'appearance'
+  | 'parser'
+  | 'folders'
+  | 'autoscroll'
+  | 'shortcuts'
+  | 'about';
 
 interface SectionDef {
   id: SettingsSection;
@@ -32,6 +43,8 @@ const SECTIONS: SectionDef[] = [
   { id: 'general', labelKey: 'settings.sections.general', icon: IconAdjustmentsHorizontal },
   { id: 'appearance', labelKey: 'settings.sections.appearance', icon: IconPalette },
   { id: 'parser', labelKey: 'settings.sections.parser', icon: IconCode },
+  { id: 'folders', labelKey: 'settings.sections.folders', icon: IconFolder },
+  { id: 'autoscroll', labelKey: 'settings.sections.autoscroll', icon: IconArrowDownCircle },
   { id: 'shortcuts', labelKey: 'settings.sections.shortcuts', icon: IconKeyboard },
   { id: 'about', labelKey: 'settings.sections.about', icon: IconInfoCircle },
 ];
@@ -209,6 +222,10 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
           )}
 
           {section === 'parser' && <ParserSettings />}
+
+          {section === 'folders' && <WatchedFoldersSettings />}
+
+          {section === 'autoscroll' && <AutoscrollSettings />}
 
           {section === 'shortcuts' && (
             <SettingsGroup>

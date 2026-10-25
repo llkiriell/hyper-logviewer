@@ -1,14 +1,17 @@
 import {
   IconArrowDownCircle,
+  IconFolder,
   IconTextWrap,
 } from '@tabler/icons-react';
 import { useTranslation } from '../i18n/index.ts';
+import { desktop } from '../platform/desktop.ts';
 import { formatBytes } from '../platform/fileLoader.ts';
 
 interface StatusBarProps {
   totalLines: number;
   filteredLines: number;
   fileSize?: number;
+  filePath?: string;
   encoding?: string;
   wordWrap: boolean;
   onToggleWordWrap: () => void;
@@ -20,6 +23,7 @@ export function StatusBar({
   totalLines,
   filteredLines,
   fileSize,
+  filePath,
   encoding = 'UTF-8',
   wordWrap,
   onToggleWordWrap,
@@ -29,9 +33,29 @@ export function StatusBar({
   const { t } = useTranslation();
   const isFiltered = filteredLines !== totalLines;
 
+  const handleOpenNativeFolder = async () => {
+    if (filePath && desktop?.showItemInFolder) {
+      await desktop.showItemInFolder(filePath);
+    }
+  };
+
   return (
     <footer className="status-bar" role="status">
       <div className="status-bar-section">
+        {/* Real file path hyperlink button */}
+        {filePath && (
+          <button
+            type="button"
+            className="status-filepath-btn"
+            onClick={handleOpenNativeFolder}
+            title={`${filePath} — ${t('statusBar.showInFolder')}`}
+            aria-label={t('statusBar.showInFolder')}
+          >
+            <IconFolder size={13} stroke={1.5} />
+            <span className="status-filepath-text">{filePath}</span>
+          </button>
+        )}
+
         <span className="status-metric">
           {isFiltered
             ? t('statusBar.filtered', {

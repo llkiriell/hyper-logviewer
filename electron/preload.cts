@@ -8,6 +8,13 @@ interface LogViewerApiBridge {
   readFile: (filePath: string) => Promise<{ ok: boolean; content?: string; error?: string }>;
   readClipboard: () => Promise<string>;
   openExternal: (url: string) => Promise<void>;
+  showItemInFolder: (filePath: string) => Promise<{ ok: boolean; error?: string }>;
+  selectFolderDialog: () => Promise<string | null>;
+  readDirLogs: (dirPath: string) => Promise<{
+    ok: boolean;
+    error?: string;
+    files: Array<{ name: string; fullPath: string; size: number; mtime: number }>;
+  }>;
   getPathForFile: (file: File) => string;
 }
 
@@ -28,6 +35,15 @@ const api: LogViewerApiBridge = {
   },
   openExternal: (url: string) => {
     return ipcRenderer.invoke('logviewer:open-external', url);
+  },
+  showItemInFolder: (filePath: string) => {
+    return ipcRenderer.invoke('logviewer:show-item-in-folder', filePath);
+  },
+  selectFolderDialog: () => {
+    return ipcRenderer.invoke('logviewer:select-folder-dialog');
+  },
+  readDirLogs: (dirPath: string) => {
+    return ipcRenderer.invoke('logviewer:read-dir-logs', dirPath);
   },
   getPathForFile: (file: File) => {
     try {

@@ -1024,31 +1024,56 @@ select {
   color: #121212;
 }
 
-/* Copy button on hover */
-.log-copy-btn {
+/* Sticky Hover Actions (Copy and Eye Inspect) */
+.log-row-actions {
   display: none;
+  position: sticky;
+  right: 8px;
+  margin-left: auto;
+  z-index: 5;
+  align-items: center;
+  gap: 3px;
+  background: var(--surface);
+  padding: 1px 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  flex: none;
+}
+
+.log-row:hover .log-row-actions {
+  display: inline-flex;
+}
+
+.log-action-btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  position: absolute;
-  right: 12px;
-  top: 2px;
   width: 20px;
   height: 20px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--surface);
+  border: none;
+  background: transparent;
   color: var(--text-muted);
   cursor: pointer;
   padding: 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.12s ease;
 }
 
-.log-row:hover .log-copy-btn {
-  display: flex;
+.log-action-btn:hover {
+  background: var(--hover);
+  color: var(--text);
 }
 
 .copy-success-icon {
   color: #27ae60;
+}
+
+/* Context menu active row highlight */
+.log-row.is-context-target {
+  background: var(--surface-hover) !important;
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
 }
 
 /* Status Bar */
@@ -1075,6 +1100,34 @@ select {
 .status-metric {
   display: inline-flex;
   align-items: center;
+}
+
+.status-filepath-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  max-width: 380px;
+  text-decoration: none;
+  transition: all 0.12s ease;
+}
+
+.status-filepath-btn:hover {
+  background: var(--hover);
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.status-filepath-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .status-actions {
@@ -1720,4 +1773,456 @@ select {
   font-size: var(--text-sm);
   color: var(--text-faint);
   font-style: italic;
+}
+
+
+/* ==========================================================================
+   JSON Beauty Highlighting, Sidebar, Recent Files & Watched Folders
+   ========================================================================== */
+
+/* JSON Highlight Viewer Card */
+.json-viewer-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #ffffff; /* Explicit white background as requested */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.json-viewer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: #f7f7f8;
+  border-bottom: 1px solid #ebebeb;
+}
+
+.json-viewer-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: #555555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.json-code-container {
+  display: flex;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  max-height: 380px;
+  overflow: auto;
+  background: #ffffff;
+  color: #24292f;
+}
+
+.json-gutter-column {
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 10px 10px 14px;
+  background: #fcfcfc;
+  border-right: 1px solid #eeeeee;
+  color: #999999;
+  text-align: right;
+  min-width: 36px;
+}
+
+.json-line-number {
+  font-size: 11px;
+}
+
+.json-lines-column {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 14px;
+  overflow-x: auto;
+  flex: 1;
+  white-space: pre;
+}
+
+.json-code-line {
+  min-height: 1.6em;
+}
+
+.json-token-key {
+  color: #0550ae;
+  font-weight: 600;
+}
+
+.json-token-string {
+  color: #116329;
+}
+
+.json-token-number {
+  color: #b05a00;
+}
+
+.json-token-boolean {
+  color: #8250df;
+  font-weight: 600;
+}
+
+.json-token-null {
+  color: #6e7781;
+  font-style: italic;
+}
+
+/* App Body Layout with Sidebar */
+.app-body-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.app-main-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sidebar-toggle-btn {
+  margin-right: 6px;
+}
+
+/* Watched Folders Sidebar (Morrow Style) */
+.watched-sidebar {
+  width: 250px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+  user-select: none;
+  transition: width 0.15s ease;
+}
+
+.watched-sidebar-header {
+  height: 40px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  flex: none;
+}
+
+.watched-sidebar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.watched-sidebar-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.sidebar-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.12s ease;
+}
+
+.sidebar-tool-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.sidebar-tool-btn.is-spinning svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.watched-sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 6px;
+}
+
+.watched-sidebar-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 12px;
+  text-align: center;
+  gap: 12px;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+}
+
+.watched-folder-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.watched-folder-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.watched-folder-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text);
+  font-size: var(--text-sm);
+  transition: background 0.12s ease;
+}
+
+.watched-folder-header:hover {
+  background: var(--hover);
+}
+
+.watched-folder-chevron {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-faint);
+}
+
+.watched-folder-name {
+  flex: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.watched-files-badge {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  padding: 1px 5px;
+  background: var(--hover);
+  border-radius: 10px;
+  color: var(--text-muted);
+}
+
+.watched-files-list {
+  display: flex;
+  flex-direction: column;
+  padding-left: 20px;
+  gap: 1px;
+  margin-top: 2px;
+}
+
+.watched-file-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  transition: all 0.12s ease;
+}
+
+.watched-file-row:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.watched-file-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.watched-file-size {
+  font-size: 10px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+}
+
+.watched-files-empty {
+  padding: 4px 8px;
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+/* Watched Folder Settings Card */
+.watched-folder-config-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+}
+
+.watched-folder-card-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.watched-folder-card-path {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Recent Files on Hero Screen */
+.recent-files-container {
+  margin-top: 32px;
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recent-files-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.recent-files-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.recent-files-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recent-file-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.recent-file-card:hover {
+  background: var(--hover);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.recent-file-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.recent-file-icon {
+  color: var(--text-muted);
+  flex: none;
+}
+
+.recent-file-texts {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.recent-file-name {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-file-path {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-file-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.recent-file-size {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+}
+
+.recent-file-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.12s ease;
+}
+
+.recent-file-remove:hover {
+  background: var(--hover);
+  color: var(--text);
 }

@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { desktop } from './platform/desktop.ts';
 
 export interface TabItem {
   id: string;
@@ -8,6 +9,7 @@ export interface TabItem {
   size: number;
   content: string;
   linesCount: number;
+  isPinned?: boolean;
 }
 
 interface TabState {
@@ -52,6 +54,7 @@ export function createTab(params: {
   kind?: 'file' | 'clipboard' | 'segment';
   filePath?: string;
   size?: number;
+  isPinned?: boolean;
 }): TabItem {
   const id = nextId();
   const content = params.content;
@@ -66,6 +69,7 @@ export function createTab(params: {
     size,
     content,
     linesCount,
+    isPinned: params.isPinned ?? false,
   };
 
   state = {
@@ -75,6 +79,54 @@ export function createTab(params: {
 
   notify();
   return newTab;
+}
+
+export function updateTab(id: string, partial: Partial<TabItem>): void {
+  state = {
+    ...state,
+    tabs: state.tabs.map((t) => (t.id === id ? { ...t, ...partial } : t)),
+  };
+  notify();
+}
+
+export function togglePinTab(id: string): void {
+  const target = state.tabs.find((t) => t.id === id);
+  if (!target) return;
+
+  const nextPinned = !target.isPinned;
+  const updatedTabs = state.tabs.map((t) =>
+    t.id === id ? { ...t, isPinned: nextPinned } : t,
+  );
+
+  // Keep pinned tabs grouped at the beginning
+  const pinned = updatedTabs.filter((t) => t.isPinned);
+  const unpinned = updatedTabs.filter((t) => !t.isPinned);
+
+  state = {
+    ...state,
+    tabs: [...pinned, ...unpinned],
+  };
+  notify();
+}
+
+export async function reloadTab(id: string): Promise<boolean> {
+  const target = state.tabs.find((t) => t.id === id);
+  if (!target || !target.filePath || !desktop?.readFile) return false;
+
+  try {
+    const res = await desktop.readFile(target.filePath);
+    if (res.ok && res.content !== undefined) {
+      updateTab(id, {
+        content: res.content,
+        size: new Blob([res.content]).size,
+        linesCount: countLines(res.content),
+      });
+      return true;
+    }
+  } catch (err) {
+    console.error('Failed to reload tab:', err);
+  }
+  return false;
 }
 
 export function closeTab(id: string): void {
@@ -105,8 +157,11 @@ export function closeOtherTabs(id: string): void {
   const target = state.tabs.find((t) => t.id === id);
   if (!target) return;
 
+  // Preserve targeted tab and any pinned tabs
+  const preserved = state.tabs.filter((t) => t.id === id || t.isPinned);
+
   state = {
-    tabs: [target],
+    tabs: preserved,
     activeId: id,
   };
 

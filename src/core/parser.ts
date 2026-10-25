@@ -1,4 +1,4 @@
-import type { LogLevel, LogStats, ParsedLogLine } from './types.ts';
+import type { CustomStandardLevel, LogLevel, LogStats, ParsedLogLine } from './types.ts';
 
 // Fast level detection regexes (case-insensitive for broad compatibility, but optimized)
 const LEVEL_PATTERNS: Array<{ regex: RegExp; level: LogLevel }> = [
@@ -14,27 +14,41 @@ const LEVEL_PATTERNS: Array<{ regex: RegExp; level: LogLevel }> = [
 const TIMESTAMP_EXTRACTOR =
   /(\d{4})[-/.](\d{2})[-/.](\d{2})[T\s](\d{2}):(\d{2}):(\d{2})(?:[.,](\d{1,6}))?/;
 
-export function detectLogLevel(line: string): LogLevel {
+export function detectLogLevel(
+  line: string,
+  customStandardLevels?: CustomStandardLevel[],
+): { level: LogLevel; customLevelTag?: string } {
+  // First check custom standard words if any
+  if (customStandardLevels && customStandardLevels.length > 0) {
+    for (const c of customStandardLevels) {
+      if (!c.word) continue;
+      const reg = new RegExp(`\\b${c.word}\\b`, 'i');
+      if (reg.test(line)) {
+        return { level: 'info', customLevelTag: c.word };
+      }
+    }
+  }
+
   // Check for JSON log level attribute: "level": "error"
   const jsonLevelMatch = /"level"\s*:\s*"([a-zA-Z]+)"/i.exec(line);
   const matchedLevel = jsonLevelMatch?.[1];
   if (matchedLevel) {
     const rawVal = matchedLevel.toLowerCase();
-    if (rawVal.includes('fatal') || rawVal.includes('crit')) return 'fatal';
-    if (rawVal.includes('err') || rawVal.includes('fail')) return 'error';
-    if (rawVal.includes('warn')) return 'warn';
-    if (rawVal.includes('info')) return 'info';
-    if (rawVal.includes('deb')) return 'debug';
-    if (rawVal.includes('trace') || rawVal.includes('verb')) return 'trace';
+    if (rawVal.includes('fatal') || rawVal.includes('crit')) return { level: 'fatal' };
+    if (rawVal.includes('err') || rawVal.includes('fail')) return { level: 'error' };
+    if (rawVal.includes('warn')) return { level: 'warn' };
+    if (rawVal.includes('info')) return { level: 'info' };
+    if (rawVal.includes('deb')) return { level: 'debug' };
+    if (rawVal.includes('trace') || rawVal.includes('verb')) return { level: 'trace' };
   }
 
   for (const item of LEVEL_PATTERNS) {
     if (item.regex.test(line)) {
-      return item.level;
+      return { level: item.level };
     }
   }
 
-  return 'unknown';
+  return { level: 'unknown' };
 }
 
 export function parseLogTimestamp(line: string): {
@@ -129,8 +143,12 @@ export function extractJsonPayloads(raw: string): string[] {
   return payloads;
 }
 
-export function parseSingleLine(raw: string, rawIndex: number): ParsedLogLine {
-  const level = detectLogLevel(raw);
+export function parseSingleLine(
+  raw: string,
+  rawIndex: number,
+  customStandardLevels?: CustomStandardLevel[],
+): ParsedLogLine {
+  const { level, customLevelTag } = detectLogLevel(raw, customStandardLevels);
   const tsInfo = parseLogTimestamp(raw);
   const jsonPayloads = raw.includes('{') ? extractJsonPayloads(raw) : undefined;
 
@@ -144,11 +162,15 @@ export function parseSingleLine(raw: string, rawIndex: number): ParsedLogLine {
     timeKey: tsInfo.timeKey,
     jsonPayloads: jsonPayloads && jsonPayloads.length > 0 ? jsonPayloads : undefined,
     level,
+    customLevelTag,
     message: raw,
   };
 }
 
-export function parseLogContent(content: string): {
+export function parseLogContent(
+  content: string,
+  customStandardLevels?: CustomStandardLevel[],
+): {
   lines: ParsedLogLine[];
   stats: LogStats;
 } {
@@ -194,17 +216,13 @@ export function parseLogContent(content: string): {
 
   for (let i = 0; i < rawLines.length; i++) {
     const raw = rawLines[i] ?? '';
-    const parsed = parseSingleLine(raw, i);
+    const parsed = parseSingleLine(raw, i, customStandardLevels);
     lines[i] = parsed;
 
     if (parsed.dateKey) {
       timestampCount++;
-      if (!minDate || parsed.dateKey < minDate) {
-        minDate = parsed.dateKey;
-      }
-      if (!maxDate || parsed.dateKey > maxDate) {
-        maxDate = parsed.dateKey;
-      }
+      if (!minDate || parsed.dateKey < minDate) minDate = parsed.dateKey;
+      if (!maxDate || parsed.dateKey > maxDate) maxDate = parsed.dateKey;
     }
 
     switch (parsed.level) {

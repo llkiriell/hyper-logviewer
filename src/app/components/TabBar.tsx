@@ -1,20 +1,32 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   IconCalendar,
   IconClipboard,
+  IconCopy,
   IconFileText,
+  IconFolderOpen,
+  IconPin,
+  IconPinFilled,
   IconPlus,
+  IconRotate2,
   IconX,
 } from '@tabler/icons-react';
 import { useTranslation } from '../i18n/index.ts';
+import { desktop } from '../platform/desktop.ts';
 import { openFileObjects } from '../platform/fileLoader.ts';
 import {
   activateTab,
+  closeOtherTabs,
   closeTab,
+  duplicateTab,
   moveTab,
+  reloadTab,
+  togglePinTab,
   useTabs,
 } from '../tabs.ts';
 import type { TabItem } from '../tabs.ts';
+import { ContextMenu } from './ContextMenu.tsx';
+import type { ContextMenuEntry } from './ContextMenu.tsx';
 
 export function TabBar({
   onNewTabClick,
@@ -24,6 +36,12 @@ export function TabBar({
   const { t } = useTranslation();
   const { tabs, activeId } = useTabs();
   const stripRef = useRef<HTMLDivElement>(null);
+
+  // Tab Context menu state
+  const [tabContextMenu, setTabContextMenu] = useState<{
+    anchor: DOMRect;
+    tab: TabItem;
+  } | null>(null);
 
   // Keep active tab in view
   useEffect(() => {
@@ -44,6 +62,61 @@ export function TabBar({
       await openFileObjects(event.dataTransfer.files);
     }
   };
+
+  const handleTabContextMenu = (e: React.MouseEvent, tab: TabItem) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setTabContextMenu({
+      anchor: new DOMRect(e.clientX, e.clientY, 0, 0),
+      tab,
+    });
+  };
+
+  const contextMenuEntries: ContextMenuEntry[] = tabContextMenu
+    ? [
+        {
+          label: tabContextMenu.tab.isPinned
+            ? t('tabs.unpinTab')
+            : t('tabs.pinTab'),
+          icon: tabContextMenu.tab.isPinned ? IconPinFilled : IconPin,
+          onSelect: () => togglePinTab(tabContextMenu.tab.id),
+        },
+        ...(tabContextMenu.tab.filePath
+          ? [
+              {
+                label: t('tabs.showInExplorer'),
+                icon: IconFolderOpen,
+                onSelect: () => {
+                  if (tabContextMenu.tab.filePath && desktop?.showItemInFolder) {
+                    void desktop.showItemInFolder(tabContextMenu.tab.filePath);
+                  }
+                },
+              },
+              {
+                label: t('tabs.reloadFile'),
+                icon: IconRotate2,
+                onSelect: () => void reloadTab(tabContextMenu.tab.id),
+              },
+            ]
+          : []),
+        {
+          label: t('tabs.duplicateTab'),
+          icon: IconCopy,
+          onSelect: () => duplicateTab(tabContextMenu.tab.id),
+        },
+        { separator: true },
+        {
+          label: t('tabs.closeTab'),
+          icon: IconX,
+          onSelect: () => closeTab(tabContextMenu.tab.id),
+        },
+        {
+          label: t('tabs.closeOthers'),
+          icon: IconX,
+          onSelect: () => closeOtherTabs(tabContextMenu.tab.id),
+        },
+      ]
+    : [];
 
   return (
     <div
@@ -75,7 +148,7 @@ export function TabBar({
               role="tab"
               tabIndex={0}
               aria-selected={isActive}
-              className={`tab ${isActive ? 'is-active' : ''}`}
+              className={`tab ${isActive ? 'is-active' : ''} ${tab.isPinned ? 'is-pinned' : ''}`}
               title={tab.filePath ?? tab.title}
               draggable
               onDragStart={(event) => {
@@ -93,6 +166,7 @@ export function TabBar({
                 if (fromId) moveTab(fromId, index);
               }}
               onClick={() => activateTab(tab.id)}
+              onContextMenu={(e) => handleTabContextMenu(e, tab)}
               onAuxClick={(event) => {
                 if (event.button === 1) {
                   event.preventDefault();
@@ -100,7 +174,15 @@ export function TabBar({
                 }
               }}
             >
-              <Icon size={14} stroke={1.5} style={{ flex: 'none' }} />
+              {tab.isPinned ? (
+                <IconPinFilled
+                  size={12}
+                  stroke={1.5}
+                  style={{ flex: 'none', color: 'var(--accent)' }}
+                />
+              ) : (
+                <Icon size={14} stroke={1.5} style={{ flex: 'none' }} />
+              )}
               <span className="tab-title">{tab.title}</span>
               <button
                 type="button"
@@ -128,6 +210,14 @@ export function TabBar({
           <IconPlus size={15} stroke={1.5} />
         </button>
       </div>
+
+      {tabContextMenu && (
+        <ContextMenu
+          anchor={tabContextMenu.anchor}
+          entries={contextMenuEntries}
+          onClose={() => setTabContextMenu(null)}
+        />
+      )}
     </div>
   );
 }

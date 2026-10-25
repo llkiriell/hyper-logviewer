@@ -17,6 +17,7 @@ export interface ParsedLogLine {
   timeKey?: string; // HH:mm:ss
   jsonPayloads?: string[];
   level: LogLevel;
+  customLevelTag?: string; // If matched a custom standard word
   message: string;
 }
 
@@ -53,6 +54,13 @@ export interface CustomHighlightRule {
 }
 
 export interface LevelColorConfig {
+  textColor: string;
+  bgColor: string;
+}
+
+export interface CustomStandardLevel {
+  id: string;
+  word: string; // single word, e.g. "SUCCESS", "CRITICAL", "PANIC"
   textColor: string;
   bgColor: string;
 }

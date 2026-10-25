@@ -1,5 +1,6 @@
 import { createTab } from '../tabs.ts';
 import { desktop } from './desktop.ts';
+import { addRecentFile } from './preferences.ts';
 
 let clipboardCounter = 1;
 
@@ -21,12 +22,23 @@ export async function openFileByPath(filePath: string): Promise<boolean> {
   }
 
   const fileName = filePath.split(/[/\\]/).pop() ?? 'log.log';
+  const size = new Blob([res.content]).size;
+
   createTab({
     title: fileName,
     content: res.content,
     kind: 'file',
     filePath,
+    size,
   });
+
+  addRecentFile({
+    filePath,
+    fileName,
+    lastOpened: Date.now(),
+    size,
+  });
+
   return true;
 }
 
@@ -102,9 +114,7 @@ export async function pasteClipboardAsTab(placeholderLabel = 'Clipboard'): Promi
     }
   }
 
-  if (!text || text.trim().length === 0) {
-    return false;
-  }
+  if (!text) return false;
 
   const title = `${placeholderLabel} #${clipboardCounter++}`;
   createTab({
@@ -112,5 +122,6 @@ export async function pasteClipboardAsTab(placeholderLabel = 'Clipboard'): Promi
     content: text,
     kind: 'clipboard',
   });
+
   return true;
 }

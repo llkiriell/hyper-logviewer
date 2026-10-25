@@ -2,6 +2,7 @@ import { memo, useMemo, useState } from 'react';
 import {
   IconCheck,
   IconCopy,
+  IconEye,
   IconPin,
   IconPinFilled,
 } from '@tabler/icons-react';
@@ -30,8 +31,10 @@ interface VirtualLogRowProps {
   wordWrap: boolean;
   fontSize: number;
   isPinned: boolean;
+  isContextMenuTarget?: boolean;
   onTogglePin: (line: ParsedLogLine) => void;
   onContextMenu: (event: React.MouseEvent, line: ParsedLogLine) => void;
+  onInspectLine?: (line: ParsedLogLine) => void;
 }
 
 export const VirtualLogRow = memo(function VirtualLogRow({
@@ -47,8 +50,10 @@ export const VirtualLogRow = memo(function VirtualLogRow({
   wordWrap,
   fontSize,
   isPinned,
+  isContextMenuTarget = false,
   onTogglePin,
   onContextMenu,
+  onInspectLine,
 }: VirtualLogRowProps) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
@@ -93,9 +98,13 @@ export const VirtualLogRow = memo(function VirtualLogRow({
     ? `1px solid ${separatorColor}`
     : undefined;
 
+  const badgeText = line.customLevelTag
+    ? line.customLevelTag.toUpperCase()
+    : line.level.toUpperCase();
+
   return (
     <div
-      className={`log-row log-row-${line.level} ${wordWrap ? 'is-wrapped' : ''} ${isPinned ? 'is-pinned-row' : ''}`}
+      className={`log-row log-row-${line.level} ${wordWrap ? 'is-wrapped' : ''} ${isPinned ? 'is-pinned-row' : ''} ${isContextMenuTarget ? 'is-context-target' : ''}`}
       style={{
         fontSize: `${fontSize}px`,
         backgroundColor: rowBg,
@@ -127,7 +136,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
         className={`log-level-badge log-level-${line.level}`}
         style={levelColor ? { color: levelColor.textColor } : undefined}
       >
-        {line.level.toUpperCase()}
+        {badgeText}
       </span>
 
       {/* Log Line Text Content */}
@@ -163,19 +172,35 @@ export const VirtualLogRow = memo(function VirtualLogRow({
         })}
       </div>
 
-      {/* Hover Copy Button */}
-      <button
-        type="button"
-        className="log-copy-btn"
-        onClick={handleCopy}
-        title={t('viewer.copyLine')}
-      >
-        {copied ? (
-          <IconCheck size={13} stroke={1.5} className="copy-success-icon" />
-        ) : (
-          <IconCopy size={13} stroke={1.5} />
+      {/* Sticky Right-aligned Hover Actions (Copy and Eye Inspect) */}
+      <div className="log-row-actions">
+        <button
+          type="button"
+          className="log-action-btn"
+          onClick={handleCopy}
+          title={t('viewer.copyLine')}
+        >
+          {copied ? (
+            <IconCheck size={13} stroke={1.5} className="copy-success-icon" />
+          ) : (
+            <IconCopy size={13} stroke={1.5} />
+          )}
+        </button>
+
+        {onInspectLine && (
+          <button
+            type="button"
+            className="log-action-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onInspectLine(line);
+            }}
+            title={t('contextMenu.inspectLine')}
+          >
+            <IconEye size={13} stroke={1.5} />
+          </button>
         )}
-      </button>
+      </div>
     </div>
   );
 });
