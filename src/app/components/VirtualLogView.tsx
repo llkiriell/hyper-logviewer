@@ -58,6 +58,7 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
 
   // Pinned line state
   const [pinnedLine, setPinnedLine] = useState<ParsedLogLine | null>(null);
+  const [scrollTop, setScrollTop] = useState(0);
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{
@@ -183,18 +184,19 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
   );
 
   // Determine whether to show floating sticky pinned bar
-  // Pinned line only floats when the user scrolls down past its original position
+  // Pinned line floats when scrolled past its natural position or if filtered out
   const pinnedInFilteredIndex = useMemo(() => {
     if (!pinnedLine) return -1;
     return filteredLines.findIndex((l) => l.rawIndex === pinnedLine.rawIndex);
   }, [pinnedLine, filteredLines]);
 
   const showFloatingStickyPin = useMemo(() => {
-    if (!pinnedLine || pinnedInFilteredIndex === -1) return false;
-    const firstVisible = virtualItems[0];
-    if (!firstVisible) return false;
-    return firstVisible.index > pinnedInFilteredIndex;
-  }, [pinnedLine, pinnedInFilteredIndex, virtualItems]);
+    if (!pinnedLine) return false;
+    if (pinnedInFilteredIndex === -1) return true;
+    const rowHeight = 24;
+    const pinnedTop = pinnedInFilteredIndex * rowHeight;
+    return scrollTop > pinnedTop;
+  }, [pinnedLine, pinnedInFilteredIndex, scrollTop]);
 
   // Build context menu entries
   const contextMenuEntries: ContextMenuEntry[] = useMemo(() => {
@@ -274,46 +276,49 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
         onScrollToBottom={handleScrollToBottom}
       />
 
-      {/* Floating Sticky Pinned Header (appears when scrolled past pinned line) */}
-      {showFloatingStickyPin && pinnedLine && (
-        <div className="sticky-pinned-bar">
-          <div className="sticky-pinned-header">
-            <span className="sticky-pinned-title">
-              <IconPinFilled size={13} stroke={1.5} />
-              <span>{t('viewer.pinnedHeader')}</span>
-            </span>
-            <button
-              type="button"
-              className="sticky-unpin-btn"
-              onClick={() => setPinnedLine(null)}
-              title={t('viewer.unpinLine')}
-            >
-              <IconX size={14} stroke={1.5} />
-            </button>
+      {/* Viewport wrapper with relative positioning so floating sticky bar overlays cleanly without layout shifts */}
+      <div className="viewer-viewport-wrapper">
+        {/* Floating Sticky Pinned Header (appears when scrolled past pinned line) */}
+        {showFloatingStickyPin && pinnedLine && (
+          <div className="sticky-pinned-bar">
+            <div className="sticky-pinned-header">
+              <span className="sticky-pinned-title">
+                <IconPinFilled size={13} stroke={1.5} />
+                <span>{t('viewer.pinnedHeader')}</span>
+              </span>
+              <button
+                type="button"
+                className="sticky-unpin-btn"
+                onClick={() => setPinnedLine(null)}
+                title={t('viewer.unpinLine')}
+              >
+                <IconX size={14} stroke={1.5} />
+              </button>
+            </div>
+            <VirtualLogRow
+              line={pinnedLine}
+              searchQuery={searchQuery}
+              isRegex={isRegex}
+              caseSensitive={caseSensitive}
+              customRules={prefs.customHighlights}
+              levelColor={prefs.levelColors[pinnedLine.level]}
+              showSeparator={prefs.showLineSeparator}
+              separatorColor={prefs.lineSeparatorColor}
+              wordWrap={wordWrap}
+              fontSize={prefs.fontSize}
+              isPinned={true}
+              onTogglePin={handleTogglePin}
+              onContextMenu={handleContextMenu}
+            />
           </div>
-          <VirtualLogRow
-            line={pinnedLine}
-            searchQuery={searchQuery}
-            isRegex={isRegex}
-            caseSensitive={caseSensitive}
-            customRules={prefs.customHighlights}
-            levelColor={prefs.levelColors[pinnedLine.level]}
-            showSeparator={prefs.showLineSeparator}
-            separatorColor={prefs.lineSeparatorColor}
-            wordWrap={wordWrap}
-            fontSize={prefs.fontSize}
-            isPinned={true}
-            onTogglePin={handleTogglePin}
-            onContextMenu={handleContextMenu}
-          />
-        </div>
-      )}
+        )}
 
-      {/* Main Virtualized Log Scroller */}
-      <div
-        ref={parentRef}
-        className={`viewer-scroller ${wordWrap ? 'is-wrapped' : 'is-nowrap'}`}
-      >
+        {/* Main Virtualized Log Scroller */}
+        <div
+          ref={parentRef}
+          onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
+          className={`viewer-scroller ${wordWrap ? 'is-wrapped' : 'is-nowrap'}`}
+        >
         {filteredLines.length === 0 ? (
           <div className="viewer-empty">
             <p>
@@ -379,6 +384,7 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
             })}
           </div>
         )}
+      </div>
       </div>
 
       {/* Status Bar */}

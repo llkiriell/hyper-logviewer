@@ -15,6 +15,8 @@ const DEV_URL = process.env.LOGVIEWER_DEV_URL ?? null;
 const DIST_INDEX = path.join(__dirname, '..', 'dist', 'index.html');
 const IS_MAC = process.platform === 'darwin';
 const TITLE_BAR_HEIGHT = 48;
+const APP_ID = 'app.hyperlogviewer.desktop';
+const ICON = path.join(__dirname, '..', 'public', 'icon.png');
 
 const THEMES = {
   light: { background: '#f8f8f7', symbols: '#5b5b5f' },
@@ -36,6 +38,7 @@ function createWindow(): BrowserWindow {
     minWidth: 700,
     minHeight: 450,
     title: 'Hyper LogViewer',
+    icon: ICON,
     backgroundColor: initialTheme.background,
     titleBarStyle: 'hidden',
     ...(IS_MAC
@@ -69,6 +72,7 @@ function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(() => {
+  app.setAppUserModelId(APP_ID);
   mainWindow = createWindow();
 
   ipcMain.on('logviewer:theme', (_event, theme: 'light' | 'dark') => {
