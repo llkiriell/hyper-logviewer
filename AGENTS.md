@@ -78,7 +78,7 @@ The repository includes a dedicated `docs/` folder in the project root:
 ## 5. Agent Operational Directives
 
 When modifying, generating, or refactoring code, every agent must respect:
-1. **Refer to `AGENTS_STYLE_GUIDE.md`** for coding practices, naming patterns, and typing discipline.
+1. **Refer to `DESIGN.md`** for coding practices, naming patterns, and typing discipline.
 2. **Preserve i18n Completeness:** Never introduce hardcoded user-facing strings in UI components. Add corresponding keys to both `src/app/i18n/locales/en.ts` and `src/app/i18n/locales/es.ts`.
 3. **Preserve Design System Integrity:** Use native CSS variables (`var(--bg)`, `var(--text)`, `var(--accent)`, `var(--border)`). Do not install unapproved CSS libraries.
 4. **Virtualization First:** Always virtualize log lines; never map an unbounded array into React DOM nodes.

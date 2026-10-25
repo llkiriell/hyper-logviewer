@@ -1,0 +1,69 @@
+:root {
+  --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', 'JetBrains Mono', Consolas, 'Courier New', monospace;
+
+  --text-xs: 11.5px;
+  --text-sm: 12.5px;
+  --text-ui: 13.5px;
+  --text-md: 14.5px;
+
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-lg: 10px;
+
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  --bg: #ffffff;
+  --bg-sidebar: #f8f8f7;
+  --surface: #ffffff;
+  --popover: #ffffff;
+  --text: #1d1d1f;
+  --text-muted: #5b5b5f;
+  --text-faint: #8c8c91;
+  --border: #ececeb;
+  --border-strong: #dcdcda;
+  --hover: rgba(20, 20, 30, 0.05);
+  --active: rgba(20, 20, 30, 0.085);
+  --accent: #c0582f;
+  --accent-strong: #a3451f;
+  --accent-soft: rgba(192, 88, 47, 0.11);
+  --accent-line: rgba(192, 88, 47, 0.35);
+  --focus: rgba(192, 88, 47, 0.5);
+  --selection: rgba(192, 88, 47, 0.18);
+  --danger: #b3261e;
+  --danger-soft: rgba(179, 38, 30, 0.09);
+  --code-bg: #f6f6f5;
+  --mark: #d6a028;
+  --mark-soft: rgba(214, 160, 40, 0.15);
+  --scrim: rgba(24, 22, 19, 0.32);
+  --shadow-popover: 0 1px 2px rgba(30, 25, 20, 0.06), 0 10px 28px rgba(30, 25, 20, 0.1);
+  --shadow-dialog: 0 2px 6px rgba(30, 25, 20, 0.08), 0 24px 60px rgba(30, 25, 20, 0.18);
+}
+
+:root[data-theme='dark'] {
+  --bg: #191919;
+  --bg-sidebar: #202020;
+  --surface: #232323;
+  --popover: #282828;
+  --text: #ececec;
+  --text-muted: #b1b1b1;
+  --text-faint: #8a8a8a;
+  --border: #2e2e2e;
+  --border-strong: #3c3c3c;
+  --hover: rgba(255, 255, 255, 0.055);
+  --active: rgba(255, 255, 255, 0.09);
+  --accent: #e27d50;
+  --accent-strong: #ef9670;
+  --accent-soft: rgba(226, 125, 80, 0.15);
+  --accent-line: rgba(226, 125, 80, 0.45);
+  --focus: rgba(226, 125, 80, 0.6);
+  --selection: rgba(226, 125, 80, 0.28);
+  --danger: #f07a6e;
+  --danger-soft: rgba(240, 122, 110, 0.12);
+  --code-bg: #222222;
+  --mark: #e6b43c;
+  --mark-soft: rgba(230, 180, 60, 0.2);
+  --scrim: rgba(0, 0, 0, 0.5);
+  --shadow-popover: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.4);
+  --shadow-dialog: 0 2px 8px rgba(0, 0, 0, 0.35), 0 28px 70px rgba(0, 0, 0, 0.5);
+}

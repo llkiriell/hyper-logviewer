@@ -123,7 +123,7 @@ Formato estricto: `<sustantivo> : <verbo> <descripción>`
 
 ### 5.4 Documentación para Agentes (en inglés)
 * [`AGENTS.md`](file:///D:/Proyectos-Aplicaciones/NodeJS/hyper-logviewer/AGENTS.md): Reglas de operación, flujo de ramas y directivas para agentes.
-* [`AGENTS_STYLE_GUIDE.md`](file:///D:/Proyectos-Aplicaciones/NodeJS/hyper-logviewer/AGENTS_STYLE_GUIDE.md): Estándar estricto de TypeScript, React 19, tokens CSS, Tabler Icons e i18n.
+* [`DESIGN.md`](file:///D:/Proyectos-Aplicaciones/NodeJS/hyper-logviewer/DESIGN.md): Estándar estricto de TypeScript, React 19, tokens CSS, Tabler Icons e i18n.
 
 ---
 

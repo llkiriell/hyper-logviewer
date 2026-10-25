@@ -1,0 +1,31 @@
+{
+  "name": "hyper-logviewer",
+  "productName": "Hyper LogViewer",
+  "private": true,
+  "version": "0.1.0",
+  "description": "High-performance, local-first log file viewer inspired by Morrow.",
+  "main": "dist-electron/main.cjs",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:desktop": "vite --mode desktop",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.electron.json --noEmit && vite build && vite build --config vite.electron.config.ts",
+    "start": "electron .",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.electron.json --noEmit"
+  },
+  "dependencies": {
+    "@tabler/icons-react": "^3.31.0",
+    "@tanstack/react-virtual": "^3.13.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^34.2.0",
+    "typescript": "^5.8.0",
+    "vite": "^6.2.0"
+  }
+}
