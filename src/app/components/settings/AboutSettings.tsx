@@ -1,4 +1,4 @@
-import { IconBrandGithub, IconExternalLink, IconSparkles } from '@tabler/icons-react';
+import { IconBrandGithub, IconExternalLink } from '@tabler/icons-react';
 import { useTranslation } from '../../i18n/index.ts';
 import { desktop, openExternalUrl } from '../../platform/desktop.ts';
 import { Logo } from '../primitives.tsx';
@@ -39,28 +39,6 @@ export function AboutSettings() {
             {t('settings.about.viewGitHub')}
             <IconExternalLink size={13} stroke={1.5} />
           </button>
-        </SettingRow>
-
-        <SettingRow
-          label={t('settings.about.coauthor')}
-          help={t('settings.about.coauthorHelp')}
-        >
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontSize: 'var(--text-xs)',
-              fontWeight: 500,
-              color: 'var(--accent)',
-              padding: '4px 8px',
-              borderRadius: 'var(--radius-sm)',
-              background: 'var(--accent-soft)',
-            }}
-          >
-            <IconSparkles size={14} stroke={1.5} />
-            Antigravity (AGY)
-          </span>
         </SettingRow>
       </SettingsGroup>
     </>

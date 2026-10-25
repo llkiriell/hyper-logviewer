@@ -73,8 +73,6 @@ export const en = {
       github: 'GitHub Repository',
       githubHelp: 'View source code, report issues, or contribute.',
       viewGitHub: 'View on GitHub',
-      coauthor: 'Co-authored with Antigravity (AGY)',
-      coauthorHelp: 'Conceived and engineered in collaboration with Google DeepMind Antigravity.',
     },
   },
 };

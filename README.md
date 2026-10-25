@@ -118,4 +118,4 @@ Este repositorio sigue una convención estricta de ramas y mensajes de commit de
 
 Este proyecto ha sido concebido y desarrollado en estrecha colaboración entre el autor principal y **Antigravity (AGY)**, el agente avanzado de ingeniería de software desarrollado por el equipo de Google DeepMind.
 
-> **Nota de gobernanza:** Conforme a las políticas del proyecto establecidas en [`AGENTS.md`](AGENTS.md), la coautoría y créditos de AGY se reconocen formalmente en esta documentación y en la vista «Acerca de» de la interfaz gráfica, manteniéndose expresamente **fuera del historial de commits de Git** para preservar un historial de autoría unificado y estándar.
+> **Nota de gobernanza:** Conforme a las políticas del proyecto establecidas en [`AGENTS.md`](AGENTS.md), la coautoría y créditos de AGY se reconocen formalmente y de manera exclusiva en esta documentación (README), manteniéndose expresamente **fuera de la interfaz de la aplicación y del historial de commits de Git** para preservar un historial de autoría y una aplicación limpia.

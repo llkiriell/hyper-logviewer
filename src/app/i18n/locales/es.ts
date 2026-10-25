@@ -75,8 +75,6 @@ export const es: TranslationSchema = {
       github: 'Repositorio de GitHub',
       githubHelp: 'Ver código fuente, reportar problemas o contribuir.',
       viewGitHub: 'Ver en GitHub',
-      coauthor: 'Coautoría con Antigravity (AGY)',
-      coauthorHelp: 'Concebido e implementado en colaboración con Google DeepMind Antigravity.',
     },
   },
 };
