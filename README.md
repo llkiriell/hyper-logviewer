@@ -5,6 +5,10 @@
 <h1 align="center">Hyper LogViewer</h1>
 
 <p align="center">
+  <strong>🇺🇸 Read in English</strong> | <a href="README.es.md">🇪🇸 Leer en Español</a>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Electron-34.x-47848F?logo=electron&logoColor=white" alt="Electron" />
   <img src="https://img.shields.io/badge/React-19.1-23272f?logo=react&logoColor=61DAFB" alt="React" />
   <img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
@@ -15,63 +19,83 @@
   <img src="https://img.shields.io/badge/Co--author-Antigravity%20CLI-E65100?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij4KICA8cGF0aCBmaWxsPSIjZmZmZmZmIiBkPSJNMTIuMDI1IDJxMi4wMjUgMCAzLjE2MyAxLjUyNVQxNy4xMjUgN3EuNjUgMS41NzUgMS4yNSAzLjV0MS4yNzUgMy44NzVxLjY1IDEuODc1IDEuNDI1IDMuNTI1dDEuOCAyLjgyNXEuMi4yMjUuMTc1LjUyNXQtLjIyNS41MjV0LS40NzUuMjV0LS41NS0uMTc1cS0xLjk3NS0xLjU1LTMuMjUtMy40NjN0LTIuNTc1LTMuMzM3cS0uODUtLjk1LTEuODEyLTEuNVQxMi4wMjUgMTN0LTIuMTM3LjU1dC0xLjgxMyAxLjVxLTEuMyAxLjQyNS0yLjU3NSAzLjMzOFQyLjI1IDIxLjg1cS0uMjc1LjItLjU1LjE3NXQtLjQ3NS0uMjVUMSAyMS4yNXQuMTc1LS41MjVRMi4yIDE5LjU1IDIuOTc1IDE3LjlUNC40IDE0LjM3NXEuNjc1LTEuOTUgMS4yNzUtMy44NzVUNi45MjUgN3EuOC0xLjk1IDEuOTM4LTMuNDc1VDEyLjAyNSAybTAgMnEtMS4xMjUgMC0xLjc3NS45NzVUOS4xIDdxLS42NSAxLjQtMS4xNjIgMy4wMTNUNi44IDEzLjVxLjUtLjUyNS45NjMtLjkyNXQuOTYyLS43MjVxLjgtLjQ3NSAxLjU4OC0uNjYzVDEyLjAyNSAxMXQxLjcxMy4xODh0MS41ODcuNjYycS41LjMyNS45NjMuNzI1dC45NjIuOTI1cS0uNjI1LTEuODc1LTEuMTM3LTMuNDg3VDE0Ljk1IDdxLS41LTEuMDUtMS4xNS0yLjAyNVQxMi4wMjUgNG0wIDciLz4KPC9zdmc+Cg==" alt="Co-author" />
 </p>
 
-**hyper-logviewer** es un visor de archivos `.log` de escritorio, ultrarrápido y *local-first*, concebido para la inspección, filtrado y diagnóstico eficiente de registros de depuración y auditoría. 
+**hyper-logviewer** is an ultra-fast, local-first desktop `.log` file viewer engineered for deep diagnostic inspection, high-performance filtering, and effortless stacktrace troubleshooting on large log streams.
 
-hyper-logviewer combina un diseño minimalista y moderno con un sistema de estilos por tokens CSS puros (modo claro/oscuro y paletas de acento), diálogo modal de configuración y arquitectura de navegación por pestañas (`TabBar`), incorporando un motor de renderizado virtualizado para navegar fluidamente por millones de líneas de log a 60 FPS sin bloquear la memoria ni la interfaz.
-
----
-
-## Características Principales
-
-* **Navegación por pestañas (Multi-log):** Soporte simultáneo para múltiples fuentes de log con desplazamiento horizontal suave, atajos rápidos (`Ctrl+T`, `Ctrl+W`, `Ctrl+1..9`) y cierres individuales.
-* **Triple vía de entrada de registros:**
-  * **Explorador Nativo:** Diálogo del sistema operativo con selección de archivo rápida (`Ctrl+O`).
-  * **Arrastrar y Soltar (Drag & Drop):** Zona receptora tanto en la vista inicial como arrastrando directamente archivos sobre la barra de pestañas.
-  * **Pegado Directo del Portapapeles (Clipboard Paste):** Botón superior y atajo global `Ctrl+V` que genera una pestaña en memoria con el contenido crudo formateado y numerado de forma instantánea.
-* **Visor virtualizado de alto rendimiento:** Renderizado con `@tanstack/react-virtual` para garantizar 60 FPS con mínimo uso de RAM, incluso con archivos de cientos de megabytes.
-* **Estilo visual limpio y temas bimodales:** Modo Claro, Modo Oscuro (automático según preferencias del sistema operativo) y selección de colores de acento (`Ember`, `Ocean`, `Aqua`, `Violet`).
-* **Internacionalización (i18n) bilingüe:** Inglés (`en`) como idioma predeterminado y Español (`es`) completamente integrado, con cambio en tiempo real sin recargar la aplicación.
-* **Modal de configuración con pestaña «Acerca de»:** Diálogo modal flotante con selector segmentado para gestionar Idioma, Apariencia, Parser, Atajos y la vista **Acerca de** con detalles de versión y repositorio.
-* **Iconografía Tabler Icons:** Estética vectorial uniforme basada en trazos limpios (`@tabler/icons-react` con `stroke={1.5}`).
+Built with modern desktop ergonomics in mind, hyper-logviewer combines pure CSS tokens (light/dark modes and accent palettes), a modular settings dialog, multi-tab navigation, and virtualized row scrolling powered by TanStack Virtual to navigate millions of lines smoothly at 60 FPS without UI freezes or memory bloat.
 
 ---
 
-## Pila Tecnológica (Tech Stack)
+## Key Features
 
-| Componente | Tecnología | Versión |
+* **Multi-Tab Navigation (Multi-log):** Inspect multiple log sources concurrently with smooth horizontal scrolling, quick keyboard shortcuts (`Ctrl+T`, `Ctrl+W`, `Ctrl+1..9`), and individual tab close handlers.
+* **Triple Ingestion Workflow:**
+  * **Native OS File Dialog:** Fast file picker integration (`Ctrl+O`).
+  * **Drag & Drop:** Immediate file dropzone on the home screen or dropped directly onto the tab bar.
+  * **Direct Clipboard Paste:** Global `Ctrl+V` shortcut or toolbar action that instantly creates an in-memory formatted tab from raw log buffers.
+* **High-Performance Virtual Scroller:** Powered by `@tanstack/react-virtual` to ensure rock-solid 60 FPS scrolling with minimal memory footprint, even across multi-gigabyte files or millions of entries.
+* **Rainbow Brackets & Matching Highlights:**
+  * Depth-based hierarchical colorization for braces `{}` and brackets `[]`.
+  * Real-time interactive highlighting when hovering or clicking delimiter pairs.
+  * Fully integrated across virtualized log lines and the dedicated JSON inspector block.
+* **Intelligent Metadata Extraction:**
+  * Automated discovery of **UUIDs**, **URLs**, and local or remote **File Paths**.
+  * Instant hover-to-copy buttons for rapid debugging and trace sharing.
+* **Java Stacktrace & Multiline Continuity Engine:**
+  * Strict detection of Java exceptions (`java.lang.*Exception`, `at ...` frames, `Caused by:`).
+  * Continuation row flattening: suppresses redundant `UNKNOWN` badges on multiline traces while applying a soft background tint inherited from the root error severity.
+  * Log detail inspector captures and displays the full consolidated exception tree.
+* **Jenkins & Git Pipeline Log Support:**
+  * Automatic recognition and colorization of Git branches (`feature/...`, `bugfix/...`, `develop`).
+  * Command highlighting for merge actions (`git merge`, integration conflicts).
+  * Diff statistics highlighting (file counts in blue, `+` insertions in green, and `-` deletions in red).
+* **Severity-Aware Dynamic Row Focus:**
+  * Seamless focus borders dynamically colored according to the log severity (red for error, amber for warning, accent for info).
+  * Customizable indicator icon in Settings (hand 👉, right arrow ➡️, chevron ❯, caret ▶, target 🎯, star ★, etc.).
+* **Clean INFO Background Toggle:** Optional setting to strip background tints on INFO entries for higher contrast and readability.
+* **Watched Folders Sidebar:** Collapsible side panel to monitor local log directories with quick reload and one-click file opening.
+* **Smart Autoscroll:** Continuous and tail modes with configurable speeds and automatic pause on user interaction.
+* **Bilingual i18n:** Built-in English (`en`) and Spanish (`es`) with instantaneous switching without application reload.
+* **Modern Floating Tooltips:** Dynamic out-of-DOM tooltips powered by `@floating-ui/dom` matching the current theme palette.
+
+---
+
+## Tech Stack
+
+| Layer | Technology | Version |
 | :--- | :--- | :--- |
-| **Entorno de Escritorio** | Electron | ^34.2.0 |
-| **Empaquetador / Bundler** | Vite | ^6.2.0 |
-| **Lenguaje** | TypeScript | ^5.8.0 |
-| **Biblioteca de UI** | React | ^19.1.0 |
-| **Virtualización de Registros** | `@tanstack/react-virtual` | ^3.13.2 |
-| **Librería de Iconos** | Tabler Icons (`@tabler/icons-react`) | ^3.31.0 |
-| **Motor de Internacionalización** | Custom Typed i18n Engine | Nativo (`en` / `es`) |
-| **Sistema de Estilos** | Pure CSS Variables (`tokens.css`, `color.css`) | Estándar W3C |
+| **Desktop Runtime** | Electron | ^34.2.0 |
+| **Bundler & Dev Server** | Vite | ^6.2.0 |
+| **Language** | TypeScript | ^5.8.0 |
+| **UI Library** | React | ^19.1.0 |
+| **Log Virtualization** | `@tanstack/react-virtual` | ^3.13.2 |
+| **Floating UI Tooltips** | `@floating-ui/dom` | ^1.8.0 |
+| **Iconography** | Tabler Icons (`@tabler/icons-react`) | ^3.31.0 |
+| **Internationalization** | Custom Type-Safe i18n Engine | Native (`en` / `es`) |
+| **Styling Architecture** | Pure CSS Tokens (`tokens.css`, `app.css`) | W3C Standard |
 
 ---
 
-## Estructura del Repositorio
+## Repository Structure
 
 ```
 hyper-logviewer/
-├── docs/                     # Carpeta local para logs de prueba y scratchpad (excluida de Git)
+├── docs/                     # Local test logs and scratchpad (excluded from Git)
 ├── electron/
-│   ├── main.cts              # Proceso principal: ventanas, menú, IPC nativo
-│   └── preload.cts           # ContextBridge seguro (lectura de archivos, portapapeles)
+│   ├── main.cts              # Main process: window lifecycle, native menus, IPC
+│   └── preload.cts           # Secure contextBridge (file system access, clipboard)
 ├── src/
-│   ├── core/                 # Lógica pura TypeScript (parsers, regex, tipos)
+│   ├── core/                 # Pure TypeScript domain logic (parsers, regex, brackets, types)
 │   ├── app/
-│   │   ├── i18n/             # Motor i18n tipado y diccionarios (en.ts, es.ts)
-│   │   ├── components/       # Primitivas UI (Dialog, Switch, TabBar, VirtualLogView)
-│   │   │   └── settings/     # Modal de configuración y pestaña Acerca de
-│   │   ├── platform/         # Fachadas para puente Electron y preferencias locales
-│   │   ├── styles/           # Tokens CSS, temas claro/oscuro y reglas de diseño
-│   │   ├── tabs.ts           # Store reactivo para gestión de pestañas
-│   │   ├── App.tsx           # Vista orquestadora principal
-│   │   └── main.tsx          # Punto de entrada React
-├── AGENTS.md                 # Flujo de ramas, commits y directivas para agentes IA
-├── DESIGN.md                 # Estándar estricto de diseño, TypeScript y estilos
+│   │   ├── i18n/             # Type-safe i18n engine and dictionaries (en.ts, es.ts)
+│   │   ├── components/       # UI components (TabBar, VirtualLogView, VirtualLogRow)
+│   │   │   └── settings/     # Modular settings modal and About tab
+│   │   ├── platform/         # Electron bridge facades and persistent preferences
+│   │   ├── styles/           # Pure CSS tokens, light/dark themes, and layout rules
+│   │   ├── tabs.ts           # Reactive store for multi-tab management
+│   │   ├── App.tsx           # Primary orchestrator component
+│   │   └── main.tsx          # React application entry point
+├── AGENTS.md                 # Branching model, commit rules, and AI agent guidelines
+├── DESIGN.md                 # Strict code style, TypeScript, and design guidelines
 ├── index.html
 ├── package.json
 ├── tsconfig.json
@@ -80,48 +104,48 @@ hyper-logviewer/
 
 ---
 
-## Instalación y Desarrollo Local
+## Installation & Local Development
 
-### Requisitos Previos
+### Prerequisites
 * **Node.js** >= 20.x
 * **npm** >= 10.x
 
-### Comandos de Desarrollo
+### Development Commands
 
 ```powershell
-# Instalar dependencias
+# Install dependencies
 npm install
 
-# Iniciar servidor de desarrollo Vite con Hot Module Replacement (HMR)
+# Start Vite dev server with Hot Module Replacement (HMR)
 npm run dev
 
-# Compilar proceso principal y renderer para producción
+# Compile main process and renderer for production
 npm run build
 
-# Ejecutar aplicación de escritorio en Electron
+# Launch the desktop application with Electron
 npm run start
 
-# Verificación estricta de tipos de TypeScript
+# Strict TypeScript type check
 npm run typecheck
 ```
 
 ---
 
-## Modelo de Ramas y Commits
+## Git Branching Model & Commit Standard
 
-Este repositorio sigue una convención estricta de ramas y mensajes de commit descrita en [`AGENTS.md`](AGENTS.md):
-* **Ramas:**
-  * `main`: Producción y versiones estables.
-  * `dev`: Rama activa de integración principal.
-  * `feature/<nombre>`: Ramas de características específicas.
-* **Formato de Commits:** `<sustantivo> : <verbo> <descripción>`
-  * *Autor (Español):* `visor : implementar virtualizacion de lineas de log`
-  * *Comunidad (Inglés):* `viewer : implement log line virtualization`
+This repository follows a strict workflow detailed in [`AGENTS.md`](AGENTS.md):
+* **Branches:**
+  * `main`: Production and stable release tags.
+  * `dev`: Primary integration branch.
+  * `feature/<feature-name>`: Specific feature or topic branches.
+* **Commit Message Format:** `<noun> : <verb> <description>`
+  * *Author (Spanish):* `visor : implementar virtualizacion de lineas de log`
+  * *Community (English):* `viewer : implement log line virtualization`
 
 ---
 
-## Reconocimientos y Coautoría
+## Acknowledgements & Co-Authorship
 
-Este proyecto ha sido concebido y desarrollado en estrecha colaboración entre el autor principal y **Antigravity CLI**, el agente avanzado de ingeniería de software desarrollado por el equipo de Google DeepMind.
+This project was conceived and developed in close collaboration between the primary maintainer and **Antigravity CLI**, the advanced agentic coding assistant designed by Google DeepMind.
 
-> **Nota de gobernanza:** Conforme a las políticas del proyecto establecidas en [`AGENTS.md`](AGENTS.md), la coautoría y créditos de Antigravity CLI se reconocen formalmente y de manera exclusiva en esta documentación (README), manteniéndose expresamente **fuera de la interfaz de la aplicación y del historial de commits de Git** para preservar un historial de autoría y una aplicación limpia.
+> **Governance Note:** As established in [`AGENTS.md`](AGENTS.md), co-authorship and technical credits to Antigravity CLI are formally recognized exclusively within this repository documentation (README), remaining strictly **outside the user interface and Git commit history** to preserve a clean and standard open-source footprint.

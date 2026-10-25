@@ -2,7 +2,7 @@
   "name": "hyper-logviewer",
   "productName": "Hyper LogViewer",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.0-beta.1",
   "description": "High-performance, local-first log file viewer.",
   "license": "Apache-2.0",
   "main": "dist-electron/main.cjs",
@@ -12,7 +12,8 @@
     "dev:web": "vite",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.electron.json --noEmit && vite build && vite build --config vite.electron.config.ts",
     "start": "electron .",
-    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.electron.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.electron.json --noEmit",
+    "dist:win": "npm run build && electron-builder --win"
   },
   "dependencies": {
     "@floating-ui/dom": "^1.8.0",
@@ -27,7 +28,56 @@
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^4.3.4",
     "electron": "^34.2.0",
+    "electron-builder": "^26.18.0",
     "typescript": "^5.8.0",
     "vite": "^6.2.0"
+  },
+  "build": {
+    "appId": "app.hyperlogviewer.desktop",
+    "productName": "Hyper LogViewer",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "fileAssociations": [
+      {
+        "ext": "log",
+        "name": "Log File",
+        "description": "Log file readable with Hyper LogViewer",
+        "role": "Viewer"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "public/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Hyper LogViewer",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-Portable.${ext}"
+    }
   }
 }
