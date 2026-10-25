@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import {
+  IconClipboardText,
   IconCopy,
   IconEye,
   IconFileExport,
@@ -66,6 +67,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
   const [contextMenu, setContextMenu] = useState<{
     anchor: DOMRect;
     line: ParsedLogLine;
+    selectedText?: string;
   } | null>(null);
 
   // Single line inspection modal state
@@ -301,9 +303,13 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
   const handleContextMenu = useCallback(
     (event: React.MouseEvent, line: ParsedLogLine) => {
       event.preventDefault();
+      const rawSelection = window.getSelection()?.toString() ?? '';
+      // Pure clean text without formatting, carriage returns, or metadata
+      const selectedText = rawSelection.replace(/\r\n/g, '\n');
       setContextMenu({
         anchor: new DOMRect(event.clientX, event.clientY, 0, 0),
         line,
+        selectedText: selectedText.length > 0 ? selectedText : undefined,
       });
     },
     [],
@@ -344,11 +350,22 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     if (!contextMenu) return [];
     const line = contextMenu.line;
     const isPinned = pinnedLine?.rawIndex === line.rawIndex;
+    const hasSelection = !!contextMenu.selectedText && contextMenu.selectedText.length > 0;
 
     const entries: ContextMenuEntry[] = [
       {
-        label: t('contextMenu.copyLine'),
+        label: t('contextMenu.copySelection'),
         icon: IconCopy,
+        disabled: !hasSelection,
+        onSelect: () => {
+          if (contextMenu.selectedText) {
+            void navigator.clipboard.writeText(contextMenu.selectedText);
+          }
+        },
+      },
+      {
+        label: t('contextMenu.copyLine'),
+        icon: IconClipboardText,
         shortcut: 'Ctrl+C',
         onSelect: () => void navigator.clipboard.writeText(line.raw),
       },

@@ -96,7 +96,8 @@ export const es: TranslationSchema = {
     matchesCount: '{count} coincidencias',
   },
   contextMenu: {
-    copyLine: 'Copiar línea',
+    copySelection: 'Copiar',
+    copyLine: 'Copiar línea completa',
     pinLine: 'Fijar línea arriba',
     unpinLine: 'Desfijar línea',
     inspectLine: 'Inspeccionar registro...',

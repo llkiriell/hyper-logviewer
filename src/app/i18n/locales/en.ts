@@ -94,7 +94,8 @@ export const en = {
     matchesCount: '{count} matches',
   },
   contextMenu: {
-    copyLine: 'Copy Line',
+    copySelection: 'Copy',
+    copyLine: 'Copy Entire Line',
     pinLine: 'Pin Line to Top',
     unpinLine: 'Unpin Line',
     inspectLine: 'Inspect Line Details...',
