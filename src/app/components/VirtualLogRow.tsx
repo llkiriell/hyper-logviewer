@@ -6,6 +6,7 @@ import {
   IconPin,
   IconPinFilled,
 } from '@tabler/icons-react';
+import { analyzeBrackets, type BracketInfo } from '../../core/brackets.ts';
 import {
   findMatchRanges,
   splitTextWithSearchAndHighlights,
@@ -33,9 +34,68 @@ interface VirtualLogRowProps {
   isPinned: boolean;
   isContextMenuTarget?: boolean;
   isHighlighted?: boolean;
+  isSelected?: boolean;
+  rainbowBrackets?: boolean;
   onTogglePin: (line: ParsedLogLine) => void;
   onContextMenu: (event: React.MouseEvent, line: ParsedLogLine) => void;
   onInspectLine?: (line: ParsedLogLine) => void;
+  onSelectLine?: (line: ParsedLogLine) => void;
+}
+
+function renderContentWithBrackets(
+  text: string,
+  startOffset: number,
+  bracketMap: Map<number, BracketInfo> | null,
+  hoveredBracketPairId: number | null,
+  onHoverBracket: (id: number | null) => void,
+) {
+  if (!bracketMap || bracketMap.size === 0) {
+    return text;
+  }
+
+  const elements: React.ReactNode[] = [];
+  let buffer = '';
+
+  for (let i = 0; i < text.length; i++) {
+    const globalIdx = startOffset + i;
+    const bracket = bracketMap.get(globalIdx);
+
+    if (bracket) {
+      if (buffer) {
+        elements.push(buffer);
+        buffer = '';
+      }
+      const isMatched = hoveredBracketPairId === bracket.pairId;
+      elements.push(
+        <span
+          key={`br-${globalIdx}`}
+          className={`rainbow-bracket bracket-depth-${bracket.depth % 5} ${isMatched ? 'is-matched-bracket' : ''}`}
+          onMouseEnter={(e) => {
+            e.stopPropagation();
+            onHoverBracket(bracket.pairId);
+          }}
+          onMouseLeave={(e) => {
+            e.stopPropagation();
+            onHoverBracket(null);
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onHoverBracket(isMatched ? null : bracket.pairId);
+          }}
+        >
+          {bracket.char}
+        </span>,
+      );
+    } else {
+      buffer += text[i];
+    }
+  }
+
+  if (buffer) {
+    elements.push(buffer);
+  }
+
+  return elements;
 }
 
 export const VirtualLogRow = memo(function VirtualLogRow({
@@ -53,12 +113,21 @@ export const VirtualLogRow = memo(function VirtualLogRow({
   isPinned,
   isContextMenuTarget = false,
   isHighlighted = false,
+  isSelected = false,
+  rainbowBrackets = true,
   onTogglePin,
   onContextMenu,
   onInspectLine,
+  onSelectLine,
 }: VirtualLogRowProps) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
+  const [hoveredBracketPairId, setHoveredBracketPairId] = useState<number | null>(null);
+
+  const bracketMap = useMemo(() => {
+    if (!rainbowBrackets) return null;
+    return analyzeBrackets(line.raw);
+  }, [line.raw, rainbowBrackets]);
 
   const searchRanges = useMemo(() => {
     if (!searchQuery) return [];
@@ -96,6 +165,19 @@ export const VirtualLogRow = memo(function VirtualLogRow({
       ? levelColor.bgColor
       : undefined;
 
+  // Fully opaque solid composite background for sticky columns (prevents any bleed-through on horizontal scroll)
+  const stickySolidStyle = useMemo(() => {
+    if (rowBg) {
+      return {
+        backgroundColor: 'var(--bg)',
+        backgroundImage: `linear-gradient(${rowBg}, ${rowBg})`,
+      };
+    }
+    return {
+      backgroundColor: 'var(--bg)',
+    };
+  }, [rowBg]);
+
   const rowBorderBottom = showSeparator
     ? `1px solid ${separatorColor}`
     : undefined;
@@ -106,19 +188,20 @@ export const VirtualLogRow = memo(function VirtualLogRow({
 
   return (
     <div
-      className={`log-row log-row-${line.level} ${wordWrap ? 'is-wrapped' : ''} ${isPinned ? 'is-pinned-row' : ''} ${isContextMenuTarget ? 'is-context-target' : ''} ${isHighlighted ? 'is-highlighted-focus' : ''}`}
+      className={`log-row log-row-${line.level} ${wordWrap ? 'is-wrapped' : ''} ${isPinned ? 'is-pinned-row' : ''} ${isContextMenuTarget ? 'is-context-target' : ''} ${isHighlighted ? 'is-highlighted-focus' : ''} ${isSelected ? 'is-selected-line' : ''}`}
       style={{
         fontSize: `${fontSize}px`,
         backgroundColor: rowBg,
         borderBottom: rowBorderBottom,
       }}
+      onClick={() => onSelectLine?.(line)}
       onContextMenu={(e) => onContextMenu(e, line)}
     >
-      {/* Sticky Pin Button */}
+      {/* Sticky Pin Button (Always 100% solid background) */}
       <button
         type="button"
         className={`log-pin-btn ${isPinned ? 'is-active' : ''}`}
-        style={rowBg ? { backgroundColor: rowBg } : undefined}
+        style={stickySolidStyle}
         onClick={handlePinClick}
         title={isPinned ? t('viewer.unpinLine') : t('viewer.pinLine')}
       >
@@ -129,21 +212,21 @@ export const VirtualLogRow = memo(function VirtualLogRow({
         )}
       </button>
 
-      {/* Sticky Line Number Gutter */}
+      {/* Sticky Line Number Gutter (Always 100% solid background) */}
       <span
         className="log-gutter"
-        style={rowBg ? { backgroundColor: rowBg } : undefined}
+        style={stickySolidStyle}
         title={`Line ${line.lineNumber}`}
       >
         {line.lineNumber}
       </span>
 
-      {/* Sticky Log Level Indicator */}
+      {/* Sticky Log Level Indicator (Always 100% solid background) */}
       <span
         className={`log-level-badge log-level-${line.level}`}
         style={{
           color: levelColor ? levelColor.textColor : undefined,
-          backgroundColor: rowBg,
+          ...stickySolidStyle,
         }}
       >
         {badgeText}
@@ -152,13 +235,21 @@ export const VirtualLogRow = memo(function VirtualLogRow({
       {/* Log Line Text Content */}
       <div className="log-content">
         {chunks.map((chunk, idx) => {
+          const renderedText = renderContentWithBrackets(
+            chunk.text,
+            chunk.startIndex,
+            bracketMap,
+            hoveredBracketPairId,
+            setHoveredBracketPairId,
+          );
+
           if (chunk.isSearchMatch) {
             return (
               <mark
                 key={idx}
                 className={`log-match ${chunk.isActiveMatch ? 'is-active-match' : ''}`}
               >
-                {chunk.text}
+                {renderedText}
               </mark>
             );
           }
@@ -173,16 +264,16 @@ export const VirtualLogRow = memo(function VirtualLogRow({
                   fontStyle: chunk.customStyle.italic ? 'italic' : undefined,
                 }}
               >
-                {chunk.text}
+                {renderedText}
               </span>
             );
           }
 
-          return <span key={idx}>{chunk.text}</span>;
+          return <span key={idx}>{renderedText}</span>;
         })}
       </div>
 
-      {/* Sticky Right-aligned Hover Actions (Copy and Eye Inspect) */}
+      {/* Sticky Right-aligned Hover Actions (Zero layout shift on text) */}
       <div className="log-row-actions">
         <button
           type="button"

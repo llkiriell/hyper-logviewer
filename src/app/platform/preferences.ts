@@ -54,6 +54,9 @@ export interface Preferences {
   sidebarEnabled: boolean;
   sidebarCollapsed: boolean;
   watchedFolders: string[];
+  // Rainbow Brackets & Active Line Highlight
+  rainbowBrackets: boolean;
+  highlightActiveLine: boolean;
   // Recent files
   recentFiles: RecentFileItem[];
 }
@@ -82,6 +85,8 @@ const DEFAULT_PREFERENCES: Preferences = {
   sidebarEnabled: false,
   sidebarCollapsed: false,
   watchedFolders: [],
+  rainbowBrackets: true,
+  highlightActiveLine: true,
   recentFiles: [],
 };
 
@@ -114,6 +119,8 @@ function load(): Preferences {
       sidebarEnabled: typeof parsed.sidebarEnabled === 'boolean' ? parsed.sidebarEnabled : DEFAULT_PREFERENCES.sidebarEnabled,
       sidebarCollapsed: typeof parsed.sidebarCollapsed === 'boolean' ? parsed.sidebarCollapsed : DEFAULT_PREFERENCES.sidebarCollapsed,
       watchedFolders: Array.isArray(parsed.watchedFolders) ? parsed.watchedFolders : DEFAULT_PREFERENCES.watchedFolders,
+      rainbowBrackets: typeof parsed.rainbowBrackets === 'boolean' ? parsed.rainbowBrackets : DEFAULT_PREFERENCES.rainbowBrackets,
+      highlightActiveLine: typeof parsed.highlightActiveLine === 'boolean' ? parsed.highlightActiveLine : DEFAULT_PREFERENCES.highlightActiveLine,
       recentFiles: Array.isArray(parsed.recentFiles) ? parsed.recentFiles : DEFAULT_PREFERENCES.recentFiles,
     };
   } catch {

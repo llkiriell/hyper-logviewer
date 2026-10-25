@@ -179,6 +179,7 @@ export function indexSearchMatches(
 
 export interface FormattedTextChunk {
   text: string;
+  startIndex: number;
   isSearchMatch: boolean;
   isActiveMatch?: boolean;
   customStyle?: {
@@ -197,11 +198,10 @@ export function splitTextWithSearchAndHighlights(
   // If no search matches and no custom highlights, return plain text chunk
   const hasCustom = customRules && customRules.length > 0;
   if (searchRanges.length === 0 && !hasCustom) {
-    return [{ text, isSearchMatch: false }];
+    return [{ text, startIndex: 0, isSearchMatch: false }];
   }
 
   // Priority 1: Search matches take visual precedence
-  // Find all custom rule occurrences first
   interface Span {
     start: number;
     end: number;
@@ -271,12 +271,14 @@ export function splitTextWithSearchAndHighlights(
     if (span.start > lastIndex) {
       chunks.push({
         text: text.slice(lastIndex, span.start),
+        startIndex: lastIndex,
         isSearchMatch: false,
       });
     }
 
     chunks.push({
       text: text.slice(span.start, span.end),
+      startIndex: span.start,
       isSearchMatch: span.isSearch,
       isActiveMatch: span.isActiveSearch,
       customStyle: span.customStyle,
@@ -288,6 +290,7 @@ export function splitTextWithSearchAndHighlights(
   if (lastIndex < text.length) {
     chunks.push({
       text: text.slice(lastIndex),
+      startIndex: lastIndex,
       isSearchMatch: false,
     });
   }

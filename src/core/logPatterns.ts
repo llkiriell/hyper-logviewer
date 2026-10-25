@@ -1,0 +1,213 @@
+export interface DetectedCurlRequest {
+  raw: string;
+  command: string;
+  method: string;
+  url: string;
+  headers: Record<string, string>;
+  params?: Record<string, string>;
+  body?: string;
+  uuid?: string;
+}
+
+export interface DetectedJavaError {
+  exceptionClass: string;
+  simpleName: string;
+  message: string;
+  targetUrl?: string;
+  nestedCauses: string[];
+  stackTrace: string[];
+  rawBlock: string;
+}
+
+/**
+ * Detects and extracts a structured cURL command from a log line
+ * Handles:
+ * 1. ApiLoggerFilter Request pattern: Request:::: UUID (...) | Headers ([...]) | Params ([...]) | Body ([...])
+ * 2. Raw curl commands: curl -X ...
+ * 3. HTTP method + URL patterns: POST http://...
+ */
+export function detectCurlPattern(rawLine: string): DetectedCurlRequest | null {
+  // 1. ApiLoggerFilter / Request pattern
+  if (rawLine.includes('Request::::') || (rawLine.includes('Headers ([') && rawLine.includes('Params (['))) {
+    const uuidMatch = rawLine.match(/UUID\s*\(([^)]+)\)/i);
+    const uuid = uuidMatch ? uuidMatch[1]?.trim() : undefined;
+
+    // Extract Headers ([ ... ])
+    const headersMatch = rawLine.match(/Headers\s*\(\[([\s\S]*?)\]\)/);
+    const headers: Record<string, string> = {};
+    if (headersMatch && headersMatch[1]) {
+      const headerPairs = headersMatch[1].match(/([a-zA-Z0-9_-]+)=\[([^\]]*)\]/g);
+      if (headerPairs) {
+        for (const pair of headerPairs) {
+          const m = pair.match(/([a-zA-Z0-9_-]+)=\[([^\]]*)\]/);
+          if (m && m[1]) {
+            headers[m[1]] = m[2] ?? '';
+          }
+        }
+      }
+    }
+
+    // Extract Params ([ ... ])
+    const paramsMatch = rawLine.match(/Params\s*\(\[([\s\S]*?)\]\)/);
+    const params: Record<string, string> = {};
+    if (paramsMatch && paramsMatch[1]) {
+      const paramPairs = paramsMatch[1].match(/([a-zA-Z0-9_-]+)=\[([^\]]*)\]/g);
+      if (paramPairs) {
+        for (const pair of paramPairs) {
+          const m = pair.match(/([a-zA-Z0-9_-]+)=\[([^\]]*)\]/);
+          if (m && m[1]) {
+            params[m[1]] = m[2] ?? '';
+          }
+        }
+      }
+    }
+
+    // Extract Body ([ ... ])
+    const bodyMatch = rawLine.match(/Body\s*\(\[([\s\S]*?)\]\)/);
+    let body = bodyMatch ? bodyMatch[1]?.trim() : undefined;
+    if (body === '[]' || body === '') body = undefined;
+
+    // Detect Method (POST, GET, etc.)
+    let method = 'GET';
+    const methodMatch = rawLine.match(/\b(POST|GET|PUT|DELETE|PATCH)\b/i);
+    if (methodMatch && methodMatch[1]) {
+      method = methodMatch[1].toUpperCase();
+    } else if (body && body.length > 0) {
+      method = 'POST';
+    }
+
+    // Detect Host / URL
+    const host = headers['host'] || 'localhost';
+    let url = host.startsWith('http://') || host.startsWith('https://')
+      ? host
+      : `http://${host}`;
+
+    // Look for path in rawLine
+    const uriMatch = rawLine.match(/(?:URI|path|endpoint|url|request for)\s*[:="']?\s*([/a-zA-Z0-9_.-]+(?:\?[^\s"'>]+)?)/i);
+    if (uriMatch && uriMatch[1] && !uriMatch[1].startsWith('http')) {
+      const path = uriMatch[1].startsWith('/') ? uriMatch[1] : `/${uriMatch[1]}`;
+      url = `${url}${path}`;
+    }
+
+    // Construct cURL command
+    const parts: string[] = [`curl -X ${method} "${url}"`];
+    for (const [key, val] of Object.entries(headers)) {
+      parts.push(`  -H "${key}: ${val}"`);
+    }
+
+    if (body) {
+      // Escape inner quotes
+      const escapedBody = body.replace(/"/g, '\\"');
+      parts.push(`  -d "${escapedBody}"`);
+    }
+
+    const command = parts.join(' \\\n');
+
+    return {
+      raw: rawLine,
+      command,
+      method,
+      url,
+      headers,
+      params: Object.keys(params).length > 0 ? params : undefined,
+      body,
+      uuid,
+    };
+  }
+
+  // 2. Existing curl command in log
+  const curlMatch = rawLine.match(/(curl\s+[\s\S]+)/);
+  if (curlMatch && curlMatch[1]) {
+    const rawCmd = curlMatch[1].trim();
+    // Split on -H, -d, -X etc to format multi-line
+    const formatted = rawCmd
+      .replace(/\s+(-H|-d|-X|--data|--header)/g, ' \\\n  $1')
+      .trim();
+
+    const methodM = rawCmd.match(/-X\s+([A-Z]+)/);
+    const method = methodM && methodM[1] ? methodM[1] : 'GET';
+    const urlM = rawCmd.match(/["']?(https?:\/\/[^\s"']+)["']?/);
+    const url = urlM && urlM[1] ? urlM[1] : '';
+
+    return {
+      raw: rawLine,
+      command: formatted,
+      method,
+      url,
+      headers: {},
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Detects Java Exception and stack traces inside a log line or multi-line block.
+ */
+export function detectJavaErrorPattern(rawLine: string, nextLines?: string[]): DetectedJavaError | null {
+  // Regex for java exception class: e.g. org.springframework.web.client.RestClientException
+  const exceptionRegex = /([a-zA-Z_$][a-zA-Z0-9_$]*\.)+([a-zA-Z0-9_$]+Exception|[a-zA-Z0-9_$]+Error)(:\s*[\s\S]*)?/;
+  const hasException = exceptionRegex.test(rawLine);
+  const hasStackTrace = rawLine.includes('at ') || (nextLines && nextLines.some((l) => l.trim().startsWith('at ')));
+
+  if (!hasException && !hasStackTrace) {
+    return null;
+  }
+
+  // Extract primary exception
+  const match = rawLine.match(/(([a-zA-Z_$][a-zA-Z0-9_$]*\.)+([a-zA-Z0-9_$]+(?:Exception|Error)))(?::\s*([^\n\r]+))?/);
+  const fullClass = match && match[1] ? match[1] : 'JavaException';
+  const simpleName = match && match[3] ? match[3] : fullClass.split('.').pop() || fullClass;
+  const message = match && match[4] ? match[4].trim() : '';
+
+  // Extract target URL if present in error message
+  const urlMatch = rawLine.match(/https?:\/\/[^\s"'<>]+/);
+  const targetUrl = urlMatch ? urlMatch[0] : undefined;
+
+  // Extract nested causes
+  const nestedCauses: string[] = [];
+  const causeRegex = /(?:sun|java|javax|org|com)\.[a-zA-Z0-9_$.]+(?:Exception|Error):[^\n\r;:]+/g;
+  let causeMatch: RegExpExecArray | null;
+  while ((causeMatch = causeRegex.exec(rawLine)) !== null) {
+    const causeStr = causeMatch[0].trim();
+    if (!causeStr.startsWith(fullClass) && !nestedCauses.includes(causeStr)) {
+      nestedCauses.push(causeStr);
+    }
+  }
+
+  // Extract stack trace frames from line or nextLines
+  const stackTrace: string[] = [];
+  const atRegex = /\bat\s+([a-zA-Z0-9_$.]+)\(([^)]+)\)/g;
+  let atMatch: RegExpExecArray | null;
+  while ((atMatch = atRegex.exec(rawLine)) !== null) {
+    stackTrace.push(`at ${atMatch[1]}(${atMatch[2]})`);
+  }
+
+  if (nextLines) {
+    for (const line of nextLines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('at ') || trimmed.startsWith('Caused by:') || trimmed.startsWith('... ')) {
+        stackTrace.push(trimmed);
+      } else {
+        break; // Stop at end of stacktrace
+      }
+    }
+  }
+
+  // Build raw block for copying
+  const rawParts: string[] = [
+    `${fullClass}${message ? `: ${message}` : ''}`,
+    ...nestedCauses.map((c) => `  Caused by: ${c}`),
+    ...stackTrace.map((st) => `    ${st}`),
+  ];
+
+  return {
+    exceptionClass: fullClass,
+    simpleName,
+    message,
+    targetUrl,
+    nestedCauses,
+    stackTrace,
+    rawBlock: rawParts.join('\n'),
+  };
+}

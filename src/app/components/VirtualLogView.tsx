@@ -78,6 +78,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
   // Retain position when clearing search
   const lastActiveRawIndexRef = useRef<number | null>(null);
   const [highlightedRawIndex, setHighlightedRawIndex] = useState<number | null>(null);
+  const [selectedRawIndex, setSelectedRawIndex] = useState<number | null>(null);
 
   // Compute filtered log lines
   const filteredLines = useMemo(() => {
@@ -102,20 +103,21 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     setCurrentMatchIndex(0);
   }, [searchQuery, isRegex, caseSensitive, levelFilter, dateFilter]);
 
-  // Virtualizer setup
+  // Virtualizer setup with per-item key tracking to avoid search overlapping
   const rowVirtualizer = useVirtualizer({
     count: filteredLines.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 24,
     overscan: 25,
+    getItemKey: (index) => filteredLines[index]?.rawIndex ?? index,
   });
 
   const virtualItems = rowVirtualizer.getVirtualItems();
 
-  // Invalidate virtualizer cache when wordWrap changes so line heights adapt immediately
+  // Invalidate virtualizer cache when wordWrap, search or lines change so heights adapt immediately
   useEffect(() => {
     rowVirtualizer.measure();
-  }, [wordWrap, rowVirtualizer]);
+  }, [wordWrap, searchQuery, filteredLines, rowVirtualizer]);
 
   // Search match navigation handlers
   const activeLocation = searchIndex.locations[currentMatchIndex];
@@ -449,9 +451,12 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
               wordWrap={wordWrap}
               fontSize={prefs.fontSize}
               isPinned={true}
+              isSelected={prefs.highlightActiveLine && selectedRawIndex === pinnedLine.rawIndex}
+              rainbowBrackets={prefs.rainbowBrackets}
               onTogglePin={handleTogglePin}
               onContextMenu={handleContextMenu}
               onInspectLine={(l) => setDetailModalLine(l)}
+              onSelectLine={(l) => setSelectedRawIndex(l.rawIndex)}
             />
           </div>
         )}
@@ -536,9 +541,12 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
                       isPinned={isPinned}
                       isContextMenuTarget={isTarget}
                       isHighlighted={isHighlighted}
+                      isSelected={prefs.highlightActiveLine && selectedRawIndex === line.rawIndex}
+                      rainbowBrackets={prefs.rainbowBrackets}
                       onTogglePin={handleTogglePin}
                       onContextMenu={handleContextMenu}
                       onInspectLine={(l) => setDetailModalLine(l)}
+                      onSelectLine={(l) => setSelectedRawIndex(l.rawIndex)}
                     />
                   </div>
                 );
@@ -608,6 +616,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
       {detailModalLine && (
         <LogDetailModal
           line={detailModalLine}
+          allLines={lines}
           onClose={() => setDetailModalLine(null)}
         />
       )}

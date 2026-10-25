@@ -978,7 +978,7 @@ select {
   align-items: flex-start;
   min-height: 24px;
   line-height: 24px;
-  padding: 0 10px 0 0;
+  padding: 0 58px 0 0;
   border-left: 3px solid transparent;
   position: relative;
   box-sizing: border-box;
@@ -1011,27 +1011,31 @@ select {
   position: sticky;
   left: 0;
   z-index: 4;
-  background: var(--bg);
+  background-color: var(--bg);
+  opacity: 1 !important;
 }
 
 .log-gutter {
   position: sticky;
   left: 22px;
   z-index: 4;
-  background: var(--bg);
+  background-color: var(--bg);
+  opacity: 1 !important;
 }
 
 .log-level-badge {
   position: sticky;
   left: 82px;
   z-index: 4;
-  background: var(--bg);
+  background-color: var(--bg);
+  opacity: 1 !important;
 }
 
 .log-row:hover .log-pin-btn,
 .log-row:hover .log-gutter,
 .log-row:hover .log-level-badge {
-  background: var(--hover);
+  background-color: var(--bg);
+  background-image: linear-gradient(var(--hover), var(--hover));
 }
 
 .log-row-fatal .log-pin-btn,
@@ -1040,13 +1044,15 @@ select {
 .log-row-error .log-pin-btn,
 .log-row-error .log-gutter,
 .log-row-error .log-level-badge {
-  background: var(--danger-soft);
+  background-color: var(--bg);
+  background-image: linear-gradient(var(--danger-soft), var(--danger-soft));
 }
 
 .log-row-warn .log-pin-btn,
 .log-row-warn .log-gutter,
 .log-row-warn .log-level-badge {
-  background: var(--mark-soft);
+  background-color: var(--bg);
+  background-image: linear-gradient(var(--mark-soft), var(--mark-soft));
 }
 
 .log-row.is-highlighted-focus .log-pin-btn,
@@ -1055,7 +1061,23 @@ select {
 .log-row.is-context-target .log-pin-btn,
 .log-row.is-context-target .log-gutter,
 .log-row.is-context-target .log-level-badge {
-  background: var(--surface-hover);
+  background-color: var(--bg);
+  background-image: linear-gradient(var(--surface-hover), var(--surface-hover));
+}
+
+.log-row.is-selected-line .log-pin-btn,
+.log-row.is-selected-line .log-gutter,
+.log-row.is-selected-line .log-level-badge {
+  background-color: var(--bg);
+  background-image: linear-gradient(var(--active), var(--active));
+}
+
+/* Selected row highlight on click */
+.log-row.is-selected-line {
+  background-color: var(--bg) !important;
+  background-image: linear-gradient(var(--active), var(--active)) !important;
+  outline: 1.5px solid var(--accent);
+  outline-offset: -1px;
 }
 
 /* Retained focus highlight when search filter is cleared */
@@ -1100,7 +1122,7 @@ select {
   color: var(--text-faint);
   font-size: 0.85em;
   user-select: none;
-  opacity: 0.8;
+  opacity: 1 !important;
 }
 
 /* Level badge */
@@ -1163,14 +1185,16 @@ select {
   color: #121212;
 }
 
-/* Sticky Hover Actions (Copy and Eye Inspect) */
+/* Sticky Hover Actions (Copy and Eye Inspect) - Zero Layout Shift */
 .log-row-actions {
-  display: none;
+  display: inline-flex;
   position: sticky;
   right: 8px;
-  margin-left: auto;
+  margin-left: -50px;
+  width: 48px;
   z-index: 5;
   align-items: center;
+  justify-content: center;
   gap: 3px;
   background: var(--surface);
   padding: 1px 4px;
@@ -1178,10 +1202,14 @@ select {
   border: 1px solid var(--border);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
   flex: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
 }
 
 .log-row:hover .log-row-actions {
-  display: inline-flex;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .log-action-btn {
@@ -1419,25 +1447,24 @@ select {
   height: 24px;
   border: none;
   background: inherit;
-  color: var(--text-faint);
+  color: transparent;
   cursor: pointer;
   padding: 0;
-  opacity: 0;
-  transition: opacity 0.12s ease, color 0.12s ease;
+  opacity: 1;
+  transition: color 0.12s ease;
   flex: none;
 }
 
-.log-row:hover .log-pin-btn,
-.log-pin-btn.is-active {
-  opacity: 1;
+.log-row:hover .log-pin-btn {
+  color: var(--text-faint);
 }
 
 .log-pin-btn.is-active {
-  color: var(--accent);
+  color: var(--accent) !important;
 }
 
 .log-pin-btn:hover {
-  color: var(--text);
+  color: var(--text) !important;
 }
 
 /* Viewer Viewport Wrapper & Sticky Pinned Bar */
@@ -2669,3 +2696,209 @@ select {
   background: var(--hover);
   color: var(--accent);
 }
+
+/* ==========================================================================
+   Rainbow Brackets & Matching Highlighting
+   ========================================================================== */
+
+.rainbow-bracket {
+  display: inline-block;
+  font-weight: 600;
+  border-radius: 2px;
+  padding: 0 0.5px;
+  transition: all 0.1s ease;
+}
+
+/* Light Theme Depth Colors */
+.bracket-depth-0 { color: #d63384; } /* Magenta vibrant */
+.bracket-depth-1 { color: #0d6efd; } /* Bright Blue */
+.bracket-depth-2 { color: #d97706; } /* Warm Amber */
+.bracket-depth-3 { color: #198754; } /* Forest Emerald */
+.bracket-depth-4 { color: #6f42c1; } /* Royal Purple */
+
+/* Dark Theme Depth Colors */
+:root[data-theme='dark'] .bracket-depth-0 { color: #ff79c6; } /* Neon Pink */
+:root[data-theme='dark'] .bracket-depth-1 { color: #50fa7b; } /* Neon Green */
+:root[data-theme='dark'] .bracket-depth-2 { color: #f1fa8c; } /* Bright Gold */
+:root[data-theme='dark'] .bracket-depth-3 { color: #8be9fd; } /* Cyan */
+:root[data-theme='dark'] .bracket-depth-4 { color: #bd93f9; } /* Violet Pastel */
+
+/* Matched Pair Bracket Highlighting */
+.rainbow-bracket.is-matched-bracket {
+  background: var(--selection);
+  outline: 2px solid var(--accent);
+  border-radius: 3px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 0 4px var(--accent);
+}
+
+/* ==========================================================================
+   Log Detail Modal: cURL & Java Stacktrace Block Enhancements
+   ========================================================================== */
+
+/* HTTP Method Badge */
+.detail-tag-method {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent-line);
+}
+
+/* cURL Card */
+.detail-curl-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.detail-curl-code {
+  margin: 0;
+  padding: 12px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+  background: transparent;
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+}
+
+/* Java Exception Tag */
+.detail-tag-exception {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid var(--danger-soft);
+  font-family: var(--font-mono);
+}
+
+/* Java Exception Card */
+.detail-java-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-java-header {
+  padding: 10px 14px;
+  background: var(--surface-hover);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-java-class {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--danger);
+  word-break: break-all;
+}
+
+.detail-java-url {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  word-break: break-all;
+}
+
+.detail-java-message {
+  padding: 10px 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--bg);
+}
+
+.detail-java-causes {
+  padding: 8px 14px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--surface);
+}
+
+.detail-java-causes .causes-title {
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.detail-java-causes ul {
+  margin: 6px 0 0 16px;
+  padding: 0;
+  color: var(--text);
+}
+
+.detail-java-causes li {
+  margin-bottom: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+/* Stacktrace Formatted Lines */
+.detail-java-trace {
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--bg);
+}
+
+.trace-code-container {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 20px;
+}
+
+.trace-line {
+  display: flex;
+  align-items: flex-start;
+  padding: 0 10px;
+  user-select: text;
+}
+
+.trace-line:hover {
+  background: var(--hover);
+}
+
+.trace-line-number {
+  flex: none;
+  width: 32px;
+  color: var(--text-faint);
+  text-align: right;
+  padding-right: 12px;
+  user-select: none;
+  font-size: 10px;
+}
+
+.trace-line-text {
+  flex: 1;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+

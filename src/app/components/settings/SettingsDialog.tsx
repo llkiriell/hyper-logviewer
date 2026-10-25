@@ -244,6 +244,28 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
                   label={t('settings.appearance.bottomSearchBar')}
                 />
               </SettingRow>
+
+              <SettingRow
+                label={t('settings.appearance.rainbowBrackets')}
+                help={t('settings.appearance.rainbowBracketsHelp')}
+              >
+                <Switch
+                  checked={prefs.rainbowBrackets}
+                  onChange={(rainbowBrackets) => setPreferences({ rainbowBrackets })}
+                  label={t('settings.appearance.rainbowBrackets')}
+                />
+              </SettingRow>
+
+              <SettingRow
+                label={t('settings.appearance.highlightActiveLine')}
+                help={t('settings.appearance.highlightActiveLineHelp')}
+              >
+                <Switch
+                  checked={prefs.highlightActiveLine}
+                  onChange={(highlightActiveLine) => setPreferences({ highlightActiveLine })}
+                  label={t('settings.appearance.highlightActiveLine')}
+                />
+              </SettingRow>
             </SettingsGroup>
           )}
 
