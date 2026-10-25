@@ -4,6 +4,7 @@ import {
   clipboard,
   dialog,
   ipcMain,
+  Menu,
   nativeTheme,
   shell,
 } from 'electron';
@@ -13,18 +14,39 @@ import path from 'node:path';
 const DEV_URL = process.env.LOGVIEWER_DEV_URL ?? null;
 const DIST_INDEX = path.join(__dirname, '..', 'dist', 'index.html');
 const IS_MAC = process.platform === 'darwin';
+const TITLE_BAR_HEIGHT = 42;
+
+const THEMES = {
+  light: { background: '#f8f8f7', symbols: '#5b5b5f' },
+  dark: { background: '#202020', symbols: '#ececec' },
+};
 
 let mainWindow: BrowserWindow | null = null;
 
 function createWindow(): BrowserWindow {
+  const initialThemeName = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+  const initialTheme = THEMES[initialThemeName];
+
+  // Hide the default Electron application menu bar on all non-macOS platforms
+  Menu.setApplicationMenu(null);
+
   const win = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1240,
+    height: 820,
     minWidth: 700,
     minHeight: 450,
     title: 'Hyper LogViewer',
-    titleBarStyle: IS_MAC ? 'hiddenInset' : 'default',
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#191919' : '#ffffff',
+    backgroundColor: initialTheme.background,
+    titleBarStyle: 'hidden',
+    ...(IS_MAC
+      ? { trafficLightPosition: { x: 14, y: 14 } }
+      : {
+          titleBarOverlay: {
+            color: initialTheme.background,
+            symbolColor: initialTheme.symbols,
+            height: TITLE_BAR_HEIGHT,
+          },
+        }),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -51,7 +73,15 @@ app.whenReady().then(() => {
 
   ipcMain.on('logviewer:theme', (_event, theme: 'light' | 'dark') => {
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.setBackgroundColor(theme === 'dark' ? '#191919' : '#ffffff');
+      const t = THEMES[theme];
+      mainWindow.setBackgroundColor(t.background);
+      if (!IS_MAC && typeof mainWindow.setTitleBarOverlay === 'function') {
+        mainWindow.setTitleBarOverlay({
+          color: t.background,
+          symbolColor: t.symbols,
+          height: TITLE_BAR_HEIGHT,
+        });
+      }
     }
   });
 

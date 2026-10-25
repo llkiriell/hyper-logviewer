@@ -1,13 +1,19 @@
-# hyper-logviewer
+<p align="center">
+  <img src="./public/icon.svg" width="80" height="80" alt="Hyper LogViewer Logo" />
+</p>
 
-![Electron](https://img.shields.io/badge/Electron-34.x-47848F?logo=electron&logoColor=white)
-![React](https://img.shields.io/badge/React-19.1-23272f?logo=react&logoColor=61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-6.2-646CFF?logo=vite&logoColor=white)
-![Tabler Icons](https://img.shields.io/badge/Icons-Tabler-0054a6)
-![Virtual Scroller](https://img.shields.io/badge/Scroll-TanStack%20Virtual-FF4154)
-![i18n](https://img.shields.io/badge/i18n-English%20|%20Español-blue)
-![Co-author](https://img.shields.io/badge/Co--author-Antigravity%20(AGY)-E65100?logo=google)
+<h1 align="center">Hyper LogViewer</h1>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Electron-34.x-47848F?logo=electron&logoColor=white" alt="Electron" />
+  <img src="https://img.shields.io/badge/React-19.1-23272f?logo=react&logoColor=61DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Vite-6.2-646CFF?logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/Icons-Tabler-0054a6" alt="Tabler Icons" />
+  <img src="https://img.shields.io/badge/Scroll-TanStack%20Virtual-FF4154" alt="TanStack Virtual" />
+  <img src="https://img.shields.io/badge/i18n-English%20|%20Español-blue" alt="i18n" />
+  <img src="https://img.shields.io/badge/Co--author-Antigravity%20(AGY)-E65100?logo=google" alt="Co-author" />
+</p>
 
 **hyper-logviewer** es un visor de archivos `.log` de escritorio, ultrarrápido y *local-first*, concebido para la inspección, filtrado y diagnóstico eficiente de registros de depuración y auditoría. 
 
