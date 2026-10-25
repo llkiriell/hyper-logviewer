@@ -1,11 +1,19 @@
 import { memo, useMemo, useState } from 'react';
 import {
+  IconArrowRight,
+  IconBookmarkFilled,
+  IconCaretRightFilled,
   IconCheck,
+  IconChevronRight,
+  IconChevronsRight,
+  IconCircleDot,
   IconCopy,
   IconEye,
   IconHandFingerRight,
   IconPin,
   IconPinFilled,
+  IconStarFilled,
+  IconTarget,
 } from '@tabler/icons-react';
 import { analyzeBrackets, type BracketInfo } from '../../core/brackets.ts';
 import {
@@ -19,6 +27,7 @@ import type {
   ParsedLogLine,
   SearchMatchRange,
 } from '../../core/types.ts';
+import type { ActiveLineIconType } from '../platform/preferences.ts';
 import { useTranslation } from '../i18n/index.ts';
 
 interface VirtualLogRowProps {
@@ -38,7 +47,7 @@ interface VirtualLogRowProps {
   isContextMenuTarget?: boolean;
   isHighlighted?: boolean;
   isSelected?: boolean;
-  activeLineColor?: string;
+  activeLineIcon?: ActiveLineIconType;
   rainbowBrackets?: boolean;
   highlightGitPipeline?: boolean;
   onTogglePin: (line: ParsedLogLine) => void;
@@ -114,6 +123,32 @@ function getContinuationBg(bgColor?: string): string | undefined {
   return bgColor;
 }
 
+function renderActiveLineIcon(iconType: ActiveLineIconType = 'hand', color: string) {
+  const size = 13;
+  const stroke = 1.8;
+  switch (iconType) {
+    case 'arrow':
+      return <IconArrowRight size={size} stroke={stroke} style={{ color }} />;
+    case 'chevron':
+      return <IconChevronRight size={size} stroke={stroke} style={{ color }} />;
+    case 'caret':
+      return <IconCaretRightFilled size={size} style={{ color }} />;
+    case 'chevrons':
+      return <IconChevronsRight size={size} stroke={stroke} style={{ color }} />;
+    case 'target':
+      return <IconTarget size={size} stroke={stroke} style={{ color }} />;
+    case 'dot':
+      return <IconCircleDot size={size} stroke={stroke} style={{ color }} />;
+    case 'bookmark':
+      return <IconBookmarkFilled size={size} style={{ color }} />;
+    case 'star':
+      return <IconStarFilled size={size} style={{ color }} />;
+    case 'hand':
+    default:
+      return <IconHandFingerRight size={size} stroke={stroke} style={{ color }} />;
+  }
+}
+
 export const VirtualLogRow = memo(function VirtualLogRow({
   line,
   searchQuery,
@@ -131,7 +166,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
   isContextMenuTarget = false,
   isHighlighted = false,
   isSelected = false,
-  activeLineColor,
+  activeLineIcon = 'hand',
   rainbowBrackets = true,
   highlightGitPipeline = true,
   onTogglePin,
@@ -225,6 +260,34 @@ export const VirtualLogRow = memo(function VirtualLogRow({
     ? line.customLevelTag.toUpperCase()
     : line.level.toUpperCase();
 
+  // Dynamic focus color matching the log level / custom tag
+  const activeBorderColor = useMemo(() => {
+    if (line.customLevelTag) {
+      const tag = line.customLevelTag.toLowerCase();
+      if (tag === 'conflict') return '#ef4444';
+      if (tag === 'merge') return '#9333ea';
+      if (tag === 'pipeline') return '#0ea5e9';
+    }
+    if (levelColor?.textColor && levelColor.textColor !== 'inherit') {
+      return levelColor.textColor;
+    }
+    switch (line.level) {
+      case 'fatal':
+      case 'error':
+        return 'var(--danger)';
+      case 'warn':
+        return 'var(--mark)';
+      case 'info':
+        return 'var(--accent)';
+      case 'debug':
+        return '#8c8c91';
+      case 'trace':
+        return '#7b1fa2';
+      default:
+        return 'var(--accent)';
+    }
+  }, [line.level, line.customLevelTag, levelColor]);
+
   return (
     <div
       className={`log-row log-row-${line.level} ${line.isContinuation ? 'is-continuation' : ''} ${wordWrap ? 'is-wrapped' : ''} ${isPinned ? 'is-pinned-row' : ''} ${isContextMenuTarget ? 'is-context-target' : ''} ${isHighlighted ? 'is-highlighted-focus' : ''} ${isSelected ? 'is-selected-line' : ''}`}
@@ -232,8 +295,8 @@ export const VirtualLogRow = memo(function VirtualLogRow({
         fontSize: `${fontSize}px`,
         backgroundColor: rowBg,
         borderBottom: rowBorderBottom,
-        ...(isSelected && activeLineColor
-          ? ({ '--selected-line-border': activeLineColor } as React.CSSProperties)
+        ...(isSelected
+          ? ({ '--selected-line-border': activeBorderColor } as React.CSSProperties)
           : {}),
       }}
       onClick={() => onSelectLine?.(line)}
@@ -254,19 +317,13 @@ export const VirtualLogRow = memo(function VirtualLogRow({
         )}
       </button>
 
-      {/* Sticky Pointer Indicator Cell (Shows pointing hand when line has focus) */}
+      {/* Sticky Pointer Indicator Cell (Shows pointing hand or selected icon when line has focus) */}
       <span
         className={`log-pointer-cell ${isSelected ? 'is-active' : ''}`}
         style={stickySolidStyle}
         aria-hidden={!isSelected}
       >
-        {isSelected && (
-          <IconHandFingerRight
-            size={13}
-            stroke={1.8}
-            style={{ color: activeLineColor || 'var(--accent)' }}
-          />
-        )}
+        {isSelected && renderActiveLineIcon(activeLineIcon, activeBorderColor)}
       </span>
 
       {/* Sticky Line Number Gutter (Always 100% solid background) */}

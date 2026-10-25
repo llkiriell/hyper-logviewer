@@ -16,7 +16,11 @@ import {
   setPreferences,
   usePreferences,
 } from '../../platform/preferences.ts';
-import type { AccentColor, ThemePreference } from '../../platform/preferences.ts';
+import type {
+  AccentColor,
+  ActiveLineIconType,
+  ThemePreference,
+} from '../../platform/preferences.ts';
 import { Dialog, Segmented, Select, Switch } from '../primitives.tsx';
 import { AboutSettings } from './AboutSettings.tsx';
 import { AutoscrollSettings } from './AutoscrollSettings.tsx';
@@ -260,23 +264,36 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
                 label={t('settings.appearance.highlightActiveLine')}
                 help={t('settings.appearance.highlightActiveLineHelp')}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <Switch
-                    checked={prefs.highlightActiveLine}
-                    onChange={(highlightActiveLine) => setPreferences({ highlightActiveLine })}
-                    label={t('settings.appearance.highlightActiveLine')}
-                  />
-                  {prefs.highlightActiveLine && (
-                    <div className="color-picker-wrapper" title={t('settings.appearance.activeLineColor')}>
-                      <input
-                        type="color"
-                        value={prefs.activeLineColor || '#0ea5e9'}
-                        onChange={(e) => setPreferences({ activeLineColor: e.target.value })}
-                      />
-                    </div>
-                  )}
-                </div>
+                <Switch
+                  checked={prefs.highlightActiveLine}
+                  onChange={(highlightActiveLine) => setPreferences({ highlightActiveLine })}
+                  label={t('settings.appearance.highlightActiveLine')}
+                />
               </SettingRow>
+
+              {prefs.highlightActiveLine && (
+                <SettingRow
+                  label={t('settings.appearance.activeLineIcon')}
+                  help={t('settings.appearance.activeLineIconHelp')}
+                >
+                  <Select<ActiveLineIconType>
+                    value={prefs.activeLineIcon || 'hand'}
+                    label={t('settings.appearance.activeLineIcon')}
+                    options={[
+                      { value: 'hand', label: `👉 ${t('settings.appearance.icons.hand')}` },
+                      { value: 'arrow', label: `➡️ ${t('settings.appearance.icons.arrow')}` },
+                      { value: 'chevron', label: `❯ ${t('settings.appearance.icons.chevron')}` },
+                      { value: 'caret', label: `▶ ${t('settings.appearance.icons.caret')}` },
+                      { value: 'chevrons', label: `» ${t('settings.appearance.icons.chevrons')}` },
+                      { value: 'target', label: `🎯 ${t('settings.appearance.icons.target')}` },
+                      { value: 'dot', label: `● ${t('settings.appearance.icons.dot')}` },
+                      { value: 'bookmark', label: `🔖 ${t('settings.appearance.icons.bookmark')}` },
+                      { value: 'star', label: `★ ${t('settings.appearance.icons.star')}` },
+                    ]}
+                    onChange={(activeLineIcon) => setPreferences({ activeLineIcon })}
+                  />
+                </SettingRow>
+              )}
             </SettingsGroup>
           )}
 

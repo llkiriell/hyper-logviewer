@@ -505,7 +505,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
                 fontSize={prefs.fontSize}
                 isPinned={true}
                 isSelected={prefs.highlightActiveLine && selectedRawIndex === pinnedLine.rawIndex}
-                activeLineColor={prefs.activeLineColor}
+                activeLineIcon={prefs.activeLineIcon}
                 rainbowBrackets={prefs.rainbowBrackets}
                 highlightGitPipeline={prefs.highlightGitPipeline}
                 onTogglePin={handleTogglePin}
@@ -599,7 +599,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
                       isContextMenuTarget={isTarget}
                       isHighlighted={isHighlighted}
                       isSelected={prefs.highlightActiveLine && selectedRawIndex === line.rawIndex}
-                      activeLineColor={prefs.activeLineColor}
+                      activeLineIcon={prefs.activeLineIcon}
                       rainbowBrackets={prefs.rainbowBrackets}
                       highlightGitPipeline={prefs.highlightGitPipeline}
                       onTogglePin={handleTogglePin}

@@ -10,6 +10,16 @@ import type { SupportedLocale } from '../i18n/types.ts';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 export type AccentColor = 'ember' | 'ocean' | 'aqua' | 'violet';
+export type ActiveLineIconType =
+  | 'hand'
+  | 'arrow'
+  | 'chevron'
+  | 'caret'
+  | 'chevrons'
+  | 'target'
+  | 'dot'
+  | 'bookmark'
+  | 'star';
 
 export interface RecentFileItem {
   filePath: string;
@@ -59,6 +69,7 @@ export interface Preferences {
   rainbowBrackets: boolean;
   highlightActiveLine: boolean;
   activeLineColor: string;
+  activeLineIcon: ActiveLineIconType;
   // Git & Pipeline Highlights (branches, merges, conflicts)
   highlightGitPipeline: boolean;
   // Log parsing filters
@@ -95,6 +106,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   rainbowBrackets: true,
   highlightActiveLine: true,
   activeLineColor: '#0ea5e9',
+  activeLineIcon: 'hand',
   highlightGitPipeline: true,
   removeInfoBg: true,
   recentFiles: [],
@@ -133,6 +145,9 @@ function load(): Preferences {
       rainbowBrackets: typeof parsed.rainbowBrackets === 'boolean' ? parsed.rainbowBrackets : DEFAULT_PREFERENCES.rainbowBrackets,
       highlightActiveLine: typeof parsed.highlightActiveLine === 'boolean' ? parsed.highlightActiveLine : DEFAULT_PREFERENCES.highlightActiveLine,
       activeLineColor: typeof parsed.activeLineColor === 'string' ? parsed.activeLineColor : DEFAULT_PREFERENCES.activeLineColor,
+      activeLineIcon: ['hand', 'arrow', 'chevron', 'caret', 'chevrons', 'target', 'dot', 'bookmark', 'star'].includes(parsed.activeLineIcon as string)
+        ? (parsed.activeLineIcon as ActiveLineIconType)
+        : DEFAULT_PREFERENCES.activeLineIcon,
       highlightGitPipeline: typeof parsed.highlightGitPipeline === 'boolean' ? parsed.highlightGitPipeline : DEFAULT_PREFERENCES.highlightGitPipeline,
       removeInfoBg: typeof parsed.removeInfoBg === 'boolean' ? parsed.removeInfoBg : DEFAULT_PREFERENCES.removeInfoBg,
       recentFiles: Array.isArray(parsed.recentFiles) ? parsed.recentFiles : DEFAULT_PREFERENCES.recentFiles,

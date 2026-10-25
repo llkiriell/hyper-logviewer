@@ -1036,9 +1036,9 @@ select {
   position: sticky;
   left: 22px;
   z-index: 4;
-  width: 20px;
-  min-width: 20px;
-  max-width: 20px;
+  width: 16px;
+  min-width: 16px;
+  max-width: 16px;
   height: 24px;
   min-height: 24px;
   max-height: 24px;
@@ -1063,17 +1063,17 @@ select {
 
 .log-gutter {
   position: sticky;
-  left: 42px;
+  left: 38px;
   z-index: 4;
-  width: 58px;
-  min-width: 58px;
-  max-width: 58px;
+  width: 50px;
+  min-width: 50px;
+  max-width: 50px;
   height: 24px;
   min-height: 24px;
   max-height: 24px;
   line-height: 24px;
   box-sizing: border-box;
-  padding: 0 10px 0 0;
+  padding: 0 6px 0 0;
   margin: 0;
   border: none;
   display: inline-flex;
@@ -1089,7 +1089,7 @@ select {
 
 .log-level-badge {
   position: sticky;
-  left: 100px;
+  left: 88px;
   z-index: 4;
   width: 52px;
   min-width: 52px;
