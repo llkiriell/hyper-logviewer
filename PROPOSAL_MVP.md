@@ -1,12 +1,12 @@
 # Propuesta Inicial y Especificación de MVP: Hyper-Logviewer
 
-Visor de archivos `.log` de alto rendimiento y experiencia de usuario moderna basada en la interfaz y arquitectura de **Morrow**.
+Visor de archivos `.log` de alto rendimiento y experiencia de usuario moderna.
 
 ---
 
 ## 1. Resumen Ejecutivo
 
-**hyper-logviewer** es una aplicación de escritorio *local-first* diseñada para la visualización, filtrado y diagnóstico ultrarrápido de registros de depuración y auditoría (`.log`). Tomando como base visual y arquitectónica el proyecto **Morrow** (`D:\Proyectos-Aplicaciones\NodeJS\Morrow`), el visor adopta su andamiaje moderno (**Electron + React 19 + TypeScript + Vite**), su sistema de estilos mediante tokens y variables CSS puras (temas Claro y Oscuro con paletas de acento), su patrón de configuración modal desacoplado (`SettingsDialog`) y su sistema de navegación por pestañas (`TabBar`), adaptándolos específicamente al procesamiento eficiente de grandes flujos de datos.
+**hyper-logviewer** es una aplicación de escritorio *local-first* diseñada para la visualización, filtrado y diagnóstico ultrarrápido de registros de depuración y auditoría (`.log`). El visor adopta un andamiaje moderno (**Electron + React 19 + TypeScript + Vite**), su sistema de estilos mediante tokens y variables CSS puras (temas Claro y Oscuro con paletas de acento), su patrón de configuración modal desacoplado (`SettingsDialog`) y su sistema de navegación por pestañas (`TabBar`), adaptándolos específicamente al procesamiento eficiente de grandes flujos de datos.
 
 El proyecto incorpora un motor de internacionalización (**i18n**) nativo y tipado con **inglés como idioma predeterminado** y **español completamente soportado**, y mantiene la pestaña **Acerca de** (*About*) dentro del modal de configuración.
 
@@ -14,13 +14,13 @@ El proyecto incorpora un motor de internacionalización (**i18n**) nativo y tipa
 
 ## 2. Puntos Clave de la Experiencia de Usuario (GUI & UX)
 
-Inspirado en la ergonomía de **Morrow**, hyper-logviewer ofrece:
+hyper-logviewer ofrece:
 * **Internacionalización Bilingüe (i18n):**
   * Idioma predeterminado: **Inglés (`en`)**.
   * Idioma secundario integrado: **Español (`es`)**.
   * Conmutación instantánea desde el modal de ajustes sin necesidad de reiniciar la aplicación.
 * **Estilo Visual Limpio y Bimodal:** Soporte nativo para modo Claro (`data-theme="light"`), modo Oscuro (`data-theme="dark"`) y seguimiento automático del tema del sistema operativo, con colores de acento personalizables (Ember, Ocean, Aqua, Violet).
-* **Modal de Configuración Flotante:** Idéntico al diseño de Morrow, con categorías a la izquierda:
+* **Modal de Configuración Flotante:** Con categorías a la izquierda:
   * `General`: Idioma (`en` / `es`), codificación por defecto, límites de buffer.
   * `Appearance`: Tema, acento, tipografía monoespaciada, tamaño de fuente.
   * `Parser`: Detección de niveles de severidad y marcas de tiempo.
@@ -46,16 +46,16 @@ Inspirado en la ergonomía de **Morrow**, hyper-logviewer ofrece:
 |   - Diálogos showOpenDialog        |   - Tokens CSS (color.css / tokens)|
 |   - Streaming y lectura en chunks  |   - TabBar (pestañas reactivas)    |
 |   - Acceso seguro al portapapeles  |   - VirtualLogView (windowing)     |
-|                                    |   - SettingsDialog (modal Morrow)  |
+|                                    |   - SettingsDialog (modal ajustes) |
 |                                    |   - AboutSettings (pestaña Acerca) |
 |                                    |   - i18n Engine (en/es tipado)     |
 |                                    |   - Parser de Severidades          |
 +-------------------------------------------------------------------------+
 ```
 
-### Componentes de Morrow Reutilizados vs. Adaptados
+### Componentes de UI y Rendimiento
 
-| Componente | Enfoque en Morrow | Adaptación en hyper-logviewer |
+| Componente | Enfoque | Adaptación en hyper-logviewer |
 | :--- | :--- | :--- |
 | **Tokens CSS** | `tokens.css`, `color.css` | Reutilizado al 100% para preservar la paleta, radios y sombras exactas. |
 | **Modal Settings** | `SettingsDialog.tsx` | Reutilizado con secciones: General, Apariencia, Parser, Atajos y Acerca de. |
@@ -105,7 +105,29 @@ Inspirado en la ergonomía de **Morrow**, hyper-logviewer ofrece:
 
 ---
 
-## 5. Hoja de Ruta de Implementación (Roadmap)
+## 5. Flujo Git, Convención de Commits y Directivas de Agentes
+
+### 5.1 Modelo de Ramas
+* **`main`:** Rama de producción y versiones estables.
+* **`dev`:** Rama activa de desarrollo e integración principal.
+* **`feature/<nombre>`:** Ramas de características específicas desprendidas de `dev`.
+
+### 5.2 Estándar Open Source de Commits
+Formato estricto: `<sustantivo> : <verbo> <descripción>`
+* **Autor / Maintainer:** En **español** (ej. `visor : integrar virtualización con tanstack`, `i18n : agregar diccionario en español`).
+* **Comunidad / Open Source:** En **inglés** (ej. `viewer : integrate virtualized scrolling`, `tabs : add horizontal navigation`).
+
+### 5.3 Carpeta Local `docs/`
+* Excluida expresamente del control de versiones (`.gitignore`).
+* Destinada a logs de prueba, benchmarks, especificaciones o notas temporales del usuario y los agentes de IA.
+
+### 5.4 Documentación para Agentes (en inglés)
+* [`AGENTS.md`](file:///D:/Proyectos-Aplicaciones/NodeJS/hyper-logviewer/AGENTS.md): Reglas de operación, flujo de ramas y directivas para agentes.
+* [`DESIGN.md`](file:///D:/Proyectos-Aplicaciones/NodeJS/hyper-logviewer/DESIGN.md): Estándar estricto de TypeScript, React 19, tokens CSS, Tabler Icons e i18n.
+
+---
+
+## 6. Hoja de Ruta de Implementación (Roadmap)
 
 ```mermaid
 flowchart TD

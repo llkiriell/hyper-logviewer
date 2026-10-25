@@ -10,7 +10,7 @@ All instructions and rules in this document must be strictly adhered to by autom
 
 **hyper-logviewer** is a high-performance, local-first `.log` file viewer desktop application built with:
 * **Electron** + **Vite** + **React 19** + **TypeScript**.
-* **Design Philosophy:** Inspired by [Morrow](https://github.com/Aarav2709/Morrow), utilizing pure CSS design tokens (`tokens.css`, `color.css`) with light/dark theme support and accent palettes. No heavy CSS utility frameworks (no Tailwind, no CSS-in-JS).
+* **Design Philosophy:** Clean desktop ergonomics utilizing pure CSS design tokens (`tokens.css`, `color.css`) with light/dark theme support and accent palettes. No heavy CSS utility frameworks (no Tailwind, no CSS-in-JS).
 * **High-Performance Log Viewer:** Virtualized line scrolling via `@tanstack/react-virtual` to ensure smooth 60 FPS navigation on files containing millions of log entries.
 * **Iconography:** Exclusively [Tabler Icons](https://tabler.io/icons) (`@tabler/icons-react`) with consistent stroke aesthetics (`stroke={1.5}`).
 * **Internationalization (i18n):** Native, type-safe i18n engine with English (`en`) as the default language and Spanish (`es`) fully integrated.
@@ -78,7 +78,7 @@ The repository includes a dedicated `docs/` folder in the project root:
 ## 5. Agent Operational Directives
 
 When modifying, generating, or refactoring code, every agent must respect:
-1. **Refer to `AGENTS_STYLE_GUIDE.md`** for coding practices, naming patterns, and typing discipline.
+1. **Refer to `DESIGN.md`** for coding practices, naming patterns, and typing discipline.
 2. **Preserve i18n Completeness:** Never introduce hardcoded user-facing strings in UI components. Add corresponding keys to both `src/app/i18n/locales/en.ts` and `src/app/i18n/locales/es.ts`.
 3. **Preserve Design System Integrity:** Use native CSS variables (`var(--bg)`, `var(--text)`, `var(--accent)`, `var(--border)`). Do not install unapproved CSS libraries.
 4. **Virtualization First:** Always virtualize log lines; never map an unbounded array into React DOM nodes.

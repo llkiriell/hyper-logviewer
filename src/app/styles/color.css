@@ -1,0 +1,87 @@
+/* Accent colors */
+:root[data-accent='ember'] {
+  --accent: #c0582f;
+  --accent-strong: #a3451f;
+  --accent-soft: rgba(192, 88, 47, 0.11);
+  --accent-line: rgba(192, 88, 47, 0.35);
+  --focus: rgba(192, 88, 47, 0.5);
+  --selection: rgba(192, 88, 47, 0.18);
+}
+:root[data-accent='ember'][data-theme='dark'] {
+  --accent: #e27d50;
+  --accent-strong: #ef9670;
+  --accent-soft: rgba(226, 125, 80, 0.15);
+  --accent-line: rgba(226, 125, 80, 0.45);
+  --focus: rgba(226, 125, 80, 0.6);
+  --selection: rgba(226, 125, 80, 0.28);
+}
+
+:root[data-accent='ocean'] {
+  --accent: #1e88d8;
+  --accent-strong: #1769ad;
+  --accent-soft: rgba(30, 136, 216, 0.11);
+  --accent-line: rgba(30, 136, 216, 0.35);
+  --focus: rgba(30, 136, 216, 0.5);
+  --selection: rgba(30, 136, 216, 0.18);
+}
+:root[data-accent='ocean'][data-theme='dark'] {
+  --accent: #4aa8f0;
+  --accent-strong: #7cc0f5;
+  --accent-soft: rgba(74, 168, 240, 0.15);
+  --accent-line: rgba(74, 168, 240, 0.45);
+  --focus: rgba(74, 168, 240, 0.6);
+  --selection: rgba(74, 168, 240, 0.28);
+}
+
+:root[data-accent='aqua'] {
+  --accent: #0a9bc4;
+  --accent-strong: #087d9e;
+  --accent-soft: rgba(10, 155, 196, 0.11);
+  --accent-line: rgba(10, 155, 196, 0.35);
+  --focus: rgba(10, 155, 196, 0.5);
+  --selection: rgba(10, 155, 196, 0.18);
+}
+:root[data-accent='aqua'][data-theme='dark'] {
+  --accent: #2ec4e8;
+  --accent-strong: #6dd6ef;
+  --accent-soft: rgba(46, 196, 232, 0.15);
+  --accent-line: rgba(46, 196, 232, 0.45);
+  --focus: rgba(46, 196, 232, 0.6);
+  --selection: rgba(46, 196, 232, 0.28);
+}
+
+:root[data-accent='violet'] {
+  --accent: #7353e0;
+  --accent-strong: #5b3dc4;
+  --accent-soft: rgba(115, 83, 224, 0.11);
+  --accent-line: rgba(115, 83, 224, 0.35);
+  --focus: rgba(115, 83, 224, 0.5);
+  --selection: rgba(115, 83, 224, 0.18);
+}
+:root[data-accent='violet'][data-theme='dark'] {
+  --accent: #9b82ff;
+  --accent-strong: #b8a6ff;
+  --accent-soft: rgba(155, 130, 255, 0.15);
+  --accent-line: rgba(155, 130, 255, 0.45);
+  --focus: rgba(155, 130, 255, 0.6);
+  --selection: rgba(155, 130, 255, 0.28);
+}
+
+.accent-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.accent-swatch:hover {
+  transform: scale(1.15);
+}
+.accent-swatch.is-selected {
+  border-color: var(--text);
+}
+.accent-swatch.accent-ember { background-color: #c0582f; }
+.accent-swatch.accent-ocean { background-color: #1e88d8; }
+.accent-swatch.accent-aqua { background-color: #0a9bc4; }
+.accent-swatch.accent-violet { background-color: #7353e0; }

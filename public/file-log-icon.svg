@@ -1,0 +1,128 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Document Drop Shadow -->
+    <filter id="docShadow" x="30" y="2" width="196" height="260" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.18" />
+    </filter>
+
+    <!-- Badge Drop Shadow -->
+    <filter id="badgeShadow" x="130" y="174" width="110" height="72" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000000" flood-opacity="0.25" />
+    </filter>
+
+    <!-- Logo Badge Shadow -->
+    <filter id="logoShadow" x="20" y="152" width="94" height="94" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.28" />
+    </filter>
+
+    <!-- Document Background Gradient (Clean Windows Fluent White) -->
+    <linearGradient id="docBg" x1="44" y1="8" x2="212" y2="248" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f2f2f4" />
+    </linearGradient>
+
+    <!-- Dog-ear Fold Gradient -->
+    <linearGradient id="foldBg" x1="156" y1="8" x2="212" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#d8d8de" />
+      <stop offset="100%" stop-color="#ebebef" />
+    </linearGradient>
+
+    <!-- Logo Box Gradient -->
+    <linearGradient id="logoBg" x1="28" y1="160" x2="98" y2="230" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2a2a2e" />
+      <stop offset="100%" stop-color="#18181b" />
+    </linearGradient>
+
+    <!-- Badge Gradient -->
+    <linearGradient id="badgeBg" x1="142" y1="184" x2="228" y2="234" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#c0582f" />
+      <stop offset="100%" stop-color="#9a3c17" />
+    </linearGradient>
+  </defs>
+
+  <!-- 1. Document Base Paper with Windows Fluent Style -->
+  <g filter="url(#docShadow)">
+    <path
+      d="M 52 14 C 52 10.686 54.686 8 58 8 L 156 8 L 212 64 L 212 234 C 212 237.314 209.314 240 206 240 L 58 240 C 54.686 240 52 237.314 52 234 Z"
+      fill="url(#docBg)"
+      stroke="#d0d0d5"
+      stroke-width="1.5"
+    />
+  </g>
+
+  <!-- 2. Dog-ear Fold in Upper Right Corner -->
+  <path
+    d="M 156 8 L 156 54 C 156 59.523 160.477 64 166 64 L 212 64 Z"
+    fill="url(#foldBg)"
+    stroke="#c4c4ca"
+    stroke-width="1.2"
+  />
+
+  <!-- 3. Stylized Log File Content Lines with Severity Dots -->
+  <!-- Line 1: Header/Info -->
+  <circle cx="74" cy="40" r="3" fill="#1e88d8" />
+  <rect x="84" y="38" width="56" height="4.5" rx="2.25" fill="#a0a0a8" />
+
+  <!-- Line 2: Standard log entry -->
+  <circle cx="74" cy="58" r="3" fill="#c0582f" />
+  <rect x="84" y="56" width="60" height="4.5" rx="2.25" fill="#b0b0b8" />
+
+  <!-- Line 3: Timestamp & Error -->
+  <circle cx="74" cy="80" r="3" fill="#d32f2f" />
+  <rect x="84" y="78" width="38" height="4.5" rx="2.25" fill="#909098" />
+  <rect x="128" y="78" width="66" height="4.5" rx="2.25" fill="#c8c8d0" />
+
+  <!-- Line 4: Code trace -->
+  <rect x="84" y="98" width="110" height="4.5" rx="2.25" fill="#d2d2d8" />
+
+  <!-- Line 5: Info log -->
+  <circle cx="74" cy="118" r="3" fill="#1e88d8" />
+  <rect x="84" y="116" width="48" height="4.5" rx="2.25" fill="#a0a0a8" />
+  <rect x="138" y="116" width="54" height="4.5" rx="2.25" fill="#c8c8d0" />
+
+  <!-- Line 6: Message line -->
+  <rect x="84" y="136" width="96" height="4.5" rx="2.25" fill="#d2d2d8" />
+
+  <!-- 4. Bottom-Left Corner: Hyper-Logviewer Logo -->
+  <g filter="url(#logoShadow)">
+    <rect
+      x="28"
+      y="160"
+      width="72"
+      height="72"
+      rx="16"
+      fill="url(#logoBg)"
+      stroke="#c0582f"
+      stroke-width="2.5"
+    />
+    <!-- Hyper LogViewer Icon inside badge -->
+    <path d="M 42 178 L 86 178" stroke="#c0582f" stroke-width="4.5" stroke-linecap="round" />
+    <path d="M 42 196 L 68 196" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.88" />
+    <path d="M 42 214 L 74 214" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.6" />
+    <circle cx="81" cy="202" r="5.5" stroke="#d6a028" stroke-width="3" fill="none" />
+  </g>
+
+  <!-- 5. Bottom-Right Corner: .log Extension Badge -->
+  <g filter="url(#badgeShadow)">
+    <rect
+      x="140"
+      y="184"
+      width="90"
+      height="48"
+      rx="12"
+      fill="url(#badgeBg)"
+      stroke="#ffffff"
+      stroke-width="2"
+    />
+    <text
+      x="185"
+      y="217"
+      font-family="'Segoe UI', -apple-system, system-ui, Roboto, sans-serif"
+      font-size="23"
+      font-weight="800"
+      letter-spacing="-0.5px"
+      fill="#ffffff"
+      text-anchor="middle"
+    >.log</text>
+  </g>
+</svg>
