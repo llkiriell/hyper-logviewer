@@ -53,6 +53,7 @@ export interface CustomHighlightRule {
   color: string;
   bold: boolean;
   italic: boolean;
+  isRegex?: boolean;
 }
 
 export interface LevelColorConfig {

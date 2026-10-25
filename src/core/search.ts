@@ -229,32 +229,66 @@ export function splitTextWithSearchAndHighlights(
     });
   }
 
-  // Add custom highlights only if they don't collide with search matches
+  // Add custom highlights only if they don't collide with search matches or earlier custom matches
   if (hasCustom) {
     const lowerText = text.toLowerCase();
     for (const rule of customRules) {
       if (!rule.keyword) continue;
-      const term = rule.keyword.toLowerCase();
-      let pos = 0;
-      while ((pos = lowerText.indexOf(term, pos)) !== -1) {
-        const start = pos;
-        const end = pos + term.length;
-        pos += term.length;
 
-        // Check collision with search matches
-        const collides = spans.some((s) => s.isSearch && s.start < end && s.end > start);
-        if (!collides) {
-          spans.push({
-            start,
-            end,
-            isSearch: false,
-            isActiveSearch: false,
-            customStyle: {
-              color: rule.color,
-              bold: rule.bold,
-              italic: rule.italic,
-            },
-          });
+      if (rule.isRegex) {
+        try {
+          const regex = new RegExp(rule.keyword, 'gi');
+          let match: RegExpExecArray | null;
+          while ((match = regex.exec(text)) !== null) {
+            if (match[0].length === 0) {
+              regex.lastIndex++;
+              continue;
+            }
+            const start = match.index;
+            const end = match.index + match[0].length;
+
+            // Check collision with already placed spans (search matches or previous custom highlights)
+            const collides = spans.some((s) => s.start < end && s.end > start);
+            if (!collides) {
+              spans.push({
+                start,
+                end,
+                isSearch: false,
+                isActiveSearch: false,
+                customStyle: {
+                  color: rule.color,
+                  bold: rule.bold,
+                  italic: rule.italic,
+                },
+              });
+            }
+          }
+        } catch {
+          // Ignore invalid regex pattern silently during real-time rendering
+        }
+      } else {
+        const term = rule.keyword.toLowerCase();
+        let pos = 0;
+        while ((pos = lowerText.indexOf(term, pos)) !== -1) {
+          const start = pos;
+          const end = pos + term.length;
+          pos += term.length;
+
+          // Check collision with already placed spans
+          const collides = spans.some((s) => s.start < end && s.end > start);
+          if (!collides) {
+            spans.push({
+              start,
+              end,
+              isSearch: false,
+              isActiveSearch: false,
+              customStyle: {
+                color: rule.color,
+                bold: rule.bold,
+                italic: rule.italic,
+              },
+            });
+          }
         }
       }
     }

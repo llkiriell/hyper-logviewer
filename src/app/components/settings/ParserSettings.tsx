@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import {
   IconBold,
+  IconCheck,
   IconItalic,
+  IconPencil,
   IconPlus,
+  IconRegex,
   IconRotate2,
   IconTrash,
+  IconX,
 } from '@tabler/icons-react';
 import type {
   CustomHighlightRule,
@@ -43,11 +47,14 @@ export function ParserSettings() {
   const [newStdColor, setNewStdColor] = useState('#0284c7');
   const [newStdHasBg, setNewStdHasBg] = useState(true);
 
-  // Custom keyword input state
+  // Custom keyword input / editing state
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [newKeyword, setNewKeyword] = useState('');
   const [newColor, setNewColor] = useState('#e67e22');
   const [newBold, setNewBold] = useState(true);
   const [newItalic, setNewItalic] = useState(false);
+  const [newIsRegex, setNewIsRegex] = useState(false);
+  const [regexError, setRegexError] = useState(false);
 
   const handleUpdateLevelText = (level: LogLevel, textColor: string) => {
     const current = prefs.levelColors[level] ?? DEFAULT_LEVEL_COLORS[level];
@@ -131,9 +138,100 @@ export function ParserSettings() {
     });
   };
 
+  const handleKeywordChange = (val: string) => {
+    setNewKeyword(val);
+    if (newIsRegex && val.trim()) {
+      try {
+        new RegExp(val.trim());
+        setRegexError(false);
+      } catch {
+        setRegexError(true);
+      }
+    } else {
+      setRegexError(false);
+    }
+  };
+
+  const handleToggleRegex = () => {
+    const nextRegex = !newIsRegex;
+    setNewIsRegex(nextRegex);
+    if (nextRegex && newKeyword.trim()) {
+      try {
+        new RegExp(newKeyword.trim());
+        setRegexError(false);
+      } catch {
+        setRegexError(true);
+      }
+    } else {
+      setRegexError(false);
+    }
+  };
+
+  const handleStartEdit = (rule: CustomHighlightRule) => {
+    setEditingId(rule.id);
+    setNewKeyword(rule.keyword);
+    setNewColor(rule.color);
+    setNewBold(rule.bold);
+    setNewItalic(rule.italic);
+    setNewIsRegex(!!rule.isRegex);
+    setRegexError(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setNewKeyword('');
+    setNewColor('#e67e22');
+    setNewBold(true);
+    setNewItalic(false);
+    setNewIsRegex(false);
+    setRegexError(false);
+  };
+
+  const handleSaveEdit = () => {
+    const trimmed = newKeyword.trim();
+    if (!trimmed || !editingId) return;
+
+    if (newIsRegex) {
+      try {
+        new RegExp(trimmed);
+      } catch {
+        setRegexError(true);
+        return;
+      }
+    }
+
+    const updated = prefs.customHighlights.map((r) =>
+      r.id === editingId
+        ? {
+            ...r,
+            keyword: trimmed,
+            color: newColor,
+            bold: newBold,
+            italic: newItalic,
+            isRegex: newIsRegex,
+          }
+        : r,
+    );
+
+    setPreferences({
+      customHighlights: updated,
+    });
+
+    handleCancelEdit();
+  };
+
   const handleAddKeyword = () => {
     const trimmed = newKeyword.trim();
     if (!trimmed) return;
+
+    if (newIsRegex) {
+      try {
+        new RegExp(trimmed);
+      } catch {
+        setRegexError(true);
+        return;
+      }
+    }
 
     const newRule: CustomHighlightRule = {
       id: `kw-${Date.now()}`,
@@ -141,6 +239,7 @@ export function ParserSettings() {
       color: newColor,
       bold: newBold,
       italic: newItalic,
+      isRegex: newIsRegex,
     };
 
     setPreferences({
@@ -148,9 +247,14 @@ export function ParserSettings() {
     });
 
     setNewKeyword('');
+    setNewIsRegex(false);
+    setRegexError(false);
   };
 
   const handleRemoveKeyword = (id: string) => {
+    if (editingId === id) {
+      handleCancelEdit();
+    }
     setPreferences({
       customHighlights: prefs.customHighlights.filter((r) => r.id !== id),
     });
@@ -322,16 +426,39 @@ export function ParserSettings() {
         <h3>{t('settings.parser.customKeywordsTitle')}</h3>
         <p className="settings-desc">{t('settings.parser.customKeywordsDesc')}</p>
 
-        {/* Add keyword form */}
-        <div className="keyword-add-bar">
-          <input
-            type="text"
-            className="keyword-input"
-            value={newKeyword}
-            onChange={(e) => setNewKeyword(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAddKeyword()}
-            placeholder={t('settings.parser.keywordPlaceholder')}
-          />
+        {/* Add / Edit keyword form */}
+        <div className={`keyword-add-bar ${editingId ? 'is-editing' : ''}`}>
+          {editingId && (
+            <div className="keyword-editing-badge">
+              <IconPencil size={12} stroke={1.5} />
+              <span>{t('settings.parser.editingRule')}</span>
+            </div>
+          )}
+
+          <div className="keyword-input-wrapper">
+            <input
+              type="text"
+              className={`keyword-input ${regexError ? 'is-invalid' : ''}`}
+              value={newKeyword}
+              onChange={(e) => handleKeywordChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  if (editingId) handleSaveEdit();
+                  else handleAddKeyword();
+                } else if (e.key === 'Escape' && editingId) {
+                  handleCancelEdit();
+                }
+              }}
+              placeholder={
+                newIsRegex
+                  ? t('settings.parser.regexPlaceholder')
+                  : t('settings.parser.keywordPlaceholder')
+              }
+            />
+            {regexError && (
+              <span className="keyword-error-hint">{t('settings.parser.regexInvalid')}</span>
+            )}
+          </div>
 
           <div className="color-picker-wrapper">
             <input
@@ -341,6 +468,15 @@ export function ParserSettings() {
               title={t('settings.parser.textColor')}
             />
           </div>
+
+          <button
+            type="button"
+            className={`button button-sm ${newIsRegex ? 'primary' : 'button-ghost'}`}
+            onClick={handleToggleRegex}
+            title={t('settings.parser.isRegex')}
+          >
+            <IconRegex size={15} stroke={1.5} />
+          </button>
 
           <button
             type="button"
@@ -360,15 +496,39 @@ export function ParserSettings() {
             <IconItalic size={15} stroke={2} />
           </button>
 
-          <button
-            type="button"
-            className="button button-sm primary"
-            onClick={handleAddKeyword}
-            disabled={!newKeyword.trim()}
-          >
-            <IconPlus size={15} stroke={1.5} />
-            <span>{t('common.add')}</span>
-          </button>
+          {editingId ? (
+            <div className="keyword-edit-actions">
+              <button
+                type="button"
+                className="button button-sm primary"
+                onClick={handleSaveEdit}
+                disabled={!newKeyword.trim() || regexError}
+                title={t('settings.parser.saveChanges')}
+              >
+                <IconCheck size={15} stroke={1.5} />
+                <span>{t('settings.parser.saveChanges')}</span>
+              </button>
+              <button
+                type="button"
+                className="button button-sm button-ghost"
+                onClick={handleCancelEdit}
+                title={t('settings.parser.cancelEdit')}
+              >
+                <IconX size={15} stroke={1.5} />
+                <span>{t('settings.parser.cancelEdit')}</span>
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="button button-sm primary"
+              onClick={handleAddKeyword}
+              disabled={!newKeyword.trim() || regexError}
+            >
+              <IconPlus size={15} stroke={1.5} />
+              <span>{t('common.add')}</span>
+            </button>
+          )}
         </div>
 
         {/* List of custom keywords */}
@@ -376,34 +536,51 @@ export function ParserSettings() {
           {prefs.customHighlights.length === 0 ? (
             <p className="empty-keywords-hint">{t('settings.parser.noKeywords')}</p>
           ) : (
-            prefs.customHighlights.map((rule) => (
-              <div key={rule.id} className="keyword-chip-card">
-                <span
-                  className="keyword-preview-text"
-                  style={{
-                    color: rule.color,
-                    fontWeight: rule.bold ? 'bold' : 'normal',
-                    fontStyle: rule.italic ? 'italic' : 'normal',
-                  }}
+            prefs.customHighlights.map((rule) => {
+              const isBeingEdited = editingId === rule.id;
+              return (
+                <div
+                  key={rule.id}
+                  className={`keyword-chip-card ${isBeingEdited ? 'is-editing' : ''}`}
                 >
-                  {rule.keyword}
-                </span>
+                  <span
+                    className="keyword-preview-text"
+                    style={{
+                      color: rule.color,
+                      fontWeight: rule.bold ? 'bold' : 'normal',
+                      fontStyle: rule.italic ? 'italic' : 'normal',
+                    }}
+                  >
+                    {rule.keyword}
+                  </span>
 
-                <div className="keyword-flags">
-                  {rule.bold && <span className="flag-tag">B</span>}
-                  {rule.italic && <span className="flag-tag">I</span>}
+                  <div className="keyword-flags">
+                    {rule.isRegex && <span className="flag-tag regex-tag">.*</span>}
+                    {rule.bold && <span className="flag-tag">B</span>}
+                    {rule.italic && <span className="flag-tag">I</span>}
+                  </div>
+
+                  <div className="keyword-chip-actions">
+                    <button
+                      type="button"
+                      className={`search-tool-btn ${isBeingEdited ? 'is-active' : ''}`}
+                      onClick={() => handleStartEdit(rule)}
+                      title={t('common.edit')}
+                    >
+                      <IconPencil size={13} stroke={1.5} />
+                    </button>
+                    <button
+                      type="button"
+                      className="search-tool-btn"
+                      onClick={() => handleRemoveKeyword(rule.id)}
+                      title={t('common.delete')}
+                    >
+                      <IconTrash size={13} stroke={1.5} />
+                    </button>
+                  </div>
                 </div>
-
-                <button
-                  type="button"
-                  className="search-tool-btn"
-                  onClick={() => handleRemoveKeyword(rule.id)}
-                  title={t('common.delete')}
-                >
-                  <IconTrash size={14} stroke={1.5} />
-                </button>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
