@@ -7,13 +7,14 @@
   "main": "dist-electron/main.cjs",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "dev:desktop": "vite --mode desktop",
+    "dev": "vite --mode desktop",
+    "dev:web": "vite",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.electron.json --noEmit && vite build && vite build --config vite.electron.config.ts",
     "start": "electron .",
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.electron.json --noEmit"
   },
   "dependencies": {
+    "@floating-ui/dom": "^1.8.0",
     "@tabler/icons-react": "^3.31.0",
     "@tanstack/react-virtual": "^3.13.2",
     "react": "^19.1.0",

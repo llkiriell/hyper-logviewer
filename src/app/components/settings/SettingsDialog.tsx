@@ -104,6 +104,7 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
               >
                 <Select<string>
                   value="utf-8"
+                  label={t('settings.general.encoding')}
                   options={[
                     { value: 'utf-8', label: 'UTF-8' },
                     { value: 'ascii', label: 'ASCII' },
@@ -157,6 +158,7 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
               >
                 <Select<number>
                   value={prefs.fontSize}
+                  label={t('settings.appearance.fontSize')}
                   options={[11, 12, 13, 14, 15, 16, 18].map((size) => ({
                     value: size,
                     label: `${size}px`,

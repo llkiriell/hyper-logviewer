@@ -112,32 +112,8 @@ export function Switch({
   );
 }
 
-export function Select<T extends string | number>({
-  value,
-  options,
-  onChange,
-  label,
-}: {
-  value: T;
-  options: Array<{ value: T; label: string }>;
-  onChange: (value: T) => void;
-  label?: string;
-}) {
-  return (
-    <select
-      className="select-input"
-      value={value}
-      aria-label={label}
-      onChange={(e) => onChange(e.target.value as T)}
-    >
-      {options.map((opt) => (
-        <option key={String(opt.value)} value={opt.value}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
-  );
-}
+export { Select } from './Select.tsx';
+export type { SelectOption } from './Select.tsx';
 
 export function Segmented<T extends string>({
   value,
