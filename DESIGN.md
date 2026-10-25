@@ -55,7 +55,7 @@ hyper-logviewer/
      export function TabBar({ onTabChange }: TabBarProps) { ... }
      ```
 3. **State Management & Decoupling:**
-   * For non-DOM/application stores (e.g., `tabs.ts`, `preferences.ts`), use the `useSyncExternalStore` pattern inspired by Morrow.
+   * For non-DOM/application stores (e.g., `tabs.ts`, `preferences.ts`), use the `useSyncExternalStore` pattern.
    * Do not introduce Redux, Zustand, MobX, or other external state containers. The built-in reactive store pattern is mandatory.
 4. **Hooks Rules:**
    * Custom hooks must start with `use` (e.g., `useTranslation()`, `useTheme()`, `useTabs()`).

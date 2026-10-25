@@ -3,7 +3,8 @@
   "productName": "Hyper LogViewer",
   "private": true,
   "version": "0.1.0",
-  "description": "High-performance, local-first log file viewer inspired by Morrow.",
+  "description": "High-performance, local-first log file viewer.",
+  "license": "Apache-2.0",
   "main": "dist-electron/main.cjs",
   "type": "module",
   "scripts": {

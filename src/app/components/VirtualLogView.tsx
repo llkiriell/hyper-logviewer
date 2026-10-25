@@ -32,9 +32,10 @@ import { VirtualLogRow } from './VirtualLogRow.tsx';
 
 interface VirtualLogViewProps {
   tab: TabItem;
+  onOpenSettings?: () => void;
 }
 
-export function VirtualLogView({ tab }: VirtualLogViewProps) {
+export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
   const { t } = useTranslation();
   const prefs = usePreferences();
   const parentRef = useRef<HTMLDivElement>(null);
@@ -110,6 +111,11 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
   });
 
   const virtualItems = rowVirtualizer.getVirtualItems();
+
+  // Invalidate virtualizer cache when wordWrap changes so line heights adapt immediately
+  useEffect(() => {
+    rowVirtualizer.measure();
+  }, [wordWrap, rowVirtualizer]);
 
   // Search match navigation handlers
   const activeLocation = searchIndex.locations[currentMatchIndex];
@@ -190,8 +196,8 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
 
     if (prefs.autoScrollMode === 'continuous') {
       let animId: number;
-      const speedMap = { slow: 0.6, medium: 1.5, fast: 3.5 };
-      const pxPerFrame = speedMap[prefs.autoScrollSpeed] ?? 1.5;
+      const speedMap = { slow: 0.72, medium: 1.8, fast: 4.2 };
+      const pxPerFrame = speedMap[prefs.autoScrollSpeed] ?? 1.8;
 
       const step = () => {
         if (!parentRef.current) return;
@@ -407,10 +413,6 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
         onToggleLineSeparator={() =>
           setPreferences({ showLineSeparator: !prefs.showLineSeparator })
         }
-        onGoToLine={handleGoToLine}
-        totalLines={lines.length}
-        autoScroll={autoScroll}
-        onToggleAutoScroll={handleToggleAutoScroll}
         onScrollToTop={handleScrollToTop}
         onScrollToBottom={handleScrollToBottom}
         hideSearchBar={prefs.bottomSearchBar}
@@ -483,8 +485,9 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
               className="viewer-virtual-canvas"
               style={{
                 height: `${rowVirtualizer.getTotalSize()}px`,
-                minWidth: '100%',
-                width: 'max-content',
+                minWidth: wordWrap ? '0' : '100%',
+                width: wordWrap ? '100%' : 'max-content',
+                maxWidth: wordWrap ? '100%' : undefined,
                 position: 'relative',
               }}
             >
@@ -512,8 +515,9 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
                       position: 'absolute',
                       top: 0,
                       left: 0,
-                      minWidth: '100%',
-                      width: 'max-content',
+                      minWidth: wordWrap ? '0' : '100%',
+                      width: wordWrap ? '100%' : 'max-content',
+                      maxWidth: wordWrap ? '100%' : undefined,
                       transform: `translateY(${virtualRow.start}px)`,
                     }}
                   >
@@ -574,6 +578,8 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
         onToggleWordWrap={() => setWordWrap((prev) => !prev)}
         autoScroll={autoScroll}
         onToggleAutoScroll={handleToggleAutoScroll}
+        onGoToLine={handleGoToLine}
+        onOpenSettings={onOpenSettings}
       />
 
       {/* Date Filter Popover */}

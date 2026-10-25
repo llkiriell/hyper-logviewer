@@ -1,14 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import {
   IconArrowDown,
-  IconArrowDownCircle,
   IconArrowUp,
   IconBorderHorizontal,
   IconCalendar,
   IconChevronDown,
   IconChevronUp,
   IconLetterCase,
-  IconListNumbers,
   IconRegex,
   IconSearch,
   IconTextWrap,
@@ -148,10 +146,6 @@ interface LogToolbarProps {
   onToggleWordWrap: () => void;
   showLineSeparator: boolean;
   onToggleLineSeparator: () => void;
-  onGoToLine: (lineNum: number) => void;
-  totalLines: number;
-  autoScroll: boolean;
-  onToggleAutoScroll: () => void;
   onScrollToTop: () => void;
   onScrollToBottom: () => void;
   hideSearchBar?: boolean;
@@ -177,49 +171,13 @@ export function LogToolbar({
   onToggleWordWrap,
   showLineSeparator,
   onToggleLineSeparator,
-  onGoToLine,
-  totalLines,
-  autoScroll,
-  onToggleAutoScroll,
   onScrollToTop,
   onScrollToBottom,
   hideSearchBar = false,
 }: LogToolbarProps) {
   const { t } = useTranslation();
   const dateBtnRef = useRef<HTMLButtonElement>(null);
-  const [goToOpen, setGoToOpen] = useState(false);
-  const [goToLineInput, setGoToLineInput] = useState('');
-  const goToInputRef = useRef<HTMLInputElement>(null);
-
   const errorCount = stats.error + stats.fatal;
-
-  const handleGoToSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const num = parseInt(goToLineInput, 10);
-    if (!isNaN(num) && num >= 1 && num <= totalLines) {
-      onGoToLine(num);
-      setGoToOpen(false);
-      setGoToLineInput('');
-    }
-  };
-
-  useEffect(() => {
-    if (goToOpen) {
-      goToInputRef.current?.focus();
-    }
-  }, [goToOpen]);
-
-  // Global Ctrl+G shortcut to jump to line
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'g' || e.key === 'G')) {
-        e.preventDefault();
-        setGoToOpen((p) => !p);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   return (
     <div className={`log-toolbar ${hideSearchBar ? 'has-bottom-search' : ''}`}>
@@ -350,55 +308,7 @@ export function LogToolbar({
           <IconBorderHorizontal size={16} stroke={1.5} />
         </button>
 
-        {/* Go to line number button */}
-        <div style={{ position: 'relative' }}>
-          <button
-            type="button"
-            className={`toolbar-btn ${goToOpen ? 'is-active' : ''}`}
-            onClick={() => setGoToOpen((prev) => !prev)}
-            title={t('viewer.goToLine')}
-          >
-            <IconListNumbers size={16} stroke={1.5} />
-          </button>
-
-          {goToOpen && (
-            <form onSubmit={handleGoToSubmit} className="goto-line-popover">
-              <span className="goto-label">{t('viewer.goToLinePrompt')}</span>
-              <div className="goto-input-row">
-                <input
-                  ref={goToInputRef}
-                  type="number"
-                  min={1}
-                  max={totalLines}
-                  value={goToLineInput}
-                  onChange={(e) => setGoToLineInput(e.target.value)}
-                  placeholder={`1-${totalLines}`}
-                  className="goto-input"
-                />
-                <button type="submit" className="button button-xs primary">
-                  {t('viewer.go')}
-                </button>
-                <button
-                  type="button"
-                  className="button button-xs button-ghost"
-                  onClick={() => setGoToOpen(false)}
-                >
-                  <IconX size={12} stroke={1.5} />
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-
-        <button
-          type="button"
-          className={`toolbar-btn ${autoScroll ? 'is-active' : ''}`}
-          onClick={onToggleAutoScroll}
-          title={t('viewer.autoScroll')}
-        >
-          <IconArrowDownCircle size={16} stroke={1.5} />
-        </button>
-
+        {/* Jump to top */}
         <button
           type="button"
           className="toolbar-btn"
@@ -408,6 +318,7 @@ export function LogToolbar({
           <IconArrowUp size={16} stroke={1.5} />
         </button>
 
+        {/* Jump to bottom */}
         <button
           type="button"
           className="toolbar-btn"

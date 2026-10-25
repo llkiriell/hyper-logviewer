@@ -135,25 +135,46 @@ html, body, #root {
   overflow: auto;
 }
 
-.hero-box {
+/* Hero 2-Column View Layout */
+.hero-view-container {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr; /* Col 2 is ~20% thinner (1 / 1.25 = 0.8) */
+  gap: 36px;
+  width: 100%;
+  max-width: 980px;
+  margin: auto;
+  padding: 32px 24px;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.hero-column-main {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.hero-column-main .hero-box {
+  width: 100%;
+  max-width: 480px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  max-width: 520px;
   gap: 16px;
   background: var(--surface);
   border: 1px dashed var(--border-strong);
-  padding: 48px 36px;
+  padding: 44px 32px;
   border-radius: var(--radius-lg);
+  box-sizing: border-box;
 }
 
-.hero-box h2 {
+.hero-column-main .hero-box h2 {
   font-size: 20px;
   font-weight: 600;
 }
 
-.hero-box p {
+.hero-column-main .hero-box p {
   color: var(--text-muted);
   font-size: var(--text-sm);
 }
@@ -164,7 +185,35 @@ html, body, #root {
   margin-top: 8px;
 }
 
-/* Dialog / Modal (Morrow style) */
+.hero-column-recent {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.hero-column-recent .recent-files-container {
+  width: 100%;
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recent-files-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 16px;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  gap: 10px;
+  font-size: var(--text-sm);
+}
+
+/* Dialog / Modal */
 .dialog-scrim {
   position: fixed;
   inset: 0;
@@ -360,7 +409,7 @@ html, body, #root {
   font-weight: 600;
 }
 
-/* Select (Morrow style) */
+/* Select */
 .select-button {
   display: inline-flex;
   align-items: center;
@@ -597,7 +646,7 @@ html, body, #root {
 }
 
 
-/* Tab Bar (Morrow inspired) */
+/* Tab Bar */
 .tab-bar {
   flex: none;
   display: flex;
@@ -935,27 +984,78 @@ select {
   box-sizing: border-box;
   min-width: 100%;
   width: max-content; /* Stretches background across all horizontal scroll! */
+  background: var(--bg);
 }
 
+/* Wrapping overrides */
+.viewer-scroller.is-wrapped .viewer-virtual-canvas {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.viewer-scroller.is-wrapped .viewer-virtual-row-wrapper {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.log-row.is-wrapped {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* Solid non-transparent sticky columns */
 .log-pin-btn {
   position: sticky;
   left: 0;
-  z-index: 3;
-  background: inherit;
+  z-index: 4;
+  background: var(--bg);
 }
 
 .log-gutter {
   position: sticky;
   left: 22px;
-  z-index: 3;
-  background: inherit;
+  z-index: 4;
+  background: var(--bg);
 }
 
 .log-level-badge {
   position: sticky;
   left: 82px;
-  z-index: 3;
-  background: inherit;
+  z-index: 4;
+  background: var(--bg);
+}
+
+.log-row:hover .log-pin-btn,
+.log-row:hover .log-gutter,
+.log-row:hover .log-level-badge {
+  background: var(--hover);
+}
+
+.log-row-fatal .log-pin-btn,
+.log-row-fatal .log-gutter,
+.log-row-fatal .log-level-badge,
+.log-row-error .log-pin-btn,
+.log-row-error .log-gutter,
+.log-row-error .log-level-badge {
+  background: var(--danger-soft);
+}
+
+.log-row-warn .log-pin-btn,
+.log-row-warn .log-gutter,
+.log-row-warn .log-level-badge {
+  background: var(--mark-soft);
+}
+
+.log-row.is-highlighted-focus .log-pin-btn,
+.log-row.is-highlighted-focus .log-gutter,
+.log-row.is-highlighted-focus .log-level-badge,
+.log-row.is-context-target .log-pin-btn,
+.log-row.is-context-target .log-gutter,
+.log-row.is-context-target .log-level-badge {
+  background: var(--surface-hover);
 }
 
 /* Retained focus highlight when search filter is cleared */
@@ -1041,11 +1141,13 @@ select {
   tab-size: 2;
   word-break: normal;
   overflow: visible;
+  min-width: 0;
 }
 
 .log-row.is-wrapped .log-content {
-  white-space: pre-wrap;
-  word-break: break-all;
+  white-space: pre-wrap !important;
+  word-break: break-all !important;
+  overflow-wrap: anywhere !important;
 }
 
 /* Search matches */
@@ -1156,7 +1258,7 @@ select {
   cursor: pointer;
   padding: 2px 6px;
   border-radius: var(--radius-sm);
-  max-width: 380px;
+  max-width: 240px;
   text-decoration: none;
   transition: all 0.12s ease;
 }
@@ -1168,9 +1270,50 @@ select {
 }
 
 .status-filepath-text {
+  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Status Bar Go To Line Interactive Popover */
+.status-goto-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.status-metric-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  transition: all 0.12s ease;
+}
+
+.status-metric-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.status-goto-popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--popover);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  box-shadow: var(--shadow-dialog);
+  z-index: 1000;
+  min-width: 210px;
+  animation: scaleIn 0.12s ease;
 }
 
 /* Custom pleasant tooltip for file path */
@@ -1275,7 +1418,7 @@ select {
   width: 22px;
   height: 24px;
   border: none;
-  background: transparent;
+  background: inherit;
   color: var(--text-faint);
   cursor: pointer;
   padding: 0;
@@ -2020,7 +2163,7 @@ select {
   margin-right: 6px;
 }
 
-/* Watched Folders Sidebar (Morrow Style) */
+/* Watched Folders Sidebar */
 .watched-sidebar {
   width: 250px;
   flex: none;
@@ -2233,9 +2376,7 @@ select {
 
 /* Recent Files on Hero Screen */
 .recent-files-container {
-  margin-top: 32px;
   width: 100%;
-  max-width: 560px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -2263,6 +2404,9 @@ select {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .recent-file-card {
@@ -2442,6 +2586,33 @@ select {
 .tab-sidebar-toggle-btn:hover {
   background: var(--hover);
   color: var(--text);
+}
+
+/* Tab Home Button */
+.tab-home-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin-left: 2px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  flex: none;
+  transition: all 0.12s ease;
+}
+
+.tab-home-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.tab-home-btn.is-active {
+  background: var(--surface-hover);
+  color: var(--accent);
 }
 
 .empty-tabs-bar {

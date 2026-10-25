@@ -63,6 +63,7 @@ export function App() {
   const { tabs } = useTabs();
   const activeTab = getActiveTab();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [showHome, setShowHome] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useThemeManager();
@@ -75,6 +76,7 @@ export function App() {
   }, []);
 
   const handleOpenFile = async () => {
+    setShowHome(false);
     if (desktop?.openFileDialog) {
       await openNativeFileDialog();
     } else if (fileInputRef.current) {
@@ -83,11 +85,13 @@ export function App() {
   };
 
   const handlePasteLog = async () => {
+    setShowHome(false);
     await pasteClipboardAsTab(t('common.pasteLog'));
   };
 
   const handleFileInputChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
+      setShowHome(false);
       await openFileObjects(event.target.files);
       event.target.value = '';
     }
@@ -148,45 +152,11 @@ export function App() {
             <button
               type="button"
               className="button"
-              onClick={handleOpenFile}
-              title={`${t('common.openFile')} (Ctrl+O)`}
-            >
-              <IconFolderOpen size={16} stroke={1.5} />
-              <span>{t('common.openFile')}</span>
-            </button>
-
-            <button
-              type="button"
-              className="button"
               onClick={handlePasteLog}
-              title={`${t('common.pasteLog')} (Ctrl+V)`}
+              title={`${t('common.pasteText')} (Ctrl+V)`}
             >
               <IconClipboard size={16} stroke={1.5} />
-              <span>{t('common.pasteLog')}</span>
-            </button>
-
-            <button
-              type="button"
-              className="button icon-only"
-              onClick={toggleTheme}
-              title="Toggle theme"
-              aria-label="Toggle theme"
-            >
-              {resolvedTheme(prefs.theme) === 'dark' ? (
-                <IconSun size={17} stroke={1.5} />
-              ) : (
-                <IconMoon size={17} stroke={1.5} />
-              )}
-            </button>
-
-            <button
-              type="button"
-              className="button icon-only"
-              onClick={() => setSettingsOpen(true)}
-              title={`${t('common.settings')} (Ctrl+,)`}
-              aria-label={t('common.settings')}
-            >
-              <IconSettings size={17} stroke={1.5} />
+              <span>{t('common.pasteText')}</span>
             </button>
           </div>
         </header>
@@ -200,7 +170,12 @@ export function App() {
           <div className="app-main-pane">
             {/* Tabs Bar or Empty State Tab-Strip Toggle */}
             {tabs.length > 0 ? (
-              <TabBar onNewTabClick={handleOpenFile} />
+              <TabBar
+                onNewTabClick={handleOpenFile}
+                onGoHome={() => setShowHome(true)}
+                isHomeActive={showHome || !activeTab}
+                onTabSelect={() => setShowHome(false)}
+              />
             ) : (
               prefs.sidebarEnabled && (
                 <div className="empty-tabs-bar">
@@ -230,101 +205,154 @@ export function App() {
             )}
 
             {/* Main Content Area */}
-            {activeTab ? (
-              <VirtualLogView tab={activeTab} />
+            {activeTab && !showHome ? (
+              <VirtualLogView
+                tab={activeTab}
+                onOpenSettings={() => setSettingsOpen(true)}
+              />
             ) : (
-              <main className="app-content">
-                <div className="hero-box">
-                  <Logo size={48} />
-                  <h2>{t('hero.title')}</h2>
-                  <p>{t('hero.subtitle')}</p>
+              <>
+                <main className="app-content">
+                  <div className="hero-view-container">
+                    {/* Column 1: Main (Logo, Title, Actions) */}
+                    <div className="hero-column-main">
+                      <div className="hero-box">
+                        <Logo size={56} />
+                        <h2>{t('hero.title')}</h2>
+                        <p>{t('hero.subtitle')}</p>
 
-                  <div className="hero-actions">
-                    <button
-                      type="button"
-                      className="button primary"
-                      onClick={handleOpenFile}
-                    >
-                      <IconFolderOpen size={16} stroke={1.5} />
-                      <span>{t('hero.openButton')}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      className="button"
-                      onClick={handlePasteLog}
-                    >
-                      <IconClipboard size={16} stroke={1.5} />
-                      <span>{t('hero.pasteButton')}</span>
-                    </button>
-                  </div>
-
-                  {/* Recent Files List */}
-                  {prefs.recentFiles.length > 0 && (
-                    <div className="recent-files-container">
-                      <div className="recent-files-header">
-                        <div className="recent-files-title">
-                          <IconClock size={16} stroke={1.5} />
-                          <span>{t('hero.recentFiles')}</span>
-                        </div>
-                        <button
-                          type="button"
-                          className="button button-xs button-ghost"
-                          onClick={clearRecentFiles}
-                        >
-                          <IconTrash size={13} stroke={1.5} />
-                          <span>{t('hero.clearRecent')}</span>
-                        </button>
-                      </div>
-
-                      <div className="recent-files-grid">
-                        {prefs.recentFiles.map((item) => (
-                          <div
-                            key={item.filePath}
-                            className="recent-file-card"
-                            onClick={() => void openFileByPath(item.filePath)}
-                            title={item.filePath}
+                        <div className="hero-actions">
+                          <button
+                            type="button"
+                            className="button primary"
+                            onClick={handleOpenFile}
                           >
-                            <div className="recent-file-main">
-                              <IconFileText
-                                size={18}
-                                stroke={1.5}
-                                className="recent-file-icon"
-                              />
-                              <div className="recent-file-texts">
-                                <span className="recent-file-name">
-                                  {item.fileName}
-                                </span>
-                                <span className="recent-file-path">
-                                  {item.filePath}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="recent-file-meta">
-                              {item.size !== undefined && (
-                                <span className="recent-file-size">
-                                  {formatBytes(item.size)}
-                                </span>
-                              )}
-                              <button
-                                type="button"
-                                className="recent-file-remove"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removeRecentFile(item.filePath);
-                                }}
-                                title={t('common.delete')}
-                              >
-                                <IconX size={13} stroke={1.5} />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                            <IconFolderOpen size={16} stroke={1.5} />
+                            <span>{t('hero.openButton')}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="button"
+                            onClick={handlePasteLog}
+                          >
+                            <IconClipboard size={16} stroke={1.5} />
+                            <span>{t('common.pasteText')}</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  )}
-                </div>
-              </main>
+
+                    {/* Column 2: Recent Files (~20% thinner than col 1) */}
+                    <div className="hero-column-recent">
+                      <div className="recent-files-container">
+                        <div className="recent-files-header">
+                          <div className="recent-files-title">
+                            <IconClock size={16} stroke={1.5} />
+                            <span>{t('hero.recentFiles')}</span>
+                          </div>
+                          {prefs.recentFiles.length > 0 && (
+                            <button
+                              type="button"
+                              className="button button-xs button-ghost"
+                              onClick={clearRecentFiles}
+                            >
+                              <IconTrash size={13} stroke={1.5} />
+                              <span>{t('hero.clearRecent')}</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {prefs.recentFiles.length > 0 ? (
+                          <div className="recent-files-grid">
+                            {prefs.recentFiles.map((item) => (
+                              <div
+                                key={item.filePath}
+                                className="recent-file-card"
+                                onClick={() => {
+                                  setShowHome(false);
+                                  void openFileByPath(item.filePath);
+                                }}
+                                title={item.filePath}
+                              >
+                                <div className="recent-file-main">
+                                  <IconFileText
+                                    size={18}
+                                    stroke={1.5}
+                                    className="recent-file-icon"
+                                  />
+                                  <div className="recent-file-texts">
+                                    <span className="recent-file-name">
+                                      {item.fileName}
+                                    </span>
+                                    <span className="recent-file-path">
+                                      {item.filePath}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="recent-file-meta">
+                                  {item.size !== undefined && (
+                                    <span className="recent-file-size">
+                                      {formatBytes(item.size)}
+                                    </span>
+                                  )}
+                                  <button
+                                    type="button"
+                                    className="recent-file-remove"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeRecentFile(item.filePath);
+                                    }}
+                                    title={t('common.delete')}
+                                  >
+                                    <IconX size={13} stroke={1.5} />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="recent-files-empty">
+                            <IconClock size={28} stroke={1.5} />
+                            <p>{t('hero.noRecent')}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </main>
+
+                {/* Status Bar on Home Screen */}
+                <footer className="status-bar" role="status">
+                  <div className="status-bar-section">
+                    <span className="status-metric">{t('common.ready')}</span>
+                  </div>
+                  <div className="status-bar-section status-actions">
+                    <button
+                      type="button"
+                      className="status-button icon-only"
+                      onClick={toggleTheme}
+                      title="Toggle theme"
+                      aria-label="Toggle theme"
+                    >
+                      {resolvedTheme(prefs.theme) === 'dark' ? (
+                        <IconSun size={14} stroke={1.5} />
+                      ) : (
+                        <IconMoon size={14} stroke={1.5} />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      className="status-button icon-only"
+                      onClick={() => setSettingsOpen(true)}
+                      title={`${t('common.settings')} (Ctrl+,)`}
+                      aria-label={t('common.settings')}
+                    >
+                      <IconSettings size={14} stroke={1.5} />
+                    </button>
+                  </div>
+                </footer>
+              </>
             )}
           </div>
         </div>

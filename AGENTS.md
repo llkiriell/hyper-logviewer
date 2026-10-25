@@ -10,7 +10,7 @@ All instructions and rules in this document must be strictly adhered to by autom
 
 **hyper-logviewer** is a high-performance, local-first `.log` file viewer desktop application built with:
 * **Electron** + **Vite** + **React 19** + **TypeScript**.
-* **Design Philosophy:** Inspired by [Morrow](https://github.com/Aarav2709/Morrow), utilizing pure CSS design tokens (`tokens.css`, `color.css`) with light/dark theme support and accent palettes. No heavy CSS utility frameworks (no Tailwind, no CSS-in-JS).
+* **Design Philosophy:** Clean desktop ergonomics utilizing pure CSS design tokens (`tokens.css`, `color.css`) with light/dark theme support and accent palettes. No heavy CSS utility frameworks (no Tailwind, no CSS-in-JS).
 * **High-Performance Log Viewer:** Virtualized line scrolling via `@tanstack/react-virtual` to ensure smooth 60 FPS navigation on files containing millions of log entries.
 * **Iconography:** Exclusively [Tabler Icons](https://tabler.io/icons) (`@tabler/icons-react`) with consistent stroke aesthetics (`stroke={1.5}`).
 * **Internationalization (i18n):** Native, type-safe i18n engine with English (`en`) as the default language and Spanish (`es`) fully integrated.

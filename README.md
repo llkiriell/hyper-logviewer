@@ -17,7 +17,7 @@
 
 **hyper-logviewer** es un visor de archivos `.log` de escritorio, ultrarrápido y *local-first*, concebido para la inspección, filtrado y diagnóstico eficiente de registros de depuración y auditoría. 
 
-Inspirado en la estética minimalista, el andamiaje técnico y la experiencia de usuario de [Morrow](https://github.com/Aarav2709/Morrow), hyper-logviewer adopta su sistema de estilos por tokens CSS puros (modo claro/oscuro y paletas de acento), su diálogo modal de configuración y su arquitectura de navegación por pestañas (`TabBar`), incorporando un motor de renderizado virtualizado para navegar fluidamente por millones de líneas de log a 60 FPS sin bloquear la memoria ni la interfaz.
+hyper-logviewer combina un diseño minimalista y moderno con un sistema de estilos por tokens CSS puros (modo claro/oscuro y paletas de acento), diálogo modal de configuración y arquitectura de navegación por pestañas (`TabBar`), incorporando un motor de renderizado virtualizado para navegar fluidamente por millones de líneas de log a 60 FPS sin bloquear la memoria ni la interfaz.
 
 ---
 

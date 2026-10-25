@@ -5,6 +5,7 @@ import {
   IconCopy,
   IconFileText,
   IconFolderOpen,
+  IconHome,
   IconLayoutSidebar,
   IconLayoutSidebarLeftCollapse,
   IconPin,
@@ -36,8 +37,14 @@ import type { ContextMenuEntry } from './ContextMenu.tsx';
 
 export function TabBar({
   onNewTabClick,
+  onGoHome,
+  isHomeActive = false,
+  onTabSelect,
 }: {
   onNewTabClick?: () => void;
+  onGoHome?: () => void;
+  isHomeActive?: boolean;
+  onTabSelect?: () => void;
 }) {
   const { t } = useTranslation();
   const prefs = usePreferences();
@@ -157,6 +164,19 @@ export function TabBar({
         </button>
       )}
 
+      {/* Home button to return to Hero screen */}
+      {onGoHome && (
+        <button
+          type="button"
+          className={`tab-home-btn ${isHomeActive ? 'is-active' : ''}`}
+          onClick={onGoHome}
+          title={t('common.home')}
+          aria-label={t('common.home')}
+        >
+          <IconHome size={15} stroke={1.5} />
+        </button>
+      )}
+
       <div
         ref={stripRef}
         className="tab-strip"
@@ -195,7 +215,10 @@ export function TabBar({
                 const fromId = event.dataTransfer.getData('text/x-hyper-tab');
                 if (fromId) moveTab(fromId, index);
               }}
-              onClick={() => activateTab(tab.id)}
+              onClick={() => {
+                activateTab(tab.id);
+                onTabSelect?.();
+              }}
               onContextMenu={(e) => handleTabContextMenu(e, tab)}
               onAuxClick={(event) => {
                 if (event.button === 1) {

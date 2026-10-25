@@ -118,6 +118,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
       <button
         type="button"
         className={`log-pin-btn ${isPinned ? 'is-active' : ''}`}
+        style={rowBg ? { backgroundColor: rowBg } : undefined}
         onClick={handlePinClick}
         title={isPinned ? t('viewer.unpinLine') : t('viewer.pinLine')}
       >
@@ -129,14 +130,21 @@ export const VirtualLogRow = memo(function VirtualLogRow({
       </button>
 
       {/* Sticky Line Number Gutter */}
-      <span className="log-gutter" title={`Line ${line.lineNumber}`}>
+      <span
+        className="log-gutter"
+        style={rowBg ? { backgroundColor: rowBg } : undefined}
+        title={`Line ${line.lineNumber}`}
+      >
         {line.lineNumber}
       </span>
 
       {/* Sticky Log Level Indicator */}
       <span
         className={`log-level-badge log-level-${line.level}`}
-        style={levelColor ? { color: levelColor.textColor } : undefined}
+        style={{
+          color: levelColor ? levelColor.textColor : undefined,
+          backgroundColor: rowBg,
+        }}
       >
         {badgeText}
       </span>
