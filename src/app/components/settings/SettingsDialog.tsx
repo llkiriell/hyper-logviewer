@@ -3,11 +3,20 @@ import type { ComponentType } from 'react';
 import {
   IconAdjustmentsHorizontal,
   IconArrowDownCircle,
+  IconArrowRight,
+  IconBookmarkFilled,
+  IconCaretRightFilled,
+  IconChevronRight,
+  IconChevronsRight,
+  IconCircleDot,
   IconCode,
   IconFolder,
+  IconHandFingerRight,
   IconInfoCircle,
   IconKeyboard,
   IconPalette,
+  IconStarFilled,
+  IconTarget,
   IconX,
 } from '@tabler/icons-react';
 import { SUPPORTED_LOCALES, useTranslation } from '../../i18n/index.ts';
@@ -280,15 +289,51 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
                     value={prefs.activeLineIcon || 'hand'}
                     label={t('settings.appearance.activeLineIcon')}
                     options={[
-                      { value: 'hand', label: `👉 ${t('settings.appearance.icons.hand')}` },
-                      { value: 'arrow', label: `➡️ ${t('settings.appearance.icons.arrow')}` },
-                      { value: 'chevron', label: `❯ ${t('settings.appearance.icons.chevron')}` },
-                      { value: 'caret', label: `▶ ${t('settings.appearance.icons.caret')}` },
-                      { value: 'chevrons', label: `» ${t('settings.appearance.icons.chevrons')}` },
-                      { value: 'target', label: `🎯 ${t('settings.appearance.icons.target')}` },
-                      { value: 'dot', label: `● ${t('settings.appearance.icons.dot')}` },
-                      { value: 'bookmark', label: `🔖 ${t('settings.appearance.icons.bookmark')}` },
-                      { value: 'star', label: `★ ${t('settings.appearance.icons.star')}` },
+                      {
+                        value: 'hand',
+                        label: t('settings.appearance.icons.hand'),
+                        icon: <IconHandFingerRight size={15} stroke={1.8} />,
+                      },
+                      {
+                        value: 'arrow',
+                        label: t('settings.appearance.icons.arrow'),
+                        icon: <IconArrowRight size={15} stroke={1.8} />,
+                      },
+                      {
+                        value: 'chevron',
+                        label: t('settings.appearance.icons.chevron'),
+                        icon: <IconChevronRight size={15} stroke={1.8} />,
+                      },
+                      {
+                        value: 'caret',
+                        label: t('settings.appearance.icons.caret'),
+                        icon: <IconCaretRightFilled size={15} />,
+                      },
+                      {
+                        value: 'chevrons',
+                        label: t('settings.appearance.icons.chevrons'),
+                        icon: <IconChevronsRight size={15} stroke={1.8} />,
+                      },
+                      {
+                        value: 'target',
+                        label: t('settings.appearance.icons.target'),
+                        icon: <IconTarget size={15} stroke={1.8} />,
+                      },
+                      {
+                        value: 'dot',
+                        label: t('settings.appearance.icons.dot'),
+                        icon: <IconCircleDot size={15} stroke={1.8} />,
+                      },
+                      {
+                        value: 'bookmark',
+                        label: t('settings.appearance.icons.bookmark'),
+                        icon: <IconBookmarkFilled size={15} />,
+                      },
+                      {
+                        value: 'star',
+                        label: t('settings.appearance.icons.star'),
+                        icon: <IconStarFilled size={15} />,
+                      },
                     ]}
                     onChange={(activeLineIcon) => setPreferences({ activeLineIcon })}
                   />

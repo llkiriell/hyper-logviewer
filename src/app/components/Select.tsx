@@ -7,6 +7,7 @@ export interface SelectOption<T extends string | number> {
   value: T;
   label: string;
   detail?: string;
+  icon?: React.ReactNode;
 }
 
 export function foldText(text: string): string {
@@ -44,8 +45,16 @@ export function Select<T extends string | number>({
         disabled={disabled}
         onClick={(event) => setAnchor(anchor ? null : event.currentTarget)}
       >
-        <span className={current || value ? '' : 'select-placeholder'}>
-          {current?.label ?? (value !== null && value !== undefined ? String(value) : placeholder)}
+        <span
+          className={`select-label-wrapper ${current || value ? '' : 'select-placeholder'}`}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', minWidth: 0 }}
+        >
+          {current?.icon && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--accent)', flex: 'none' }}>
+              {current.icon}
+            </span>
+          )}
+          <span>{current?.label ?? (value !== null && value !== undefined ? String(value) : placeholder)}</span>
         </span>
         <IconSelector size={15} stroke={1.5} />
       </button>
@@ -156,9 +165,19 @@ function SelectList<T extends string | number>({
                 onMouseMove={() => index !== at && setActive(index)}
                 onClick={() => onPick(option.value)}
               >
-                <span className="select-option-text">
-                  <span>{option.label}</span>
-                  {option.detail && <span className="select-option-detail">{option.detail}</span>}
+                <span
+                  className="select-option-content"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}
+                >
+                  {option.icon && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--accent)', flex: 'none' }}>
+                      {option.icon}
+                    </span>
+                  )}
+                  <span className="select-option-text">
+                    <span>{option.label}</span>
+                    {option.detail && <span className="select-option-detail">{option.detail}</span>}
+                  </span>
                 </span>
                 {option.value === value && <IconCheck size={14} stroke={1.5} />}
               </button>

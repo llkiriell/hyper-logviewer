@@ -35,6 +35,7 @@ function desktopShell(): Plugin {
 }
 
 export default defineConfig({
+  base: './',
   plugins: [react(), desktopShell()],
   server: {
     port: 5173,
