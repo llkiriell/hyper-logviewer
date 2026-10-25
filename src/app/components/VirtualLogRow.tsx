@@ -198,6 +198,12 @@ export const VirtualLogRow = memo(function VirtualLogRow({
 
   // Fully opaque solid composite background for sticky columns (prevents any bleed-through on horizontal scroll)
   const stickySolidStyle = useMemo(() => {
+    if (isSelected) {
+      return {
+        backgroundColor: 'var(--bg)',
+        backgroundImage: 'linear-gradient(var(--active), var(--active))',
+      };
+    }
     if (rowBg) {
       return {
         backgroundColor: 'var(--bg)',
@@ -207,11 +213,13 @@ export const VirtualLogRow = memo(function VirtualLogRow({
     return {
       backgroundColor: 'var(--bg)',
     };
-  }, [rowBg]);
+  }, [isSelected, rowBg]);
 
-  const rowBorderBottom = showSeparator
-    ? `1px solid ${separatorColor}`
-    : undefined;
+  const rowBorderBottom = isSelected
+    ? undefined
+    : showSeparator
+      ? `1px solid ${separatorColor}`
+      : undefined;
 
   const badgeText = line.customLevelTag
     ? line.customLevelTag.toUpperCase()
@@ -254,7 +262,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
       >
         {isSelected && (
           <IconHandFingerRight
-            size={14}
+            size={13}
             stroke={1.8}
             style={{ color: activeLineColor || 'var(--accent)' }}
           />

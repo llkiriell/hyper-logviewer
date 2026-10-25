@@ -1011,16 +1011,41 @@ select {
   position: sticky;
   left: 0;
   z-index: 4;
+  width: 22px;
+  min-width: 22px;
+  max-width: 22px;
+  height: 24px;
+  min-height: 24px;
+  max-height: 24px;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  border: none;
   background-color: var(--bg);
   opacity: 1 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: transparent;
+  cursor: pointer;
+  transition: color 0.12s ease;
 }
 
 .log-pointer-cell {
   position: sticky;
   left: 22px;
   z-index: 4;
-  width: 18px;
-  min-width: 18px;
+  width: 20px;
+  min-width: 20px;
+  max-width: 20px;
+  height: 24px;
+  min-height: 24px;
+  max-height: 24px;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  border: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1028,22 +1053,66 @@ select {
   opacity: 1 !important;
   user-select: none;
   flex: none;
+  line-height: 1;
+}
+
+.log-pointer-cell svg {
+  display: block;
+  flex: none;
 }
 
 .log-gutter {
   position: sticky;
-  left: 40px;
+  left: 42px;
   z-index: 4;
+  width: 58px;
+  min-width: 58px;
+  max-width: 58px;
+  height: 24px;
+  min-height: 24px;
+  max-height: 24px;
+  line-height: 24px;
+  box-sizing: border-box;
+  padding: 0 10px 0 0;
+  margin: 0;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
   background-color: var(--bg);
   opacity: 1 !important;
+  color: var(--text-faint);
+  font-size: 0.85em;
+  user-select: none;
+  flex: none;
 }
 
 .log-level-badge {
   position: sticky;
   left: 100px;
   z-index: 4;
+  width: 52px;
+  min-width: 52px;
+  max-width: 52px;
+  height: 24px;
+  min-height: 24px;
+  max-height: 24px;
+  line-height: 24px;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background-color: var(--bg);
   opacity: 1 !important;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  user-select: none;
+  letter-spacing: 0.3px;
+  flex: none;
 }
 
 .log-row:hover .log-pin-btn,
@@ -1090,14 +1159,9 @@ select {
 .log-row.is-selected-line .log-pointer-cell,
 .log-row.is-selected-line .log-gutter,
 .log-row.is-selected-line .log-level-badge {
-  background-color: var(--bg);
-  background-image: linear-gradient(var(--active), var(--active));
-  border-top: 1.5px solid var(--selected-line-border, var(--accent));
-  border-bottom: 1.5px solid var(--selected-line-border, var(--accent));
-}
-
-.log-row.is-selected-line .log-pin-btn {
-  border-left: 1.5px solid var(--selected-line-border, var(--accent));
+  background-color: var(--bg) !important;
+  background-image: linear-gradient(var(--active), var(--active)) !important;
+  border: none !important;
 }
 
 /* Selected row highlight on click (full overlay ensures continuous seamless border) */
@@ -1110,10 +1174,14 @@ select {
 .log-row.is-selected-line::after {
   content: '';
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: -3px;
+  right: 0;
+  bottom: 0;
   border: 1.5px solid var(--selected-line-border, var(--accent));
   pointer-events: none;
   z-index: 10;
+  box-sizing: border-box;
 }
 
 /* Retained focus highlight when search filter is cleared */
@@ -1215,29 +1283,7 @@ select {
   background-image: linear-gradient(rgba(25, 118, 210, 0.025), rgba(25, 118, 210, 0.025));
 }
 
-/* Line gutter */
-.log-gutter {
-  flex: none;
-  width: 60px;
-  padding-right: 12px;
-  text-align: right;
-  color: var(--text-faint);
-  font-size: 0.85em;
-  user-select: none;
-  opacity: 1 !important;
-}
 
-/* Level badge */
-.log-level-badge {
-  flex: none;
-  display: inline-block;
-  width: 52px;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  user-select: none;
-  letter-spacing: 0.3px;
-}
 
 .log-level-fatal,
 .log-level-error {
@@ -1540,22 +1586,7 @@ select {
   box-shadow: 0 0 6px rgba(192, 88, 47, 0.4);
 }
 
-/* Row Pin Button */
-.log-pin-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 24px;
-  border: none;
-  background: inherit;
-  color: transparent;
-  cursor: pointer;
-  padding: 0;
-  opacity: 1;
-  transition: color 0.12s ease;
-  flex: none;
-}
+
 
 .log-row:hover .log-pin-btn {
   color: var(--text-faint);
