@@ -3,6 +3,7 @@ import {
   IconCheck,
   IconCopy,
   IconEye,
+  IconHandFingerRight,
   IconPin,
   IconPinFilled,
 } from '@tabler/icons-react';
@@ -37,6 +38,7 @@ interface VirtualLogRowProps {
   isContextMenuTarget?: boolean;
   isHighlighted?: boolean;
   isSelected?: boolean;
+  activeLineColor?: string;
   rainbowBrackets?: boolean;
   highlightGitPipeline?: boolean;
   onTogglePin: (line: ParsedLogLine) => void;
@@ -129,6 +131,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
   isContextMenuTarget = false,
   isHighlighted = false,
   isSelected = false,
+  activeLineColor,
   rainbowBrackets = true,
   highlightGitPipeline = true,
   onTogglePin,
@@ -221,6 +224,9 @@ export const VirtualLogRow = memo(function VirtualLogRow({
         fontSize: `${fontSize}px`,
         backgroundColor: rowBg,
         borderBottom: rowBorderBottom,
+        ...(isSelected && activeLineColor
+          ? ({ '--selected-line-border': activeLineColor } as React.CSSProperties)
+          : {}),
       }}
       onClick={() => onSelectLine?.(line)}
       onContextMenu={(e) => onContextMenu(e, line)}
@@ -239,6 +245,21 @@ export const VirtualLogRow = memo(function VirtualLogRow({
           <IconPin size={13} stroke={1.5} />
         )}
       </button>
+
+      {/* Sticky Pointer Indicator Cell (Shows pointing hand when line has focus) */}
+      <span
+        className={`log-pointer-cell ${isSelected ? 'is-active' : ''}`}
+        style={stickySolidStyle}
+        aria-hidden={!isSelected}
+      >
+        {isSelected && (
+          <IconHandFingerRight
+            size={14}
+            stroke={1.8}
+            style={{ color: activeLineColor || 'var(--accent)' }}
+          />
+        )}
+      </span>
 
       {/* Sticky Line Number Gutter (Always 100% solid background) */}
       <span

@@ -187,10 +187,13 @@ export const es: TranslationSchema = {
       rainbowBracketsHelp: 'Colorea llaves {} y corchetes [] por nivel de anidación y resalta pares coincidentes al pasar el cursor o hacer clic.',
       highlightActiveLine: 'Resaltar línea seleccionada',
       highlightActiveLineHelp: 'Resalta visualmente la línea en la que se hace clic para mantenerla localizada.',
+      activeLineColor: 'Color de foco de línea',
     },
     parser: {
       colorizeInlineSeverity: 'Colorear severidad en el texto',
       colorizeInlineSeverityHelp: 'Colorea y aplica negrita a palabras como INFO, WARN, ERROR directamente dentro del texto del registro.',
+      removeInfoBg: 'Quitar fondo a registros INFO',
+      removeInfoBgHelp: 'Muestra las líneas de severidad INFO con fondo limpio y transparente por defecto.',
       highlightGitPipeline: 'Resaltar ramas y palabras reservadas Git/Pipeline',
       highlightGitPipelineHelp: 'Colorea e identifica automáticamente ramas Git (feature/..., develop, etc.) y comandos de integración en logs de Jenkins y pipelines.',
       levelColorsTitle: 'Colores de niveles de severidad estándar',

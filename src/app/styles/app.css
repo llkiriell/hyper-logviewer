@@ -1015,9 +1015,24 @@ select {
   opacity: 1 !important;
 }
 
-.log-gutter {
+.log-pointer-cell {
   position: sticky;
   left: 22px;
+  z-index: 4;
+  width: 18px;
+  min-width: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg);
+  opacity: 1 !important;
+  user-select: none;
+  flex: none;
+}
+
+.log-gutter {
+  position: sticky;
+  left: 40px;
   z-index: 4;
   background-color: var(--bg);
   opacity: 1 !important;
@@ -1025,13 +1040,14 @@ select {
 
 .log-level-badge {
   position: sticky;
-  left: 82px;
+  left: 100px;
   z-index: 4;
   background-color: var(--bg);
   opacity: 1 !important;
 }
 
 .log-row:hover .log-pin-btn,
+.log-row:hover .log-pointer-cell,
 .log-row:hover .log-gutter,
 .log-row:hover .log-level-badge {
   background-color: var(--bg);
@@ -1039,9 +1055,11 @@ select {
 }
 
 .log-row-fatal .log-pin-btn,
+.log-row-fatal .log-pointer-cell,
 .log-row-fatal .log-gutter,
 .log-row-fatal .log-level-badge,
 .log-row-error .log-pin-btn,
+.log-row-error .log-pointer-cell,
 .log-row-error .log-gutter,
 .log-row-error .log-level-badge {
   background-color: var(--bg);
@@ -1049,6 +1067,7 @@ select {
 }
 
 .log-row-warn .log-pin-btn,
+.log-row-warn .log-pointer-cell,
 .log-row-warn .log-gutter,
 .log-row-warn .log-level-badge {
   background-color: var(--bg);
@@ -1056,9 +1075,11 @@ select {
 }
 
 .log-row.is-highlighted-focus .log-pin-btn,
+.log-row.is-highlighted-focus .log-pointer-cell,
 .log-row.is-highlighted-focus .log-gutter,
 .log-row.is-highlighted-focus .log-level-badge,
 .log-row.is-context-target .log-pin-btn,
+.log-row.is-context-target .log-pointer-cell,
 .log-row.is-context-target .log-gutter,
 .log-row.is-context-target .log-level-badge {
   background-color: var(--bg);
@@ -1066,18 +1087,33 @@ select {
 }
 
 .log-row.is-selected-line .log-pin-btn,
+.log-row.is-selected-line .log-pointer-cell,
 .log-row.is-selected-line .log-gutter,
 .log-row.is-selected-line .log-level-badge {
   background-color: var(--bg);
   background-image: linear-gradient(var(--active), var(--active));
+  border-top: 1.5px solid var(--selected-line-border, var(--accent));
+  border-bottom: 1.5px solid var(--selected-line-border, var(--accent));
 }
 
-/* Selected row highlight on click */
+.log-row.is-selected-line .log-pin-btn {
+  border-left: 1.5px solid var(--selected-line-border, var(--accent));
+}
+
+/* Selected row highlight on click (full overlay ensures continuous seamless border) */
 .log-row.is-selected-line {
+  position: relative;
   background-color: var(--bg) !important;
   background-image: linear-gradient(var(--active), var(--active)) !important;
-  outline: 1.5px solid var(--accent);
-  outline-offset: -1px;
+}
+
+.log-row.is-selected-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid var(--selected-line-border, var(--accent));
+  pointer-events: none;
+  z-index: 10;
 }
 
 /* Retained focus highlight when search filter is cleared */
@@ -1152,9 +1188,11 @@ select {
 
 /* Sticky columns for continuation rows */
 .log-row-fatal.is-continuation .log-pin-btn,
+.log-row-fatal.is-continuation .log-pointer-cell,
 .log-row-fatal.is-continuation .log-gutter,
 .log-row-fatal.is-continuation .log-level-badge,
 .log-row-error.is-continuation .log-pin-btn,
+.log-row-error.is-continuation .log-pointer-cell,
 .log-row-error.is-continuation .log-gutter,
 .log-row-error.is-continuation .log-level-badge {
   background-color: var(--bg);
@@ -1162,6 +1200,7 @@ select {
 }
 
 .log-row-warn.is-continuation .log-pin-btn,
+.log-row-warn.is-continuation .log-pointer-cell,
 .log-row-warn.is-continuation .log-gutter,
 .log-row-warn.is-continuation .log-level-badge {
   background-color: var(--bg);
@@ -1169,6 +1208,7 @@ select {
 }
 
 .log-row-info.is-continuation .log-pin-btn,
+.log-row-info.is-continuation .log-pointer-cell,
 .log-row-info.is-continuation .log-gutter,
 .log-row-info.is-continuation .log-level-badge {
   background-color: var(--bg);
@@ -3371,5 +3411,44 @@ select {
   background: rgba(14, 165, 233, 0.15);
   color: #0ea5e9;
   border-color: rgba(14, 165, 233, 0.3);
+}
+
+/* Modern High-Performance Floating Tooltip */
+.app-floating-tooltip {
+  pointer-events: none;
+  z-index: 999999;
+  max-width: 320px;
+  padding: 4px 8px;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  line-height: 1.4;
+  font-weight: 500;
+  text-align: center;
+  border-radius: var(--radius-sm, 4px);
+  background: #18181b;
+  color: #f4f4f5;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.2);
+  animation: tooltipFadeIn 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+[data-theme='dark'] .app-floating-tooltip {
+  background: #27272a;
+  color: #f4f4f5;
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 

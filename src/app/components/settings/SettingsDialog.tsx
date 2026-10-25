@@ -260,11 +260,22 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
                 label={t('settings.appearance.highlightActiveLine')}
                 help={t('settings.appearance.highlightActiveLineHelp')}
               >
-                <Switch
-                  checked={prefs.highlightActiveLine}
-                  onChange={(highlightActiveLine) => setPreferences({ highlightActiveLine })}
-                  label={t('settings.appearance.highlightActiveLine')}
-                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Switch
+                    checked={prefs.highlightActiveLine}
+                    onChange={(highlightActiveLine) => setPreferences({ highlightActiveLine })}
+                    label={t('settings.appearance.highlightActiveLine')}
+                  />
+                  {prefs.highlightActiveLine && (
+                    <div className="color-picker-wrapper" title={t('settings.appearance.activeLineColor')}>
+                      <input
+                        type="color"
+                        value={prefs.activeLineColor || '#0ea5e9'}
+                        onChange={(e) => setPreferences({ activeLineColor: e.target.value })}
+                      />
+                    </div>
+                  )}
+                </div>
               </SettingRow>
             </SettingsGroup>
           )}

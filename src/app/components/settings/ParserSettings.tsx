@@ -284,6 +284,17 @@ export function ParserSettings() {
         </SettingRow>
 
         <SettingRow
+          label={t('settings.parser.removeInfoBg')}
+          help={t('settings.parser.removeInfoBgHelp')}
+        >
+          <Switch
+            checked={prefs.removeInfoBg}
+            onChange={(removeInfoBg) => setPreferences({ removeInfoBg })}
+            label={t('settings.parser.removeInfoBg')}
+          />
+        </SettingRow>
+
+        <SettingRow
           label={t('settings.parser.highlightGitPipeline')}
           help={t('settings.parser.highlightGitPipelineHelp')}
         >

@@ -350,9 +350,13 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
           return { textColor: found.textColor, bgColor: found.bgColor };
         }
       }
-      return prefs.levelColors[line.level];
+      const baseColor = prefs.levelColors[line.level];
+      if (line.level === 'info' && prefs.removeInfoBg) {
+        return { ...baseColor, bgColor: 'transparent' };
+      }
+      return baseColor;
     },
-    [prefs.customStandardLevels, prefs.levelColors],
+    [prefs.customStandardLevels, prefs.levelColors, prefs.removeInfoBg],
   );
 
   // Build context menu entries
@@ -501,6 +505,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
                 fontSize={prefs.fontSize}
                 isPinned={true}
                 isSelected={prefs.highlightActiveLine && selectedRawIndex === pinnedLine.rawIndex}
+                activeLineColor={prefs.activeLineColor}
                 rainbowBrackets={prefs.rainbowBrackets}
                 highlightGitPipeline={prefs.highlightGitPipeline}
                 onTogglePin={handleTogglePin}
@@ -594,6 +599,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
                       isContextMenuTarget={isTarget}
                       isHighlighted={isHighlighted}
                       isSelected={prefs.highlightActiveLine && selectedRawIndex === line.rawIndex}
+                      activeLineColor={prefs.activeLineColor}
                       rainbowBrackets={prefs.rainbowBrackets}
                       highlightGitPipeline={prefs.highlightGitPipeline}
                       onTogglePin={handleTogglePin}

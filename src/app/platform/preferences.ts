@@ -58,8 +58,11 @@ export interface Preferences {
   // Rainbow Brackets & Active Line Highlight
   rainbowBrackets: boolean;
   highlightActiveLine: boolean;
+  activeLineColor: string;
   // Git & Pipeline Highlights (branches, merges, conflicts)
   highlightGitPipeline: boolean;
+  // Log parsing filters
+  removeInfoBg: boolean;
   // Recent files
   recentFiles: RecentFileItem[];
 }
@@ -91,7 +94,9 @@ const DEFAULT_PREFERENCES: Preferences = {
   watchedFolders: [],
   rainbowBrackets: true,
   highlightActiveLine: true,
+  activeLineColor: '#0ea5e9',
   highlightGitPipeline: true,
+  removeInfoBg: true,
   recentFiles: [],
 };
 
@@ -127,7 +132,9 @@ function load(): Preferences {
       watchedFolders: Array.isArray(parsed.watchedFolders) ? parsed.watchedFolders : DEFAULT_PREFERENCES.watchedFolders,
       rainbowBrackets: typeof parsed.rainbowBrackets === 'boolean' ? parsed.rainbowBrackets : DEFAULT_PREFERENCES.rainbowBrackets,
       highlightActiveLine: typeof parsed.highlightActiveLine === 'boolean' ? parsed.highlightActiveLine : DEFAULT_PREFERENCES.highlightActiveLine,
+      activeLineColor: typeof parsed.activeLineColor === 'string' ? parsed.activeLineColor : DEFAULT_PREFERENCES.activeLineColor,
       highlightGitPipeline: typeof parsed.highlightGitPipeline === 'boolean' ? parsed.highlightGitPipeline : DEFAULT_PREFERENCES.highlightGitPipeline,
+      removeInfoBg: typeof parsed.removeInfoBg === 'boolean' ? parsed.removeInfoBg : DEFAULT_PREFERENCES.removeInfoBg,
       recentFiles: Array.isArray(parsed.recentFiles) ? parsed.recentFiles : DEFAULT_PREFERENCES.recentFiles,
     };
   } catch {

@@ -30,6 +30,7 @@ import {
 } from './platform/preferences.ts';
 import { getActiveTab, useTabs } from './tabs.ts';
 import { DropZone } from './components/DropZone.tsx';
+import { GlobalTooltip } from './components/GlobalTooltip.tsx';
 import { Logo } from './components/primitives.tsx';
 import { SettingsDialog } from './components/settings/SettingsDialog.tsx';
 import { TabBar } from './components/TabBar.tsx';
@@ -361,6 +362,9 @@ export function App() {
         {settingsOpen && (
           <SettingsDialog onClose={() => setSettingsOpen(false)} />
         )}
+
+        {/* Modern High-Performance Floating Tooltip Provider */}
+        <GlobalTooltip />
       </div>
     </DropZone>
   );

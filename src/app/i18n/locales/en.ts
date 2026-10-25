@@ -185,10 +185,13 @@ export const en = {
       rainbowBracketsHelp: 'Colorize braces {} and brackets [] by nesting depth and highlight matching pair on hover/click.',
       highlightActiveLine: 'Highlight Selected Line',
       highlightActiveLineHelp: 'Visually highlight the clicked line to keep it clearly identified.',
+      activeLineColor: 'Line focus color',
     },
     parser: {
       colorizeInlineSeverity: 'Colorize Severity in Log Text',
       colorizeInlineSeverityHelp: 'Colorize and bold standard severity keywords (INFO, WARN, ERROR, etc.) directly in the log line.',
+      removeInfoBg: 'Remove background tint on INFO logs',
+      removeInfoBgHelp: 'Renders INFO log lines with clean transparent background by default.',
       highlightGitPipeline: 'Highlight Git & Pipeline branches and keywords',
       highlightGitPipelineHelp: 'Automatically colorizes and identifies Git branches (feature/..., develop, etc.) and integration commands in Jenkins and pipeline logs.',
       levelColorsTitle: 'Standard Log Level Colors',
