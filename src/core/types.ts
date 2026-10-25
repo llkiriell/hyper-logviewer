@@ -21,6 +21,8 @@ export interface ParsedLogLine {
   level: LogLevel;
   customLevelTag?: string; // If matched a custom standard word
   message: string;
+  isContinuation?: boolean;
+  parentLevel?: LogLevel;
 }
 
 export interface LogStats {

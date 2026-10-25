@@ -100,6 +100,17 @@ function renderContentWithBrackets(
   return elements;
 }
 
+// Computes a softer background tint for continuation lines (e.g. multiline stacktrace lines)
+function getContinuationBg(bgColor?: string): string | undefined {
+  if (!bgColor || bgColor === 'transparent') return undefined;
+  const match = bgColor.match(/rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([0-9.]+)\s*\)/i);
+  if (match && match[1] && match[2] && match[3] && match[4]) {
+    const reducedAlpha = Math.max(0.02, parseFloat(match[4]) * 0.4);
+    return `rgba(${match[1]}, ${match[2]}, ${match[3]}, ${reducedAlpha.toFixed(3)})`;
+  }
+  return bgColor;
+}
+
 export const VirtualLogRow = memo(function VirtualLogRow({
   line,
   searchQuery,
@@ -163,11 +174,14 @@ export const VirtualLogRow = memo(function VirtualLogRow({
     onTogglePin(line);
   };
 
-  // Safe background color from level configuration
-  const rowBg =
-    levelColor && levelColor.bgColor !== 'transparent'
-      ? levelColor.bgColor
-      : undefined;
+  // Safe background color from level configuration, softened if it is a continuation line
+  const rowBg = useMemo(() => {
+    if (!levelColor || levelColor.bgColor === 'transparent') return undefined;
+    if (line.isContinuation) {
+      return getContinuationBg(levelColor.bgColor);
+    }
+    return levelColor.bgColor;
+  }, [levelColor, line.isContinuation]);
 
   // Fully opaque solid composite background for sticky columns (prevents any bleed-through on horizontal scroll)
   const stickySolidStyle = useMemo(() => {
@@ -192,7 +206,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
 
   return (
     <div
-      className={`log-row log-row-${line.level} ${wordWrap ? 'is-wrapped' : ''} ${isPinned ? 'is-pinned-row' : ''} ${isContextMenuTarget ? 'is-context-target' : ''} ${isHighlighted ? 'is-highlighted-focus' : ''} ${isSelected ? 'is-selected-line' : ''}`}
+      className={`log-row log-row-${line.level} ${line.isContinuation ? 'is-continuation' : ''} ${wordWrap ? 'is-wrapped' : ''} ${isPinned ? 'is-pinned-row' : ''} ${isContextMenuTarget ? 'is-context-target' : ''} ${isHighlighted ? 'is-highlighted-focus' : ''} ${isSelected ? 'is-selected-line' : ''}`}
       style={{
         fontSize: `${fontSize}px`,
         backgroundColor: rowBg,
@@ -225,15 +239,15 @@ export const VirtualLogRow = memo(function VirtualLogRow({
         {line.lineNumber}
       </span>
 
-      {/* Sticky Log Level Indicator (Always 100% solid background) */}
+      {/* Sticky Log Level Indicator (Always 100% solid background, empty if continuation) */}
       <span
-        className={`log-level-badge log-level-${line.level}`}
+        className={`log-level-badge log-level-${line.level} ${line.isContinuation ? 'is-continuation-badge' : ''}`}
         style={{
           color: levelColor ? levelColor.textColor : undefined,
           ...stickySolidStyle,
         }}
       >
-        {badgeText}
+        {line.isContinuation ? '' : badgeText}
       </span>
 
       {/* Log Line Text Content */}

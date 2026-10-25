@@ -1113,6 +1113,68 @@ select {
   border-left-color: var(--accent-line);
 }
 
+/* Continuation Rows (Multiline stacktraces, line breaks belonging to parent log entry) */
+.log-row.is-continuation {
+  border-left-color: transparent !important;
+}
+
+.log-row-fatal.is-continuation,
+.log-row-error.is-continuation {
+  background-color: var(--bg);
+  background-image: linear-gradient(rgba(179, 38, 30, 0.035), rgba(179, 38, 30, 0.035)) !important;
+}
+
+.log-row-warn.is-continuation {
+  background-color: var(--bg);
+  background-image: linear-gradient(rgba(214, 160, 40, 0.035), rgba(214, 160, 40, 0.035)) !important;
+}
+
+.log-row-info.is-continuation {
+  background-color: var(--bg);
+  background-image: linear-gradient(rgba(25, 118, 210, 0.025), rgba(25, 118, 210, 0.025)) !important;
+}
+
+:root[data-theme='dark'] .log-row-fatal.is-continuation,
+:root[data-theme='dark'] .log-row-error.is-continuation {
+  background-color: var(--bg);
+  background-image: linear-gradient(rgba(239, 83, 80, 0.045), rgba(239, 83, 80, 0.045)) !important;
+}
+
+:root[data-theme='dark'] .log-row-warn.is-continuation {
+  background-color: var(--bg);
+  background-image: linear-gradient(rgba(255, 183, 77, 0.045), rgba(255, 183, 77, 0.045)) !important;
+}
+
+:root[data-theme='dark'] .log-row-info.is-continuation {
+  background-color: var(--bg);
+  background-image: linear-gradient(rgba(79, 195, 247, 0.035), rgba(79, 195, 247, 0.035)) !important;
+}
+
+/* Sticky columns for continuation rows */
+.log-row-fatal.is-continuation .log-pin-btn,
+.log-row-fatal.is-continuation .log-gutter,
+.log-row-fatal.is-continuation .log-level-badge,
+.log-row-error.is-continuation .log-pin-btn,
+.log-row-error.is-continuation .log-gutter,
+.log-row-error.is-continuation .log-level-badge {
+  background-color: var(--bg);
+  background-image: linear-gradient(rgba(179, 38, 30, 0.035), rgba(179, 38, 30, 0.035));
+}
+
+.log-row-warn.is-continuation .log-pin-btn,
+.log-row-warn.is-continuation .log-gutter,
+.log-row-warn.is-continuation .log-level-badge {
+  background-color: var(--bg);
+  background-image: linear-gradient(rgba(214, 160, 40, 0.035), rgba(214, 160, 40, 0.035));
+}
+
+.log-row-info.is-continuation .log-pin-btn,
+.log-row-info.is-continuation .log-gutter,
+.log-row-info.is-continuation .log-level-badge {
+  background-color: var(--bg);
+  background-image: linear-gradient(rgba(25, 118, 210, 0.025), rgba(25, 118, 210, 0.025));
+}
+
 /* Line gutter */
 .log-gutter {
   flex: none;

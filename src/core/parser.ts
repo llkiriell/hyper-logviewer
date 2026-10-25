@@ -214,18 +214,55 @@ export function parseLogContent(
   let maxDate: string | undefined;
   let timestampCount = 0;
 
+  // Track active parent entry for multiline logs and stacktraces (e.g. Java exceptions)
+  let currentParentLevel: LogLevel | undefined = undefined;
+  let currentParentCustomTag: string | undefined = undefined;
+  let currentParentDateKey: string | undefined = undefined;
+  let currentParentTimeKey: string | undefined = undefined;
+  let currentParentParsedDate: Date | undefined = undefined;
+
   for (let i = 0; i < rawLines.length; i++) {
     const raw = rawLines[i] ?? '';
     const parsed = parseSingleLine(raw, i, customStandardLevels);
+
+    const hasNewTimestamp = !!parsed.dateKey;
+    const hasExplicitLevel = parsed.level !== 'unknown' || !!parsed.customLevelTag;
+
+    if (hasNewTimestamp || hasExplicitLevel) {
+      // New primary log entry
+      if (hasExplicitLevel) {
+        currentParentLevel = parsed.level;
+        currentParentCustomTag = parsed.customLevelTag;
+      } else {
+        // Standalone line with timestamp but unknown level
+        currentParentLevel = undefined;
+        currentParentCustomTag = undefined;
+      }
+      currentParentDateKey = parsed.dateKey;
+      currentParentTimeKey = parsed.timeKey;
+      currentParentParsedDate = parsed.parsedDate;
+      parsed.isContinuation = false;
+    } else if (currentParentLevel) {
+      // Continuation line / multiline stacktrace belonging to the previous primary entry
+      parsed.isContinuation = true;
+      parsed.parentLevel = currentParentLevel;
+      parsed.level = currentParentLevel;
+      parsed.customLevelTag = currentParentCustomTag;
+      parsed.dateKey = currentParentDateKey;
+      parsed.timeKey = currentParentTimeKey;
+      parsed.parsedDate = currentParentParsedDate;
+    }
+
     lines[i] = parsed;
 
-    if (parsed.dateKey) {
+    if (hasNewTimestamp && parsed.dateKey) {
       timestampCount++;
       if (!minDate || parsed.dateKey < minDate) minDate = parsed.dateKey;
       if (!maxDate || parsed.dateKey > maxDate) maxDate = parsed.dateKey;
     }
 
-    switch (parsed.level) {
+    const effectiveStatLevel = parsed.isContinuation ? parsed.parentLevel : parsed.level;
+    switch (effectiveStatLevel) {
       case 'fatal':
         stats.fatal++;
         break;
