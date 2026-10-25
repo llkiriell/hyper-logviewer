@@ -207,12 +207,14 @@ export function splitTextWithSearchAndHighlights(
   activeMatchRange?: SearchMatchRange | null,
   customRules?: CustomHighlightRule[],
   inlineSeverityConfig?: InlineSeverityConfig,
+  highlightGitPipeline?: boolean,
 ): FormattedTextChunk[] {
   const hasCustom = customRules && customRules.length > 0;
   const hasInline = inlineSeverityConfig && inlineSeverityConfig.enabled;
+  const hasGit = highlightGitPipeline !== false;
 
-  // If no search matches, no custom highlights, and no inline severity, return plain text chunk
-  if (searchRanges.length === 0 && !hasCustom && !hasInline) {
+  // If no search matches, no custom highlights, no inline severity, and no git, return plain text chunk
+  if (searchRanges.length === 0 && !hasCustom && !hasInline && !hasGit) {
     return [{ text, startIndex: 0, isSearchMatch: false }];
   }
 
@@ -350,6 +352,75 @@ export function splitTextWithSearchAndHighlights(
             },
           });
         }
+      }
+    }
+  }
+
+  // Priority 4: Git & Jenkins Pipeline (Branches, Merges, Delimiters, Keywords)
+  if (hasGit) {
+    // 4a. Merge Delimiter #############
+    if (text.includes('#############')) {
+      const delimRegex = /#############/g;
+      let dm: RegExpExecArray | null;
+      while ((dm = delimRegex.exec(text)) !== null) {
+        const start = dm.index;
+        const end = dm.index + dm[0].length;
+        if (!spans.some((s) => s.start < end && s.end > start)) {
+          spans.push({
+            start,
+            end,
+            isSearch: false,
+            isActiveSearch: false,
+            customStyle: {
+              color: '#818cf8',
+              bold: true,
+              italic: false,
+            },
+          });
+        }
+      }
+    }
+
+    // 4b. Git Branches (feature/..., hotfix/..., bugfix/..., release/..., fix/..., master/develop in context)
+    const branchRegex = /\b(?:refs\/remotes\/origin\/|refs\/heads\/|origin\/)?((?:feature|hotfix|bugfix|release|fix)\/[a-zA-Z0-9_\-\.\/]+)\b/gi;
+    let bm: RegExpExecArray | null;
+    while ((bm = branchRegex.exec(text)) !== null) {
+      const start = bm.index;
+      const end = bm.index + bm[0].length;
+      if (!spans.some((s) => s.start < end && s.end > start)) {
+        spans.push({
+          start,
+          end,
+          isSearch: false,
+          isActiveSearch: false,
+          customStyle: {
+            color: '#0284c7', // Distinct cyan/teal for branches
+            bold: true,
+            italic: false,
+          },
+        });
+      }
+    }
+
+    // 4c. Git reserved keywords & operations
+    const gitKeywordsRegex = /\b(git\s+merge|git\s+checkout|git\s+fetch|git\s+branch|git|merge|checkout|fetch|commit|pull|push|rebase|CONFLICT|Automatic merge failed|Auto-merging)\b/gi;
+    let km: RegExpExecArray | null;
+    while ((km = gitKeywordsRegex.exec(text)) !== null) {
+      const start = km.index;
+      const end = km.index + km[0].length;
+      if (!spans.some((s) => s.start < end && s.end > start)) {
+        const isConflict = /conflict|failed/i.test(km[0]);
+        spans.push({
+          start,
+          end,
+          isSearch: false,
+          isActiveSearch: false,
+          customStyle: {
+            color: isConflict ? '#dc2626' : '#9333ea', // Red for conflict, violet for git keywords
+            bold: true,
+            italic: false,
+          },
+        });
       }
     }
   }

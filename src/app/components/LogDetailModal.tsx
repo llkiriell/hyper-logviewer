@@ -4,11 +4,13 @@ import {
   IconCheck,
   IconCopy,
   IconFileCode,
+  IconGitBranch,
   IconTerminal2,
   IconX,
 } from '@tabler/icons-react';
 import {
   detectCurlPattern,
+  detectGitPipeline,
   detectJavaErrorPattern,
   extractLogEntities,
 } from '../../core/logPatterns.ts';
@@ -27,13 +29,31 @@ export function LogDetailModal({ line, allLines, onClose }: LogDetailModalProps)
   const [copiedRaw, setCopiedRaw] = useState(false);
   const [copiedCurl, setCopiedCurl] = useState(false);
   const [copiedJava, setCopiedJava] = useState(false);
+  const [copiedGitEntity, setCopiedGitEntity] = useState<string | null>(null);
 
-  // 1. Detect cURL pattern in the line
+  // 1. Gather all consecutive continuation lines belonging to this primary entry
+  const fullRawMessage = useMemo(() => {
+    if (!allLines || allLines.length === 0) return line.raw;
+    const idx = allLines.findIndex((l) => l.rawIndex === line.rawIndex);
+    if (idx === -1) return line.raw;
+    const linesBlock = [line.raw];
+    for (let i = idx + 1; i < allLines.length; i++) {
+      const next = allLines[i];
+      if (next && next.isContinuation) {
+        linesBlock.push(next.raw);
+      } else {
+        break;
+      }
+    }
+    return linesBlock.join('\n');
+  }, [line, allLines]);
+
+  // 2. Detect cURL pattern in the line
   const detectedCurl = useMemo(() => {
     return detectCurlPattern(line.raw);
   }, [line.raw]);
 
-  // 2. Detect Java Exception & Stacktrace (lookahead in subsequent lines if available)
+  // 3. Detect Java Exception & Stacktrace (analyzing full multiline block)
   const detectedJava = useMemo(() => {
     let nextLines: string[] | undefined;
     if (allLines && allLines.length > 0) {
@@ -42,13 +62,18 @@ export function LogDetailModal({ line, allLines, onClose }: LogDetailModalProps)
         nextLines = allLines.slice(idx + 1, idx + 45).map((l) => l.raw);
       }
     }
-    return detectJavaErrorPattern(line.raw, nextLines);
-  }, [line.raw, line.rawIndex, allLines]);
+    return detectJavaErrorPattern(fullRawMessage, nextLines);
+  }, [fullRawMessage, line.rawIndex, allLines]);
 
-  // 3. Extract operational entities (UUIDs, file paths, URLs) from this line
+  // 4. Extract operational entities (UUIDs, file paths, URLs) from the full block
   const detectedEntities = useMemo(() => {
-    return extractLogEntities(line.raw);
-  }, [line.raw]);
+    return extractLogEntities(fullRawMessage);
+  }, [fullRawMessage]);
+
+  // 5. Detect Git & Jenkins Pipeline operations, branches, and conflicts
+  const detectedGit = useMemo(() => {
+    return detectGitPipeline(fullRawMessage);
+  }, [fullRawMessage]);
 
   const [copiedEntityKey, setCopiedEntityKey] = useState<string | null>(null);
 
@@ -62,9 +87,19 @@ export function LogDetailModal({ line, allLines, onClose }: LogDetailModalProps)
     }
   };
 
+  const handleCopyGitEntity = async (value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedGitEntity(value);
+      setTimeout(() => setCopiedGitEntity(null), 1500);
+    } catch (err) {
+      console.error('Failed to copy git entity:', err);
+    }
+  };
+
   const handleCopyRaw = async () => {
     try {
-      await navigator.clipboard.writeText(line.raw);
+      await navigator.clipboard.writeText(fullRawMessage);
       setCopiedRaw(true);
       setTimeout(() => setCopiedRaw(false), 1500);
     } catch (err) {
@@ -164,14 +199,14 @@ export function LogDetailModal({ line, allLines, onClose }: LogDetailModalProps)
               );
             })}
 
-            {/* Extracted File Paths */}
+            {/* Extracted File Paths (Rendered full width so long paths never truncate) */}
             {detectedEntities.filePaths.map((filePath, i) => {
               const label = detectedEntities.filePaths.length === 1
                 ? t('detail.filePath')
                 : `${t('detail.filePath')} ${i + 1}`;
               const copyKey = `path-${i}`;
               return (
-                <div key={copyKey} className="detail-meta-item detail-meta-item-copyable">
+                <div key={copyKey} className="detail-meta-item detail-meta-item-copyable detail-meta-item-fullwidth">
                   <span className="detail-meta-label">{label}:</span>
                   <div className="detail-meta-value-container">
                     <span className="detail-meta-value" title={filePath}>{filePath}</span>
@@ -342,7 +377,109 @@ export function LogDetailModal({ line, allLines, onClose }: LogDetailModalProps)
             </div>
           )}
 
-          {/* 4. Raw Log Message (Rendered AFTER all structured sections) */}
+          {/* 4. Git & Jenkins Pipeline Section (Rendered if git operations/branches/conflicts detected) */}
+          {detectedGit && (
+            <div className="log-detail-section">
+              <div className="detail-section-header">
+                <h4>
+                  <IconGitBranch size={16} stroke={1.5} style={{ color: 'var(--accent)' }} />
+                  <span>{t('detail.detectedGitPipeline')}</span>
+                  {detectedGit.operation && (
+                    <span className={`detail-tag-method detail-git-op-${detectedGit.operation}`}>
+                      {detectedGit.operation.toUpperCase()}
+                    </span>
+                  )}
+                </h4>
+              </div>
+
+              <div className="detail-git-card">
+                {/* Conflict Alert Banner */}
+                {detectedGit.conflictFile && (
+                  <div className="detail-conflict-banner">
+                    <IconAlertTriangle size={16} stroke={1.5} className="conflict-icon" />
+                    <div className="conflict-body">
+                      <strong>{t('detail.gitConflict')}:</strong>
+                      <code className="conflict-file-path">{detectedGit.conflictFile}</code>
+                    </div>
+                    <button
+                      type="button"
+                      className="detail-copy-btn-inline"
+                      onClick={() => handleCopyGitEntity(detectedGit.conflictFile!)}
+                      title={t('detail.copyConflictFile')}
+                    >
+                      {copiedGitEntity === detectedGit.conflictFile ? (
+                        <IconCheck size={13} stroke={1.5} className="copy-success-icon" />
+                      ) : (
+                        <IconCopy size={13} stroke={1.5} />
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {/* Primary Branch / Merge Target */}
+                {detectedGit.branch && (
+                  <div className="detail-git-row">
+                    <span className="git-row-label">
+                      {detectedGit.isMergeDelimiter ? t('detail.gitMergeTarget') : t('detail.gitBranch')}:
+                    </span>
+                    <div className="git-branch-chip">
+                      <IconGitBranch size={13} stroke={1.5} />
+                      <code>{detectedGit.branch}</code>
+                      <button
+                        type="button"
+                        className="chip-copy-btn"
+                        onClick={() => handleCopyGitEntity(detectedGit.branch!)}
+                        title={t('detail.copyBranch')}
+                      >
+                        {copiedGitEntity === detectedGit.branch ? (
+                          <IconCheck size={12} stroke={1.5} className="copy-success-icon" />
+                        ) : (
+                          <IconCopy size={12} stroke={1.5} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Strategy info if Ort or Recursive */}
+                {detectedGit.strategy && (
+                  <div className="detail-git-row">
+                    <span className="git-row-label">{t('detail.gitStrategy')}:</span>
+                    <span className="git-row-val">{detectedGit.strategy}</span>
+                  </div>
+                )}
+
+                {/* Multiple detected branches */}
+                {detectedGit.branches.length > 1 && (
+                  <div className="detail-git-multiple-branches">
+                    <span className="git-row-label">{t('detail.gitBranches')} ({detectedGit.branches.length}):</span>
+                    <div className="git-branches-list">
+                      {detectedGit.branches.map((b) => (
+                        <div key={b} className="git-branch-chip">
+                          <IconGitBranch size={13} stroke={1.5} />
+                          <code>{b}</code>
+                          <button
+                            type="button"
+                            className="chip-copy-btn"
+                            onClick={() => handleCopyGitEntity(b)}
+                            title={t('detail.copyBranch')}
+                          >
+                            {copiedGitEntity === b ? (
+                              <IconCheck size={12} stroke={1.5} className="copy-success-icon" />
+                            ) : (
+                              <IconCopy size={12} stroke={1.5} />
+                            )}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 5. Raw Log Message (Rendered AFTER all structured sections, includes continuations) */}
           <div className="log-detail-section">
             <div className="detail-section-header">
               <h4>{t('detail.rawMessage')}</h4>
@@ -364,7 +501,7 @@ export function LogDetailModal({ line, allLines, onClose }: LogDetailModalProps)
                 )}
               </button>
             </div>
-            <pre className="detail-raw-content">{line.raw}</pre>
+            <pre className="detail-raw-content">{fullRawMessage}</pre>
           </div>
         </div>
       </div>

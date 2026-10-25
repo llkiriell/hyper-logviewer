@@ -270,7 +270,7 @@ export function ParserSettings() {
 
   return (
     <div className="settings-section">
-      {/* 0. Colorize Inline Severity in Log Body */}
+      {/* 0. Colorize Inline Severity & Git Pipeline in Log Body */}
       <div className="settings-group" style={{ marginBottom: '16px' }}>
         <SettingRow
           label={t('settings.parser.colorizeInlineSeverity')}
@@ -280,6 +280,17 @@ export function ParserSettings() {
             checked={prefs.colorizeInlineSeverity}
             onChange={(colorizeInlineSeverity) => setPreferences({ colorizeInlineSeverity })}
             label={t('settings.parser.colorizeInlineSeverity')}
+          />
+        </SettingRow>
+
+        <SettingRow
+          label={t('settings.parser.highlightGitPipeline')}
+          help={t('settings.parser.highlightGitPipelineHelp')}
+        >
+          <Switch
+            checked={prefs.highlightGitPipeline}
+            onChange={(highlightGitPipeline) => setPreferences({ highlightGitPipeline })}
+            label={t('settings.parser.highlightGitPipeline')}
           />
         </SettingRow>
       </div>

@@ -274,3 +274,89 @@ export function extractLogEntities(rawLine: string): ExtractedLogEntities {
     urls,
   };
 }
+
+export interface DetectedGitPipeline {
+  operation?: 'merge' | 'checkout' | 'fetch' | 'conflict' | 'commit' | 'branch';
+  branch?: string;
+  branches: string[];
+  conflictFile?: string;
+  isMergeDelimiter: boolean;
+  strategy?: string;
+  rawSummary?: string;
+}
+
+/**
+ * Detects and extracts Git & Jenkins Pipeline operations, branches, and conflicts.
+ */
+export function detectGitPipeline(rawText: string): DetectedGitPipeline | null {
+  if (!rawText) return null;
+
+  // 1. Check for merge delimiter: ############# merge <branch>
+  const delimMatch = rawText.match(/#############\s*merge\s+([^\s]+)/i);
+  if (delimMatch && delimMatch[1]) {
+    const rawBranch = delimMatch[1].replace(/^(?:refs\/remotes\/origin\/|origin\/)/, '');
+    return {
+      operation: 'merge',
+      branch: rawBranch,
+      branches: [rawBranch],
+      isMergeDelimiter: true,
+      rawSummary: `Merge delimiter: ${rawBranch}`,
+    };
+  }
+
+  // 2. Conflict detection: CONFLICT (content): Merge conflict in <file>
+  const conflictMatch = rawText.match(/CONFLICT\s*\([^)]*\):\s*Merge conflict in\s+([^\s\r\n]+)/i);
+  const conflictFile = conflictMatch ? conflictMatch[1] : undefined;
+
+  // 3. Strategy detection: Merge made by the 'ort' strategy.
+  const stratMatch = rawText.match(/Merge made by the ['"]?([a-zA-Z0-9_-]+)['"]? strategy/i);
+  const strategy = stratMatch ? stratMatch[1] : undefined;
+
+  // 4. Branch detection regex: feature/..., hotfix/..., bugfix/..., release/..., fix/...
+  const branchRegex = /\b(?:refs\/remotes\/origin\/|refs\/heads\/|origin\/)?((?:feature|hotfix|bugfix|release|fix)\/[a-zA-Z0-9_\-\.\/]+)\b/gi;
+  const branches: string[] = [];
+  let bm: RegExpExecArray | null;
+  while ((bm = branchRegex.exec(rawText)) !== null) {
+    const b = bm[1];
+    if (b && !branches.includes(b)) {
+      branches.push(b);
+    }
+  }
+
+  // Common main branches in explicit git context
+  const gitContextBranch = /(?:git\s+(?:merge|checkout|branch|fetch)|pull request.*from|into|Merged in)\s+(?:refs\/remotes\/origin\/|refs\/heads\/|origin\/)?(master|main|develop)\b/i;
+  const mainM = rawText.match(gitContextBranch);
+  if (mainM && mainM[1] && !branches.includes(mainM[1])) {
+    branches.push(mainM[1]);
+  }
+
+  // 5. Detect operation
+  let operation: DetectedGitPipeline['operation'] = undefined;
+  if (conflictFile || /\b(?:CONFLICT|Automatic merge failed)\b/i.test(rawText)) {
+    operation = 'conflict';
+  } else if (/\b(?:git\s+merge|merge pull request|Auto-merging)\b/i.test(rawText)) {
+    operation = 'merge';
+  } else if (/\b(?:git\s+checkout|Checking out Revision|Checking out git)\b/i.test(rawText)) {
+    operation = 'checkout';
+  } else if (/\b(?:git\s+fetch|Fetching upstream|Fetching changes)\b/i.test(rawText)) {
+    operation = 'fetch';
+  } else if (/\b(?:git\s+branch)\b/i.test(rawText)) {
+    operation = 'branch';
+  } else if (/\bCommit message:\b/i.test(rawText)) {
+    operation = 'commit';
+  }
+
+  if (branches.length > 0 || operation || conflictFile) {
+    return {
+      operation,
+      branch: branches[0],
+      branches,
+      conflictFile,
+      isMergeDelimiter: false,
+      strategy,
+      rawSummary: operation ? `Git ${operation}` : undefined,
+    };
+  }
+
+  return null;
+}

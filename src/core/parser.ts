@@ -3,7 +3,7 @@ import type { CustomStandardLevel, LogLevel, LogStats, ParsedLogLine } from './t
 // Fast level detection regexes (case-insensitive for broad compatibility, but optimized)
 const LEVEL_PATTERNS: Array<{ regex: RegExp; level: LogLevel }> = [
   { regex: /\b(FATAL|CRITICAL|EMERGENCY|ALERT)\b/i, level: 'fatal' },
-  { regex: /\b(ERROR|ERR|FAIL|FAILURE|EXCEPTION)\b/i, level: 'error' },
+  { regex: /\b(ERROR|ERR|FAIL|FAILURE|EXCEPTION|CONFLICT)\b/i, level: 'error' },
   { regex: /\b(WARN|WARNING)\b/i, level: 'warn' },
   { regex: /\b(INFO|NOTICE|INFORMATION)\b/i, level: 'info' },
   { regex: /\b(DEBUG|DBG|FINE|FINER|FINEST)\b/i, level: 'debug' },
@@ -26,6 +26,23 @@ export function detectLogLevel(
       if (reg.test(line)) {
         return { level: 'info', customLevelTag: c.word };
       }
+    }
+  }
+
+  // Check for Git / Jenkins pipeline critical conflict patterns
+  if (/\b(?:CONFLICT\s*\(|Automatic merge failed|Merge conflict in)\b/i.test(line)) {
+    return { level: 'error', customLevelTag: 'CONFLICT' };
+  }
+
+  // Check for Git Merge delimiters and merge operations
+  if (/#############\s*merge\s+/i.test(line) || /^\+?\s*git\s+merge\b/i.test(line)) {
+    return { level: 'info', customLevelTag: 'MERGE' };
+  }
+
+  // Check for Jenkins [Pipeline] markers
+  if (line.includes('[Pipeline]')) {
+    if (/\b(?:error|fail|failure)\b/i.test(line)) {
+      return { level: 'error', customLevelTag: 'ERROR' };
     }
   }
 

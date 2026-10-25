@@ -38,6 +38,7 @@ interface VirtualLogRowProps {
   isHighlighted?: boolean;
   isSelected?: boolean;
   rainbowBrackets?: boolean;
+  highlightGitPipeline?: boolean;
   onTogglePin: (line: ParsedLogLine) => void;
   onContextMenu: (event: React.MouseEvent, line: ParsedLogLine) => void;
   onInspectLine?: (line: ParsedLogLine) => void;
@@ -129,6 +130,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
   isHighlighted = false,
   isSelected = false,
   rainbowBrackets = true,
+  highlightGitPipeline = true,
   onTogglePin,
   onContextMenu,
   onInspectLine,
@@ -155,8 +157,16 @@ export const VirtualLogRow = memo(function VirtualLogRow({
       activeSearchRange,
       customRules,
       inlineSeverityConfig,
+      highlightGitPipeline,
     );
-  }, [line.raw, searchRanges, activeSearchRange, customRules, inlineSeverityConfig]);
+  }, [
+    line.raw,
+    searchRanges,
+    activeSearchRange,
+    customRules,
+    inlineSeverityConfig,
+    highlightGitPipeline,
+  ]);
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -241,7 +251,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
 
       {/* Sticky Log Level Indicator (Always 100% solid background, empty if continuation) */}
       <span
-        className={`log-level-badge log-level-${line.level} ${line.isContinuation ? 'is-continuation-badge' : ''}`}
+        className={`log-level-badge log-level-${line.level} ${line.customLevelTag ? `log-level-tag-${line.customLevelTag.toLowerCase()}` : ''} ${line.isContinuation ? 'is-continuation-badge' : ''}`}
         style={{
           color: levelColor ? levelColor.textColor : undefined,
           ...stickySolidStyle,
@@ -291,35 +301,37 @@ export const VirtualLogRow = memo(function VirtualLogRow({
         })}
       </div>
 
-      {/* Sticky Right-aligned Hover Actions (Zero layout shift on text) */}
-      <div className="log-row-actions">
-        <button
-          type="button"
-          className="log-action-btn"
-          onClick={handleCopy}
-          title={t('viewer.copyLine')}
-        >
-          {copied ? (
-            <IconCheck size={13} stroke={1.5} className="copy-success-icon" />
-          ) : (
-            <IconCopy size={13} stroke={1.5} />
-          )}
-        </button>
-
-        {onInspectLine && (
+      {/* Sticky Right-aligned Hover Actions (Zero layout shift on text; hidden on continuation lines) */}
+      {!line.isContinuation && (
+        <div className="log-row-actions">
           <button
             type="button"
             className="log-action-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              onInspectLine(line);
-            }}
-            title={t('contextMenu.inspectLine')}
+            onClick={handleCopy}
+            title={t('viewer.copyLine')}
           >
-            <IconEye size={13} stroke={1.5} />
+            {copied ? (
+              <IconCheck size={13} stroke={1.5} className="copy-success-icon" />
+            ) : (
+              <IconCopy size={13} stroke={1.5} />
+            )}
           </button>
-        )}
-      </div>
+
+          {onInspectLine && (
+            <button
+              type="button"
+              className="log-action-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                onInspectLine(line);
+              }}
+              title={t('contextMenu.inspectLine')}
+            >
+              <IconEye size={13} stroke={1.5} />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 });

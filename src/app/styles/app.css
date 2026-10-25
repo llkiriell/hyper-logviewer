@@ -1855,6 +1855,32 @@ select {
   white-space: nowrap;
 }
 
+.detail-meta-item.detail-meta-item-fullwidth,
+.detail-meta-item-copyable.detail-meta-item-fullwidth {
+  flex-basis: 100%;
+  width: 100%;
+  align-items: flex-start;
+}
+
+.detail-meta-item-copyable.detail-meta-item-fullwidth .detail-meta-value-container {
+  max-width: 100%;
+  width: 100%;
+  flex: 1;
+  align-items: flex-start;
+}
+
+.detail-meta-item-copyable.detail-meta-item-fullwidth .detail-meta-value {
+  overflow: visible;
+  text-overflow: unset;
+  white-space: pre-wrap;
+  word-break: break-all;
+  flex: 1;
+}
+
+.detail-meta-item-copyable.detail-meta-item-fullwidth .detail-copy-btn {
+  margin-top: 1px;
+}
+
 .detail-meta-item-copyable .detail-copy-btn {
   opacity: 0;
   pointer-events: none;
@@ -3110,5 +3136,223 @@ select {
   color: var(--text-muted);
   white-space: pre-wrap;
   word-break: break-all;
+}
+
+/* Custom Level Badges for Git & Pipeline */
+.log-level-badge.log-level-tag-merge,
+.log-level-badge.log-level-merge {
+  background: rgba(147, 51, 234, 0.15);
+  color: #9333ea;
+  border-color: rgba(147, 51, 234, 0.35);
+  font-weight: 600;
+}
+
+[data-theme='dark'] .log-level-badge.log-level-tag-merge,
+[data-theme='dark'] .log-level-badge.log-level-merge {
+  background: rgba(168, 85, 247, 0.22);
+  color: #c084fc;
+  border-color: rgba(168, 85, 247, 0.45);
+}
+
+.log-level-badge.log-level-tag-conflict,
+.log-level-badge.log-level-conflict {
+  background: rgba(239, 68, 68, 0.18);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+  font-weight: 700;
+}
+
+[data-theme='dark'] .log-level-badge.log-level-tag-conflict,
+[data-theme='dark'] .log-level-badge.log-level-conflict {
+  background: rgba(239, 68, 68, 0.25);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.log-level-badge.log-level-tag-pipeline,
+.log-level-badge.log-level-pipeline {
+  background: rgba(14, 165, 233, 0.15);
+  color: #0ea5e9;
+  border-color: rgba(14, 165, 233, 0.35);
+}
+
+[data-theme='dark'] .log-level-badge.log-level-tag-pipeline,
+[data-theme='dark'] .log-level-badge.log-level-pipeline {
+  background: rgba(14, 165, 233, 0.2);
+  color: #38bdf8;
+  border-color: rgba(14, 165, 233, 0.45);
+}
+
+/* Git & Jenkins Pipeline Details Card */
+.detail-git-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-conflict-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius);
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.detail-conflict-banner .conflict-icon {
+  flex: none;
+  color: var(--danger);
+}
+
+.detail-conflict-banner .conflict-body {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.detail-conflict-banner .conflict-file-path {
+  font-family: var(--font-mono);
+  background: var(--surface);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.detail-copy-btn-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: var(--surface);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  flex: none;
+  transition: all 0.15s ease;
+}
+
+.detail-copy-btn-inline:hover {
+  background: var(--surface-hover);
+  color: var(--accent);
+}
+
+.detail-git-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.git-row-label {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  flex: none;
+}
+
+.git-row-val {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.git-branch-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  background: rgba(2, 132, 199, 0.1);
+  border: 1px solid rgba(2, 132, 199, 0.25);
+  border-radius: var(--radius-sm);
+  color: #0284c7;
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+
+[data-theme='dark'] .git-branch-chip {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+}
+
+.git-branch-chip code {
+  color: inherit;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.git-branch-chip .chip-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-xs, 2px);
+  opacity: 0.8;
+  padding: 0;
+  transition: opacity 0.12s ease;
+}
+
+.git-branch-chip .chip-copy-btn:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.detail-git-multiple-branches {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.git-branches-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+}
+
+.detail-git-op-merge {
+  background: rgba(147, 51, 234, 0.15);
+  color: #9333ea;
+  border-color: rgba(147, 51, 234, 0.3);
+}
+
+.detail-git-op-conflict {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.detail-git-op-checkout,
+.detail-git-op-fetch,
+.detail-git-op-branch {
+  background: rgba(14, 165, 233, 0.15);
+  color: #0ea5e9;
+  border-color: rgba(14, 165, 233, 0.3);
 }
 

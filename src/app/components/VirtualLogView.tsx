@@ -463,6 +463,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
               isPinned={true}
               isSelected={prefs.highlightActiveLine && selectedRawIndex === pinnedLine.rawIndex}
               rainbowBrackets={prefs.rainbowBrackets}
+              highlightGitPipeline={prefs.highlightGitPipeline}
               onTogglePin={handleTogglePin}
               onContextMenu={handleContextMenu}
               onInspectLine={(l) => setDetailModalLine(l)}
@@ -554,6 +555,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
                       isHighlighted={isHighlighted}
                       isSelected={prefs.highlightActiveLine && selectedRawIndex === line.rawIndex}
                       rainbowBrackets={prefs.rainbowBrackets}
+                      highlightGitPipeline={prefs.highlightGitPipeline}
                       onTogglePin={handleTogglePin}
                       onContextMenu={handleContextMenu}
                       onInspectLine={(l) => setDetailModalLine(l)}

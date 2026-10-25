@@ -58,6 +58,8 @@ export interface Preferences {
   // Rainbow Brackets & Active Line Highlight
   rainbowBrackets: boolean;
   highlightActiveLine: boolean;
+  // Git & Pipeline Highlights (branches, merges, conflicts)
+  highlightGitPipeline: boolean;
   // Recent files
   recentFiles: RecentFileItem[];
 }
@@ -89,6 +91,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   watchedFolders: [],
   rainbowBrackets: true,
   highlightActiveLine: true,
+  highlightGitPipeline: true,
   recentFiles: [],
 };
 
@@ -124,6 +127,7 @@ function load(): Preferences {
       watchedFolders: Array.isArray(parsed.watchedFolders) ? parsed.watchedFolders : DEFAULT_PREFERENCES.watchedFolders,
       rainbowBrackets: typeof parsed.rainbowBrackets === 'boolean' ? parsed.rainbowBrackets : DEFAULT_PREFERENCES.rainbowBrackets,
       highlightActiveLine: typeof parsed.highlightActiveLine === 'boolean' ? parsed.highlightActiveLine : DEFAULT_PREFERENCES.highlightActiveLine,
+      highlightGitPipeline: typeof parsed.highlightGitPipeline === 'boolean' ? parsed.highlightGitPipeline : DEFAULT_PREFERENCES.highlightGitPipeline,
       recentFiles: Array.isArray(parsed.recentFiles) ? parsed.recentFiles : DEFAULT_PREFERENCES.recentFiles,
     };
   } catch {
