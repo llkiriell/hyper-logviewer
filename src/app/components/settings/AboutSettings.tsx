@@ -6,7 +6,7 @@ import { SettingRow, SettingsGroup } from './SettingsRows.tsx';
 
 export function AboutSettings() {
   const { t } = useTranslation();
-  const version = desktop?.version ?? '0.1.0';
+  const version = desktop?.version ?? '0.1.0-beta.1';
 
   return (
     <>
@@ -33,7 +33,7 @@ export function AboutSettings() {
           <button
             type="button"
             className="button small"
-            onClick={() => void openExternalUrl('https://github.com')}
+            onClick={() => void openExternalUrl('https://github.com/llkiriell/hyper-logviewer')}
           >
             <IconBrandGithub size={15} stroke={1.5} />
             {t('settings.about.viewGitHub')}

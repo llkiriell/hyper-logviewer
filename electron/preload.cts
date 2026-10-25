@@ -20,7 +20,7 @@ interface LogViewerApiBridge {
 
 const api: LogViewerApiBridge = {
   platform: process.platform,
-  version: '0.1.0',
+  version: '0.1.0-beta.1',
   setTheme: (theme: 'light' | 'dark') => {
     ipcRenderer.send('logviewer:theme', theme);
   },
