@@ -372,44 +372,61 @@ export function ParserSettings() {
         <h3>{t('settings.parser.customStandardTitle')}</h3>
         <p className="settings-desc">{t('settings.parser.customStandardDesc')}</p>
 
-        {/* Add standard word bar */}
-        <div className="keyword-add-bar">
+        {/* Add standard word form card */}
+        <div className="std-word-form-card">
           <input
             type="text"
-            className="keyword-input"
+            className="std-word-input"
             value={newStdWord}
             onChange={(e) => setNewStdWord(e.target.value.replace(/\s+/g, ''))}
             onKeyDown={(e) => e.key === 'Enter' && handleAddStandardWord()}
             placeholder={t('settings.parser.standardWordPlaceholder')}
           />
 
-          <div className="color-picker-wrapper">
-            <input
-              type="color"
-              value={newStdColor}
-              onChange={(e) => setNewStdColor(e.target.value)}
-              title={t('settings.parser.textColor')}
-            />
+          <div className="std-word-controls">
+            <div className="color-picker-wrapper" title={t('settings.parser.textColor')}>
+              <span className="keyword-style-label">{t('settings.parser.textColor')}</span>
+              <input
+                type="color"
+                value={newStdColor}
+                onChange={(e) => setNewStdColor(e.target.value)}
+              />
+            </div>
+
+            <label className="bg-toggle-label">
+              <input
+                type="checkbox"
+                checked={newStdHasBg}
+                onChange={(e) => setNewStdHasBg(e.target.checked)}
+              />
+              <span>{t('settings.parser.softBg')}</span>
+            </label>
+
+            {newStdWord.trim() && (
+              <div className="std-word-preview" title="Vista previa en vivo del badge">
+                <span
+                  className="level-preview-badge"
+                  style={{
+                    color: newStdColor,
+                    backgroundColor: newStdHasBg ? hexToRgba(newStdColor, 0.1) : 'transparent',
+                    border: `1px solid ${newStdHasBg ? newStdColor : 'transparent'}`,
+                  }}
+                >
+                  {newStdWord.trim().toUpperCase()}
+                </span>
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="button button-sm primary"
+              onClick={handleAddStandardWord}
+              disabled={!newStdWord.trim()}
+            >
+              <IconPlus size={15} stroke={1.5} />
+              <span>{t('common.add')}</span>
+            </button>
           </div>
-
-          <label className="bg-toggle-label" style={{ margin: '0 4px' }}>
-            <input
-              type="checkbox"
-              checked={newStdHasBg}
-              onChange={(e) => setNewStdHasBg(e.target.checked)}
-            />
-            <span>{t('settings.parser.softBg')}</span>
-          </label>
-
-          <button
-            type="button"
-            className="button button-sm primary"
-            onClick={handleAddStandardWord}
-            disabled={!newStdWord.trim()}
-          >
-            <IconPlus size={15} stroke={1.5} />
-            <span>{t('common.add')}</span>
-          </button>
         </div>
 
         {/* List of custom standard words */}
