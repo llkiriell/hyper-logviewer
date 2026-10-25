@@ -423,6 +423,165 @@ export function splitTextWithSearchAndHighlights(
         });
       }
     }
+
+    // 4d. Git Diff Stat Lines (e.g. scripts/sql/INV00003229.plsql | 12 ++++++++----)
+    const statMatch = text.match(/([a-zA-Z0-9_\-\.\/]+(?:\.[a-zA-Z0-9_]+)?)\s*\|\s*(\d+)\s*([+\-]+)/);
+    if (statMatch && statMatch.index !== undefined) {
+      const baseIdx = statMatch.index;
+      const pathStr = statMatch[1];
+      const numStr = statMatch[2];
+      const barStr = statMatch[3];
+
+      if (pathStr && numStr && barStr) {
+        const pathIdx = text.indexOf(pathStr, baseIdx);
+        if (pathIdx !== -1 && !spans.some((s) => s.start < pathIdx + pathStr.length && s.end > pathIdx)) {
+          spans.push({
+            start: pathIdx,
+            end: pathIdx + pathStr.length,
+            isSearch: false,
+            isActiveSearch: false,
+            customStyle: {
+              color: 'inherit',
+              bold: true, // Soft bold for diff path
+              italic: false,
+            },
+          });
+        }
+
+        const numIdx = text.indexOf(numStr, pathIdx + pathStr.length);
+        if (numIdx !== -1 && !spans.some((s) => s.start < numIdx + numStr.length && s.end > numIdx)) {
+          spans.push({
+            start: numIdx,
+            end: numIdx + numStr.length,
+            isSearch: false,
+            isActiveSearch: false,
+            customStyle: {
+              color: '#0284c7', // Distinct color for change count
+              bold: true,
+              italic: false,
+            },
+          });
+        }
+
+        const barIdx = text.indexOf(barStr, numIdx + numStr.length);
+        if (barIdx !== -1) {
+          let currentIdx = barIdx;
+          let i = 0;
+          while (i < barStr.length) {
+            const char = barStr[i];
+            let j = i;
+            while (j < barStr.length && barStr[j] === char) j++;
+            const segment = barStr.substring(i, j);
+            const segStart = currentIdx;
+            const segEnd = currentIdx + segment.length;
+            if (!spans.some((s) => s.start < segEnd && s.end > segStart)) {
+              spans.push({
+                start: segStart,
+                end: segEnd,
+                isSearch: false,
+                isActiveSearch: false,
+                customStyle: {
+                  color: char === '+' ? '#16a34a' : '#dc2626', // Green for +, Red for -
+                  bold: true,
+                  italic: false,
+                },
+              });
+            }
+            currentIdx += segment.length;
+            i = j;
+          }
+        }
+      }
+    }
+
+    // 4e. Git Diff Summary Lines (e.g. 5 files changed, 17 insertions(+), 1 deletion(-))
+    const sumRegex = /(\d+)\s+(files?\s+changed)|(\d+)\s+(insertions?\(\+\))|(\d+)\s+(deletions?\(-\))/g;
+    let sm: RegExpExecArray | null;
+    while ((sm = sumRegex.exec(text)) !== null) {
+      if (sm[1]) {
+        const numStart = sm.index;
+        const numEnd = numStart + sm[1].length;
+        if (!spans.some((s) => s.start < numEnd && s.end > numStart)) {
+          spans.push({
+            start: numStart,
+            end: numEnd,
+            isSearch: false,
+            isActiveSearch: false,
+            customStyle: {
+              color: '#0284c7',
+              bold: true,
+              italic: false,
+            },
+          });
+        }
+      }
+      if (sm[3] && sm[4]) {
+        const numStart = sm.index;
+        const numEnd = numStart + sm[3].length;
+        if (!spans.some((s) => s.start < numEnd && s.end > numStart)) {
+          spans.push({
+            start: numStart,
+            end: numEnd,
+            isSearch: false,
+            isActiveSearch: false,
+            customStyle: {
+              color: '#0284c7',
+              bold: true,
+              italic: false,
+            },
+          });
+        }
+        const insText = sm[4];
+        const insStart = sm.index + sm[0].indexOf(insText);
+        const insEnd = insStart + insText.length;
+        if (!spans.some((s) => s.start < insEnd && s.end > insStart)) {
+          spans.push({
+            start: insStart,
+            end: insEnd,
+            isSearch: false,
+            isActiveSearch: false,
+            customStyle: {
+              color: '#16a34a', // Green for insertions(+)
+              bold: true,
+              italic: false,
+            },
+          });
+        }
+      }
+      if (sm[5] && sm[6]) {
+        const numStart = sm.index;
+        const numEnd = numStart + sm[5].length;
+        if (!spans.some((s) => s.start < numEnd && s.end > numStart)) {
+          spans.push({
+            start: numStart,
+            end: numEnd,
+            isSearch: false,
+            isActiveSearch: false,
+            customStyle: {
+              color: '#0284c7',
+              bold: true,
+              italic: false,
+            },
+          });
+        }
+        const delText = sm[6];
+        const delStart = sm.index + sm[0].indexOf(delText);
+        const delEnd = delStart + delText.length;
+        if (!spans.some((s) => s.start < delEnd && s.end > delStart)) {
+          spans.push({
+            start: delStart,
+            end: delEnd,
+            isSearch: false,
+            isActiveSearch: false,
+            customStyle: {
+              color: '#dc2626', // Red for deletions(-)
+              bold: true,
+              italic: false,
+            },
+          });
+        }
+      }
+    }
   }
 
   // Sort spans by start position
