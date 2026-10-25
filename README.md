@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/Icons-Tabler-0054a6" alt="Tabler Icons" />
   <img src="https://img.shields.io/badge/Scroll-TanStack%20Virtual-FF4154" alt="TanStack Virtual" />
   <img src="https://img.shields.io/badge/i18n-English%20|%20Español-blue" alt="i18n" />
-  <img src="https://img.shields.io/badge/Co--author-Antigravity%20(AGY)-E65100?logo=google" alt="Co-author" />
+  <img src="https://img.shields.io/badge/Co--author-Antigravity%20CLI-E65100?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij4KICA8cGF0aCBmaWxsPSIjZmZmZmZmIiBkPSJNMTIuMDI1IDJxMi4wMjUgMCAzLjE2MyAxLjUyNVQxNy4xMjUgN3EuNjUgMS41NzUgMS4yNSAzLjV0MS4yNzUgMy44NzVxLjY1IDEuODc1IDEuNDI1IDMuNTI1dDEuOCAyLjgyNXEuMi4yMjUuMTc1LjUyNXQtLjIyNS41MjV0LS40NzUuMjV0LS41NS0uMTc1cS0xLjk3NS0xLjU1LTMuMjUtMy40NjN0LTIuNTc1LTMuMzM3cS0uODUtLjk1LTEuODEyLTEuNVQxMi4wMjUgMTN0LTIuMTM3LjU1dC0xLjgxMyAxLjVxLTEuMyAxLjQyNS0yLjU3NSAzLjMzOFQyLjI1IDIxLjg1cS0uMjc1LjItLjU1LjE3NXQtLjQ3NS0uMjVUMSAyMS4yNXQuMTc1LS41MjVRMi4yIDE5LjU1IDIuOTc1IDE3LjlUNC40IDE0LjM3NXEuNjc1LTEuOTUgMS4yNzUtMy44NzVUNi45MjUgN3EuOC0xLjk1IDEuOTM4LTMuNDc1VDEyLjAyNSAybTAgMnEtMS4xMjUgMC0xLjc3NS45NzVUOS4xIDdxLS42NSAxLjQtMS4xNjIgMy4wMTNUNi44IDEzLjVxLjUtLjUyNS45NjMtLjkyNXQuOTYyLS43MjVxLjgtLjQ3NSAxLjU4OC0uNjYzVDEyLjAyNSAxMXQxLjcxMy4xODh0MS41ODcuNjYycS41LjMyNS45NjMuNzI1dC45NjIuOTI1cS0uNjI1LTEuODc1LTEuMTM3LTMuNDg3VDE0Ljk1IDdxLS41LTEuMDUtMS4xNS0yLjAyNVQxMi4wMjUgNG0wIDciLz4KPC9zdmc+Cg==" alt="Co-author" />
 </p>
 
 **hyper-logviewer** es un visor de archivos `.log` de escritorio, ultrarrápido y *local-first*, concebido para la inspección, filtrado y diagnóstico eficiente de registros de depuración y auditoría. 
@@ -23,16 +23,16 @@ Inspirado en la estética minimalista, el andamiaje técnico y la experiencia de
 
 ## Características Principales
 
-* 📑 **Navegación por Pestañas (Multi-log):** Soporte simultáneo para múltiples fuentes de log con desplazamiento horizontal suave, atajos rápidos (`Ctrl+T`, `Ctrl+W`, `Ctrl+1..9`) y cierres individuales.
-* 📂 **Triple Vía de Entrada de Logs:**
+* **Navegación por pestañas (Multi-log):** Soporte simultáneo para múltiples fuentes de log con desplazamiento horizontal suave, atajos rápidos (`Ctrl+T`, `Ctrl+W`, `Ctrl+1..9`) y cierres individuales.
+* **Triple vía de entrada de registros:**
   * **Explorador Nativo:** Diálogo del sistema operativo con selección de archivo rápida (`Ctrl+O`).
   * **Arrastrar y Soltar (Drag & Drop):** Zona receptora tanto en la vista inicial como arrastrando directamente archivos sobre la barra de pestañas.
   * **Pegado Directo del Portapapeles (Clipboard Paste):** Botón superior y atajo global `Ctrl+V` que genera una pestaña en memoria con el contenido crudo formateado y numerado de forma instantánea.
-* ⚡ **Visor Virtualizado de Alto Rendimiento:** Renderizado con `@tanstack/react-virtual` para garantizar 60 FPS con mínimo uso de RAM, incluso con archivos de cientos de megabytes.
-* 🎨 **Estilo Visual Limpio y Temas Bimodales:** Modo Claro, Modo Oscuro (automático según preferencias del sistema operativo) y selección de colores de acento (`Ember`, `Ocean`, `Aqua`, `Violet`).
-* 🌐 **Internacionalización (i18n) Bilingüe:** Inglés (`en`) como idioma predeterminado y Español (`es`) completamente integrado, con cambio en tiempo real sin recargar la aplicación.
-* ⚙️ **Modal de Configuración con Pestaña «Acerca de»:** Diálogo modal flotante con selector segmentado para gestionar Idioma, Apariencia, Parser, Atajos y la vista **Acerca de** con detalles de versión y repositorio.
-* 🔣 **Iconografía Tabler Icons:** Estética vectorial uniforme basada en trazos limpios (`@tabler/icons-react` con `stroke={1.5}`).
+* **Visor virtualizado de alto rendimiento:** Renderizado con `@tanstack/react-virtual` para garantizar 60 FPS con mínimo uso de RAM, incluso con archivos de cientos de megabytes.
+* **Estilo visual limpio y temas bimodales:** Modo Claro, Modo Oscuro (automático según preferencias del sistema operativo) y selección de colores de acento (`Ember`, `Ocean`, `Aqua`, `Violet`).
+* **Internacionalización (i18n) bilingüe:** Inglés (`en`) como idioma predeterminado y Español (`es`) completamente integrado, con cambio en tiempo real sin recargar la aplicación.
+* **Modal de configuración con pestaña «Acerca de»:** Diálogo modal flotante con selector segmentado para gestionar Idioma, Apariencia, Parser, Atajos y la vista **Acerca de** con detalles de versión y repositorio.
+* **Iconografía Tabler Icons:** Estética vectorial uniforme basada en trazos limpios (`@tabler/icons-react` con `stroke={1.5}`).
 
 ---
 
@@ -122,6 +122,6 @@ Este repositorio sigue una convención estricta de ramas y mensajes de commit de
 
 ## Reconocimientos y Coautoría
 
-Este proyecto ha sido concebido y desarrollado en estrecha colaboración entre el autor principal y **Antigravity (AGY)**, el agente avanzado de ingeniería de software desarrollado por el equipo de Google DeepMind.
+Este proyecto ha sido concebido y desarrollado en estrecha colaboración entre el autor principal y **Antigravity CLI**, el agente avanzado de ingeniería de software desarrollado por el equipo de Google DeepMind.
 
-> **Nota de gobernanza:** Conforme a las políticas del proyecto establecidas en [`AGENTS.md`](AGENTS.md), la coautoría y créditos de AGY se reconocen formalmente y de manera exclusiva en esta documentación (README), manteniéndose expresamente **fuera de la interfaz de la aplicación y del historial de commits de Git** para preservar un historial de autoría y una aplicación limpia.
+> **Nota de gobernanza:** Conforme a las políticas del proyecto establecidas en [`AGENTS.md`](AGENTS.md), la coautoría y créditos de Antigravity CLI se reconocen formalmente y de manera exclusiva en esta documentación (README), manteniéndose expresamente **fuera de la interfaz de la aplicación y del historial de commits de Git** para preservar un historial de autoría y una aplicación limpia.

@@ -20,10 +20,10 @@ import {
 } from './platform/preferences.ts';
 import { getActiveTab, useTabs } from './tabs.ts';
 import { DropZone } from './components/DropZone.tsx';
-import { LogView } from './components/LogView.tsx';
 import { Logo } from './components/primitives.tsx';
 import { SettingsDialog } from './components/settings/SettingsDialog.tsx';
 import { TabBar } from './components/TabBar.tsx';
+import { VirtualLogView } from './components/VirtualLogView.tsx';
 
 function useThemeManager() {
   const prefs = usePreferences();
@@ -186,7 +186,7 @@ export function App() {
 
         {/* Main Content Area */}
         {activeTab ? (
-          <LogView tab={activeTab} />
+          <VirtualLogView tab={activeTab} />
         ) : (
           <main className="app-content">
             <div className="hero-box">
