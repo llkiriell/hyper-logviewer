@@ -105,7 +105,29 @@ Inspirado en la ergonomía de **Morrow**, hyper-logviewer ofrece:
 
 ---
 
-## 5. Hoja de Ruta de Implementación (Roadmap)
+## 5. Flujo Git, Convención de Commits y Directivas de Agentes
+
+### 5.1 Modelo de Ramas
+* **`main`:** Rama de producción y versiones estables.
+* **`dev`:** Rama activa de desarrollo e integración principal.
+* **`feature/<nombre>`:** Ramas de características específicas desprendidas de `dev`.
+
+### 5.2 Estándar Open Source de Commits
+Formato estricto: `<sustantivo> : <verbo> <descripción>`
+* **Autor / Maintainer:** En **español** (ej. `visor : integrar virtualización con tanstack`, `i18n : agregar diccionario en español`).
+* **Comunidad / Open Source:** En **inglés** (ej. `viewer : integrate virtualized scrolling`, `tabs : add horizontal navigation`).
+
+### 5.3 Carpeta Local `docs/`
+* Excluida expresamente del control de versiones (`.gitignore`).
+* Destinada a logs de prueba, benchmarks, especificaciones o notas temporales del usuario y los agentes de IA.
+
+### 5.4 Documentación para Agentes (en inglés)
+* [`AGENTS.md`](file:///D:/Proyectos-Aplicaciones/NodeJS/hyper-logviewer/AGENTS.md): Reglas de operación, flujo de ramas y directivas para agentes.
+* [`AGENTS_STYLE_GUIDE.md`](file:///D:/Proyectos-Aplicaciones/NodeJS/hyper-logviewer/AGENTS_STYLE_GUIDE.md): Estándar estricto de TypeScript, React 19, tokens CSS, Tabler Icons e i18n.
+
+---
+
+## 6. Hoja de Ruta de Implementación (Roadmap)
 
 ```mermaid
 flowchart TD
