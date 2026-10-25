@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import {
+  IconCalendar,
   IconClipboard,
   IconFileText,
   IconPlus,
@@ -61,7 +62,12 @@ export function TabBar({
       >
         {tabs.map((tab: TabItem, index: number) => {
           const isActive = tab.id === activeId;
-          const Icon = tab.kind === 'clipboard' ? IconClipboard : IconFileText;
+          const Icon =
+            tab.kind === 'clipboard'
+              ? IconClipboard
+              : tab.kind === 'segment'
+                ? IconCalendar
+                : IconFileText;
 
           return (
             <div

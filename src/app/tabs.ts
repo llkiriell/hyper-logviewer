@@ -3,7 +3,7 @@ import { useSyncExternalStore } from 'react';
 export interface TabItem {
   id: string;
   title: string;
-  kind: 'file' | 'clipboard';
+  kind: 'file' | 'clipboard' | 'segment';
   filePath?: string;
   size: number;
   content: string;
@@ -49,7 +49,7 @@ export function getActiveTab(): TabItem | null {
 export function createTab(params: {
   title: string;
   content: string;
-  kind?: 'file' | 'clipboard';
+  kind?: 'file' | 'clipboard' | 'segment';
   filePath?: string;
   size?: number;
 }): TabItem {

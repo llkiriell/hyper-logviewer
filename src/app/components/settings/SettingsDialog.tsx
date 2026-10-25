@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ComponentType } from 'react';
 import {
   IconAdjustmentsHorizontal,
+  IconCode,
   IconInfoCircle,
   IconKeyboard,
   IconPalette,
@@ -16,9 +17,10 @@ import {
 import type { AccentColor, ThemePreference } from '../../platform/preferences.ts';
 import { Dialog, Segmented, Select, Switch } from '../primitives.tsx';
 import { AboutSettings } from './AboutSettings.tsx';
+import { ParserSettings } from './ParserSettings.tsx';
 import { SettingRow, SettingsGroup } from './SettingsRows.tsx';
 
-type SettingsSection = 'general' | 'appearance' | 'shortcuts' | 'about';
+type SettingsSection = 'general' | 'appearance' | 'parser' | 'shortcuts' | 'about';
 
 interface SectionDef {
   id: SettingsSection;
@@ -29,6 +31,7 @@ interface SectionDef {
 const SECTIONS: SectionDef[] = [
   { id: 'general', labelKey: 'settings.sections.general', icon: IconAdjustmentsHorizontal },
   { id: 'appearance', labelKey: 'settings.sections.appearance', icon: IconPalette },
+  { id: 'parser', labelKey: 'settings.sections.parser', icon: IconCode },
   { id: 'shortcuts', labelKey: 'settings.sections.shortcuts', icon: IconKeyboard },
   { id: 'about', labelKey: 'settings.sections.about', icon: IconInfoCircle },
 ];
@@ -93,7 +96,10 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
                 <Select<SupportedLocale>
                   value={prefs.locale}
                   label={t('settings.general.language')}
-                  options={SUPPORTED_LOCALES.map((l) => ({ value: l.id, label: l.label }))}
+                  options={SUPPORTED_LOCALES.map((l) => ({
+                    value: l.id,
+                    label: l.label,
+                  }))}
                   onChange={(locale) => setPreferences({ locale })}
                 />
               </SettingRow>
@@ -177,8 +183,32 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
                   label={t('settings.appearance.wordWrap')}
                 />
               </SettingRow>
+
+              <SettingRow
+                label={t('settings.appearance.lineSeparator')}
+                help={t('settings.appearance.lineSeparatorHelp')}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Switch
+                    checked={prefs.showLineSeparator}
+                    onChange={(showLineSeparator) => setPreferences({ showLineSeparator })}
+                    label={t('settings.appearance.lineSeparator')}
+                  />
+                  {prefs.showLineSeparator && (
+                    <div className="color-picker-wrapper" title={t('settings.appearance.separatorColor')}>
+                      <input
+                        type="color"
+                        value={prefs.lineSeparatorColor}
+                        onChange={(e) => setPreferences({ lineSeparatorColor: e.target.value })}
+                      />
+                    </div>
+                  )}
+                </div>
+              </SettingRow>
             </SettingsGroup>
           )}
+
+          {section === 'parser' && <ParserSettings />}
 
           {section === 'shortcuts' && (
             <SettingsGroup>

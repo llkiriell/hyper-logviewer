@@ -3,6 +3,9 @@ import {
   IconArrowDown,
   IconArrowDownCircle,
   IconArrowUp,
+  IconCalendar,
+  IconChevronDown,
+  IconChevronUp,
   IconLetterCase,
   IconRegex,
   IconSearch,
@@ -19,9 +22,15 @@ interface LogToolbarProps {
   onToggleRegex: () => void;
   caseSensitive: boolean;
   onToggleCaseSensitive: () => void;
+  totalMatches: number;
+  currentMatchIndex: number;
+  onNextMatch: () => void;
+  onPrevMatch: () => void;
   levelFilter: LogLevel | 'all';
   onLevelFilterChange: (level: LogLevel | 'all') => void;
   stats: LogStats;
+  isDateFilterActive: boolean;
+  onOpenDateFilter: (anchor: HTMLElement) => void;
   wordWrap: boolean;
   onToggleWordWrap: () => void;
   autoScroll: boolean;
@@ -37,9 +46,15 @@ export function LogToolbar({
   onToggleRegex,
   caseSensitive,
   onToggleCaseSensitive,
+  totalMatches,
+  currentMatchIndex,
+  onNextMatch,
+  onPrevMatch,
   levelFilter,
   onLevelFilterChange,
   stats,
+  isDateFilterActive,
+  onOpenDateFilter,
   wordWrap,
   onToggleWordWrap,
   autoScroll,
@@ -49,6 +64,7 @@ export function LogToolbar({
 }: LogToolbarProps) {
   const { t } = useTranslation();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const dateBtnRef = useRef<HTMLButtonElement>(null);
 
   const errorCount = stats.error + stats.fatal;
 
@@ -59,7 +75,7 @@ export function LogToolbar({
 
   return (
     <div className="log-toolbar">
-      {/* Search Bar with toggles */}
+      {/* Search Bar with match count & navigation */}
       <div className="log-search-container">
         <IconSearch size={16} stroke={1.5} className="log-search-icon" />
         <input
@@ -71,6 +87,35 @@ export function LogToolbar({
           placeholder={t('viewer.searchPlaceholder')}
           spellCheck={false}
         />
+
+        {searchQuery.trim().length > 0 && (
+          <span className="search-match-counter">
+            {totalMatches > 0
+              ? `${currentMatchIndex + 1} / ${totalMatches}`
+              : '0 / 0'}
+          </span>
+        )}
+
+        {totalMatches > 0 && (
+          <div className="search-nav-arrows">
+            <button
+              type="button"
+              className="search-tool-btn"
+              onClick={onPrevMatch}
+              title={t('viewer.prevMatch')}
+            >
+              <IconChevronUp size={14} stroke={1.5} />
+            </button>
+            <button
+              type="button"
+              className="search-tool-btn"
+              onClick={onNextMatch}
+              title={t('viewer.nextMatch')}
+            >
+              <IconChevronDown size={14} stroke={1.5} />
+            </button>
+          </div>
+        )}
 
         {searchQuery.length > 0 && (
           <button
@@ -176,6 +221,23 @@ export function LogToolbar({
 
       {/* Quick Navigation & View Toggles */}
       <div className="log-toolbar-actions">
+        {/* Date Filter Button */}
+        <button
+          ref={dateBtnRef}
+          type="button"
+          className={`toolbar-btn ${isDateFilterActive ? 'is-active' : ''}`}
+          onClick={() => dateBtnRef.current && onOpenDateFilter(dateBtnRef.current)}
+          disabled={!stats.hasTimestamps}
+          title={
+            stats.hasTimestamps
+              ? t('viewer.dateFilterTitle')
+              : t('viewer.noTimestamps')
+          }
+        >
+          <IconCalendar size={16} stroke={1.5} />
+          {isDateFilterActive && <span className="toolbar-indicator-dot" />}
+        </button>
+
         <button
           type="button"
           className={`toolbar-btn ${wordWrap ? 'is-active' : ''}`}

@@ -1,7 +1,20 @@
 import { memo, useMemo, useState } from 'react';
-import { IconCheck, IconCopy } from '@tabler/icons-react';
-import { findMatchRanges, splitTextWithMatches } from '../../core/search.ts';
-import type { ParsedLogLine } from '../../core/types.ts';
+import {
+  IconCheck,
+  IconCopy,
+  IconPin,
+  IconPinFilled,
+} from '@tabler/icons-react';
+import {
+  findMatchRanges,
+  splitTextWithSearchAndHighlights,
+} from '../../core/search.ts';
+import type {
+  CustomHighlightRule,
+  LevelColorConfig,
+  ParsedLogLine,
+  SearchMatchRange,
+} from '../../core/types.ts';
 import { useTranslation } from '../i18n/index.ts';
 
 interface VirtualLogRowProps {
@@ -9,8 +22,16 @@ interface VirtualLogRowProps {
   searchQuery: string;
   isRegex: boolean;
   caseSensitive: boolean;
+  activeSearchRange?: SearchMatchRange | null;
+  customRules?: CustomHighlightRule[];
+  levelColor?: LevelColorConfig;
+  showSeparator?: boolean;
+  separatorColor?: string;
   wordWrap: boolean;
   fontSize: number;
+  isPinned: boolean;
+  onTogglePin: (line: ParsedLogLine) => void;
+  onContextMenu: (event: React.MouseEvent, line: ParsedLogLine) => void;
 }
 
 export const VirtualLogRow = memo(function VirtualLogRow({
@@ -18,20 +39,33 @@ export const VirtualLogRow = memo(function VirtualLogRow({
   searchQuery,
   isRegex,
   caseSensitive,
+  activeSearchRange,
+  customRules,
+  levelColor,
+  showSeparator = false,
+  separatorColor = '#e5e5e3',
   wordWrap,
   fontSize,
+  isPinned,
+  onTogglePin,
+  onContextMenu,
 }: VirtualLogRowProps) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
-  const matchRanges = useMemo(() => {
+  const searchRanges = useMemo(() => {
     if (!searchQuery) return [];
     return findMatchRanges(line.raw, searchQuery, isRegex, caseSensitive);
   }, [line.raw, searchQuery, isRegex, caseSensitive]);
 
-  const parts = useMemo(() => {
-    return splitTextWithMatches(line.raw, matchRanges);
-  }, [line.raw, matchRanges]);
+  const chunks = useMemo(() => {
+    return splitTextWithSearchAndHighlights(
+      line.raw,
+      searchRanges,
+      activeSearchRange,
+      customRules,
+    );
+  }, [line.raw, searchRanges, activeSearchRange, customRules]);
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -44,32 +78,89 @@ export const VirtualLogRow = memo(function VirtualLogRow({
     }
   };
 
+  const handlePinClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onTogglePin(line);
+  };
+
+  // Safe background color from level configuration
+  const rowBg =
+    levelColor && levelColor.bgColor !== 'transparent'
+      ? levelColor.bgColor
+      : undefined;
+
+  const rowBorderBottom = showSeparator
+    ? `1px solid ${separatorColor}`
+    : undefined;
+
   return (
     <div
-      className={`log-row log-row-${line.level} ${wordWrap ? 'is-wrapped' : ''}`}
-      style={{ fontSize: `${fontSize}px` }}
+      className={`log-row log-row-${line.level} ${wordWrap ? 'is-wrapped' : ''} ${isPinned ? 'is-pinned-row' : ''}`}
+      style={{
+        fontSize: `${fontSize}px`,
+        backgroundColor: rowBg,
+        borderBottom: rowBorderBottom,
+      }}
+      onContextMenu={(e) => onContextMenu(e, line)}
     >
+      {/* Pin Button */}
+      <button
+        type="button"
+        className={`log-pin-btn ${isPinned ? 'is-active' : ''}`}
+        onClick={handlePinClick}
+        title={isPinned ? t('viewer.unpinLine') : t('viewer.pinLine')}
+      >
+        {isPinned ? (
+          <IconPinFilled size={13} stroke={1.5} />
+        ) : (
+          <IconPin size={13} stroke={1.5} />
+        )}
+      </button>
+
       {/* Line Number Gutter */}
       <span className="log-gutter" title={`Line ${line.lineNumber}`}>
         {line.lineNumber}
       </span>
 
       {/* Log Level Indicator */}
-      <span className={`log-level-badge log-level-${line.level}`}>
+      <span
+        className={`log-level-badge log-level-${line.level}`}
+        style={levelColor ? { color: levelColor.textColor } : undefined}
+      >
         {line.level.toUpperCase()}
       </span>
 
       {/* Log Line Text Content */}
       <div className="log-content">
-        {parts.map((part, idx) =>
-          part.isMatch ? (
-            <mark key={idx} className="log-match">
-              {part.text}
-            </mark>
-          ) : (
-            <span key={idx}>{part.text}</span>
-          ),
-        )}
+        {chunks.map((chunk, idx) => {
+          if (chunk.isSearchMatch) {
+            return (
+              <mark
+                key={idx}
+                className={`log-match ${chunk.isActiveMatch ? 'is-active-match' : ''}`}
+              >
+                {chunk.text}
+              </mark>
+            );
+          }
+
+          if (chunk.customStyle) {
+            return (
+              <span
+                key={idx}
+                style={{
+                  color: chunk.customStyle.color,
+                  fontWeight: chunk.customStyle.bold ? 700 : undefined,
+                  fontStyle: chunk.customStyle.italic ? 'italic' : undefined,
+                }}
+              >
+                {chunk.text}
+              </span>
+            );
+          }
+
+          return <span key={idx}>{chunk.text}</span>;
+        })}
       </div>
 
       {/* Hover Copy Button */}

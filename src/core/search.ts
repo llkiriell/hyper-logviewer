@@ -1,14 +1,58 @@
-import type { FilterOptions, LogLevel, ParsedLogLine, SearchMatchRange } from './types.ts';
+import type {
+  CustomHighlightRule,
+  DateRangeFilter,
+  FilterOptions,
+  LogLevel,
+  ParsedLogLine,
+  SearchMatchLocation,
+  SearchMatchRange,
+} from './types.ts';
+
+export function matchesDateFilter(
+  line: ParsedLogLine,
+  filter?: DateRangeFilter,
+): boolean {
+  if (!filter || !filter.enabled) return true;
+  if (!line.dateKey) return false;
+
+  if (filter.mode === 'range') {
+    if (filter.startDate && line.dateKey < filter.startDate) {
+      return false;
+    }
+    if (filter.endDate && line.dateKey > filter.endDate) {
+      return false;
+    }
+    return true;
+  }
+
+  if (filter.mode === 'single') {
+    if (filter.singleDate && line.dateKey !== filter.singleDate) {
+      return false;
+    }
+    if (line.timeKey) {
+      if (filter.startTime && line.timeKey < `${filter.startTime}:00`) {
+        return false;
+      }
+      if (filter.endTime && line.timeKey > `${filter.endTime}:59`) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  return true;
+}
 
 export function filterLines(
   lines: ParsedLogLine[],
   options: FilterOptions,
 ): ParsedLogLine[] {
-  const { level, searchQuery, isRegex, caseSensitive } = options;
+  const { level, searchQuery, isRegex, caseSensitive, dateFilter } = options;
   const hasQuery = searchQuery.trim().length > 0;
   const hasLevelFilter = level !== 'all';
+  const hasDateFilter = dateFilter?.enabled === true;
 
-  if (!hasQuery && !hasLevelFilter) {
+  if (!hasQuery && !hasLevelFilter && !hasDateFilter) {
     return lines;
   }
 
@@ -20,7 +64,6 @@ export function filterLines(
       try {
         regex = new RegExp(searchQuery, caseSensitive ? '' : 'i');
       } catch {
-        // In case of invalid regex, treat as plain text search
         regex = null;
         lowerQuery = caseSensitive ? searchQuery : searchQuery.toLowerCase();
       }
@@ -43,7 +86,11 @@ export function filterLines(
   };
 
   return lines.filter((line) => {
-    return matchesLevel(line.level) && matchesSearch(line.raw);
+    return (
+      matchesLevel(line.level) &&
+      matchesSearch(line.raw) &&
+      matchesDateFilter(line, dateFilter)
+    );
   });
 }
 
@@ -94,42 +141,156 @@ export function findMatchRanges(
   return ranges;
 }
 
-export interface HighlightPart {
-  text: string;
-  isMatch: boolean;
-}
-
-export function splitTextWithMatches(
-  text: string,
-  ranges: SearchMatchRange[],
-): HighlightPart[] {
-  if (ranges.length === 0) {
-    return [{ text, isMatch: false }];
+export function indexSearchMatches(
+  lines: ParsedLogLine[],
+  query: string,
+  isRegex: boolean,
+  caseSensitive: boolean,
+): {
+  totalMatches: number;
+  locations: SearchMatchLocation[];
+} {
+  if (!query || query.trim().length === 0) {
+    return { totalMatches: 0, locations: [] };
   }
 
-  const parts: HighlightPart[] = [];
-  let lastIndex = 0;
+  const locations: SearchMatchLocation[] = [];
+  let globalMatchIndex = 0;
 
-  for (const range of ranges) {
-    if (range.start > lastIndex) {
-      parts.push({
-        text: text.slice(lastIndex, range.start),
-        isMatch: false,
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line) continue;
+    const ranges = findMatchRanges(line.raw, query, isRegex, caseSensitive);
+    for (const r of ranges) {
+      locations.push({
+        lineIndex: i,
+        matchIndex: globalMatchIndex++,
+        start: r.start,
+        end: r.end,
       });
     }
-    parts.push({
-      text: text.slice(range.start, range.end),
-      isMatch: true,
+  }
+
+  return {
+    totalMatches: locations.length,
+    locations,
+  };
+}
+
+export interface FormattedTextChunk {
+  text: string;
+  isSearchMatch: boolean;
+  isActiveMatch?: boolean;
+  customStyle?: {
+    color: string;
+    bold: boolean;
+    italic: boolean;
+  };
+}
+
+export function splitTextWithSearchAndHighlights(
+  text: string,
+  searchRanges: SearchMatchRange[],
+  activeMatchRange?: SearchMatchRange | null,
+  customRules?: CustomHighlightRule[],
+): FormattedTextChunk[] {
+  // If no search matches and no custom highlights, return plain text chunk
+  const hasCustom = customRules && customRules.length > 0;
+  if (searchRanges.length === 0 && !hasCustom) {
+    return [{ text, isSearchMatch: false }];
+  }
+
+  // Priority 1: Search matches take visual precedence
+  // Find all custom rule occurrences first
+  interface Span {
+    start: number;
+    end: number;
+    isSearch: boolean;
+    isActiveSearch: boolean;
+    customStyle?: {
+      color: string;
+      bold: boolean;
+      italic: boolean;
+    };
+  }
+
+  const spans: Span[] = [];
+
+  for (const sr of searchRanges) {
+    const isActive =
+      !!activeMatchRange &&
+      activeMatchRange.start === sr.start &&
+      activeMatchRange.end === sr.end;
+    spans.push({
+      start: sr.start,
+      end: sr.end,
+      isSearch: true,
+      isActiveSearch: isActive,
     });
-    lastIndex = range.end;
+  }
+
+  // Add custom highlights only if they don't collide with search matches
+  if (hasCustom) {
+    const lowerText = text.toLowerCase();
+    for (const rule of customRules) {
+      if (!rule.keyword) continue;
+      const term = rule.keyword.toLowerCase();
+      let pos = 0;
+      while ((pos = lowerText.indexOf(term, pos)) !== -1) {
+        const start = pos;
+        const end = pos + term.length;
+        pos += term.length;
+
+        // Check collision with search matches
+        const collides = spans.some((s) => s.isSearch && s.start < end && s.end > start);
+        if (!collides) {
+          spans.push({
+            start,
+            end,
+            isSearch: false,
+            isActiveSearch: false,
+            customStyle: {
+              color: rule.color,
+              bold: rule.bold,
+              italic: rule.italic,
+            },
+          });
+        }
+      }
+    }
+  }
+
+  // Sort spans by start position
+  spans.sort((a, b) => a.start - b.start);
+
+  const chunks: FormattedTextChunk[] = [];
+  let lastIndex = 0;
+
+  for (const span of spans) {
+    if (span.start < lastIndex) continue; // safety against overlapping
+    if (span.start > lastIndex) {
+      chunks.push({
+        text: text.slice(lastIndex, span.start),
+        isSearchMatch: false,
+      });
+    }
+
+    chunks.push({
+      text: text.slice(span.start, span.end),
+      isSearchMatch: span.isSearch,
+      isActiveMatch: span.isActiveSearch,
+      customStyle: span.customStyle,
+    });
+
+    lastIndex = span.end;
   }
 
   if (lastIndex < text.length) {
-    parts.push({
+    chunks.push({
       text: text.slice(lastIndex),
-      isMatch: false,
+      isSearchMatch: false,
     });
   }
 
-  return parts;
+  return chunks;
 }
