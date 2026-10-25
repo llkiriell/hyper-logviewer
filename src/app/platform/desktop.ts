@@ -14,6 +14,8 @@ export interface LogViewerApi {
     files: Array<{ name: string; fullPath: string; size: number; mtime: number }>;
   }>;
   getPathForFile?: (file: File) => string;
+  getInitialFile?: () => Promise<string | null>;
+  onOpenFile?: (callback: (filePath: string) => void) => () => void;
 }
 
 export const desktop: LogViewerApi | null =

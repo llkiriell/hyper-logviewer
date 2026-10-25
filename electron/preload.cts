@@ -16,6 +16,8 @@ interface LogViewerApiBridge {
     files: Array<{ name: string; fullPath: string; size: number; mtime: number }>;
   }>;
   getPathForFile: (file: File) => string;
+  getInitialFile: () => Promise<string | null>;
+  onOpenFile: (callback: (filePath: string) => void) => () => void;
 }
 
 const api: LogViewerApiBridge = {
@@ -54,6 +56,18 @@ const api: LogViewerApiBridge = {
     } catch {
       return (file as unknown as { path?: string }).path ?? '';
     }
+  },
+  getInitialFile: () => {
+    return ipcRenderer.invoke('logviewer:get-initial-file');
+  },
+  onOpenFile: (callback: (filePath: string) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, filePath: string) => {
+      callback(filePath);
+    };
+    ipcRenderer.on('logviewer:open-file', handler);
+    return () => {
+      ipcRenderer.removeListener('logviewer:open-file', handler);
+    };
   },
 };
 

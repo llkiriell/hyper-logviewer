@@ -988,6 +988,10 @@ select {
 }
 
 /* Wrapping overrides */
+.viewer-virtual-row-wrapper {
+  box-sizing: border-box;
+}
+
 .viewer-scroller.is-wrapped .viewer-virtual-canvas {
   width: 100% !important;
   min-width: 0 !important;
@@ -998,12 +1002,14 @@ select {
   width: 100% !important;
   min-width: 0 !important;
   max-width: 100% !important;
+  height: auto !important;
 }
 
 .log-row.is-wrapped {
   width: 100% !important;
   min-width: 0 !important;
   max-width: 100% !important;
+  height: auto !important;
 }
 
 /* Solid non-transparent sticky columns */
@@ -1014,9 +1020,8 @@ select {
   width: 22px;
   min-width: 22px;
   max-width: 22px;
-  height: 24px;
   min-height: 24px;
-  max-height: 24px;
+  align-self: stretch;
   box-sizing: border-box;
   padding: 0;
   margin: 0;
@@ -1039,9 +1044,8 @@ select {
   width: 16px;
   min-width: 16px;
   max-width: 16px;
-  height: 24px;
   min-height: 24px;
-  max-height: 24px;
+  align-self: stretch;
   box-sizing: border-box;
   padding: 0;
   margin: 0;
@@ -1068,9 +1072,8 @@ select {
   width: 50px;
   min-width: 50px;
   max-width: 50px;
-  height: 24px;
   min-height: 24px;
-  max-height: 24px;
+  align-self: stretch;
   line-height: 24px;
   box-sizing: border-box;
   padding: 0 6px 0 0;
@@ -1094,9 +1097,8 @@ select {
   width: 52px;
   min-width: 52px;
   max-width: 52px;
-  height: 24px;
   min-height: 24px;
-  max-height: 24px;
+  align-self: stretch;
   line-height: 24px;
   box-sizing: border-box;
   padding: 0;
@@ -2178,24 +2180,78 @@ select {
   cursor: pointer;
 }
 
-/* Custom Highlight Keywords */
-.keyword-add-bar {
+/* Custom Standard Word Form Card - Clean Balanced Layout */
+.std-word-form-card {
   display: flex;
   align-items: center;
+  gap: 14px;
   flex-wrap: wrap;
-  gap: 10px;
   margin-top: 14px;
   margin-bottom: 16px;
-  padding: 8px 10px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  border: 1px solid transparent;
-  transition: all 0.15s ease;
+  transition: border-color 0.15s ease;
 }
 
-.keyword-add-bar.is-editing {
+.std-word-input {
+  flex: 1;
+  min-width: 180px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+.std-word-input:focus {
+  border-color: var(--accent);
+}
+
+.std-word-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.std-word-preview {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Custom Highlight Keywords Form Card - Clean 2-row Layout */
+.keyword-form-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.keyword-form-card.is-editing {
   background: var(--surface-hover);
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent-line);
+}
+
+.keyword-editing-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
 }
 
 .keyword-editing-badge {
@@ -2211,44 +2267,89 @@ select {
   user-select: none;
 }
 
-.keyword-input-wrapper {
-  flex: 1;
-  min-width: 200px;
+.keyword-form-row {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.keyword-input-wrapper {
+  flex: 1.5;
+  min-width: 0;
+  display: flex;
+  align-items: center;
   position: relative;
 }
 
 .keyword-input {
   width: 100%;
-  height: 34px;
-  padding: 0 12px;
+  height: 36px;
+  padding: 0 75px 0 12px;
   border: 1px solid var(--border);
-  background: var(--surface);
+  background: var(--bg);
   border-radius: var(--radius);
   color: var(--text);
   font-size: var(--text-sm);
   font-family: var(--font-ui);
   outline: none;
   box-sizing: border-box;
+  transition: border-color 0.15s ease;
 }
 
 .keyword-input:focus {
   border-color: var(--accent);
 }
 
-.keyword-label-input {
-  width: 180px;
-  height: 34px;
-  padding: 0 10px;
+.keyword-regex-toggle {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 8px;
   border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   background: var(--surface);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.keyword-regex-toggle:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.keyword-regex-toggle.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.keyword-label-wrapper {
+  flex: 1;
+  min-width: 140px;
+}
+
+.keyword-label-input {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
   border-radius: var(--radius);
   color: var(--text);
   font-size: var(--text-sm);
   font-family: var(--font-ui);
   outline: none;
   box-sizing: border-box;
+  transition: border-color 0.15s ease;
 }
 
 .keyword-label-input:focus {
@@ -2270,10 +2371,53 @@ select {
   font-weight: 500;
 }
 
-.keyword-edit-actions {
+.keyword-controls-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+.keyword-style-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.keyword-style-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  user-select: none;
+  margin-right: 4px;
+}
+
+.keyword-format-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.keyword-live-preview {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: var(--bg);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.keyword-preview-chip {
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+
+.keyword-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .custom-keywords-list {

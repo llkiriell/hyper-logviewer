@@ -231,8 +231,21 @@ export const VirtualLogRow = memo(function VirtualLogRow({
     return levelColor.bgColor;
   }, [levelColor, line.isContinuation]);
 
+  // Effective line separator color: uses user custom color, or theme-aware var(--border) if default
+  const effectiveSeparatorColor = useMemo(() => {
+    if (!showSeparator || isSelected) return undefined;
+    if (separatorColor && separatorColor.toLowerCase() !== '#e5e5e3') {
+      return separatorColor;
+    }
+    return 'var(--border)';
+  }, [showSeparator, isSelected, separatorColor]);
+
   // Fully opaque solid composite background for sticky columns (prevents any bleed-through on horizontal scroll)
   const stickySolidStyle = useMemo(() => {
+    const separatorShadow = effectiveSeparatorColor
+      ? `inset 0 -1px 0 0 ${effectiveSeparatorColor}`
+      : undefined;
+
     if (isSelected) {
       return {
         backgroundColor: 'var(--bg)',
@@ -243,18 +256,18 @@ export const VirtualLogRow = memo(function VirtualLogRow({
       return {
         backgroundColor: 'var(--bg)',
         backgroundImage: `linear-gradient(${rowBg}, ${rowBg})`,
+        boxShadow: separatorShadow,
       };
     }
     return {
       backgroundColor: 'var(--bg)',
+      boxShadow: separatorShadow,
     };
-  }, [isSelected, rowBg]);
+  }, [isSelected, rowBg, effectiveSeparatorColor]);
 
-  const rowBorderBottom = isSelected
-    ? undefined
-    : showSeparator
-      ? `1px solid ${separatorColor}`
-      : undefined;
+  const rowBorderBottom = effectiveSeparatorColor
+    ? `1px solid ${effectiveSeparatorColor}`
+    : undefined;
 
   const badgeText = line.customLevelTag
     ? line.customLevelTag.toUpperCase()
@@ -295,6 +308,9 @@ export const VirtualLogRow = memo(function VirtualLogRow({
         fontSize: `${fontSize}px`,
         backgroundColor: rowBg,
         borderBottom: rowBorderBottom,
+        boxShadow: effectiveSeparatorColor
+          ? `inset 0 -1px 0 0 ${effectiveSeparatorColor}`
+          : undefined,
         ...(isSelected
           ? ({ '--selected-line-border': activeBorderColor } as React.CSSProperties)
           : {}),

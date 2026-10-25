@@ -80,7 +80,7 @@ export interface Preferences {
 
 const STORAGE_KEY = 'hyper-logviewer.preferences';
 
-const DEFAULT_PREFERENCES: Preferences = {
+export const DEFAULT_PREFERENCES: Preferences = {
   theme: 'system',
   accent: 'ember',
   locale: 'en',
