@@ -1,5 +1,6 @@
 import { memo, useMemo, useState } from 'react';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
+import { analyzeJsonBrackets, type BracketInfo } from '../../core/brackets.ts';
 import { useTranslation } from '../i18n/index.ts';
 import { usePreferences } from '../platform/preferences.ts';
 
@@ -8,8 +9,68 @@ interface JsonHighlightViewerProps {
   index: number;
 }
 
-// Tokenizes a single line of formatted JSON
-function highlightJsonLine(line: string) {
+// Renders non-token text segments while colorizing structural brackets if rainbow brackets are enabled
+function renderJsonSegmentWithBrackets(
+  text: string,
+  startGlobalOffset: number,
+  bracketMap: Map<number, BracketInfo> | null,
+  hoveredPairId: number | null,
+  onHoverPair: (id: number | null) => void,
+): React.ReactNode {
+  if (!bracketMap || bracketMap.size === 0) {
+    return text;
+  }
+
+  const nodes: React.ReactNode[] = [];
+  let buffer = '';
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const globalIdx = startGlobalOffset + i;
+    const bracket = bracketMap.get(globalIdx);
+
+    if (bracket) {
+      if (buffer) {
+        nodes.push(buffer);
+        buffer = '';
+      }
+      const isMatched = hoveredPairId === bracket.pairId;
+      nodes.push(
+        <span
+          key={`br-${globalIdx}`}
+          className={`rainbow-bracket bracket-depth-${bracket.depth % 5} ${isMatched ? 'is-matched-bracket' : ''}`}
+          onMouseEnter={(e) => {
+            e.stopPropagation();
+            onHoverPair(bracket.pairId);
+          }}
+          onMouseLeave={(e) => {
+            e.stopPropagation();
+            onHoverPair(null);
+          }}
+        >
+          {char}
+        </span>,
+      );
+    } else {
+      buffer += char;
+    }
+  }
+
+  if (buffer) {
+    nodes.push(buffer);
+  }
+
+  return nodes.length > 0 ? nodes : text;
+}
+
+// Tokenizes a single line of formatted JSON with rainbow brackets support
+function highlightJsonLine(
+  line: string,
+  lineGlobalOffset: number,
+  bracketMap: Map<number, BracketInfo> | null,
+  hoveredPairId: number | null,
+  onHoverPair: (id: number | null) => void,
+) {
   const regex =
     /("(?:\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(\s*:)?|\btrue\b|\bfalse\b|\bnull\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g;
 
@@ -20,7 +81,17 @@ function highlightJsonLine(line: string) {
   while ((match = regex.exec(line)) !== null) {
     const textBefore = line.slice(lastIndex, match.index);
     if (textBefore) {
-      nodes.push(<span key={`text-${lastIndex}`}>{textBefore}</span>);
+      nodes.push(
+        <span key={`text-${lastIndex}`}>
+          {renderJsonSegmentWithBrackets(
+            textBefore,
+            lineGlobalOffset + lastIndex,
+            bracketMap,
+            hoveredPairId,
+            onHoverPair,
+          )}
+        </span>,
+      );
     }
 
     const token = match[0];
@@ -63,7 +134,17 @@ function highlightJsonLine(line: string) {
 
   const trailing = line.slice(lastIndex);
   if (trailing) {
-    nodes.push(<span key={`tail-${lastIndex}`}>{trailing}</span>);
+    nodes.push(
+      <span key={`tail-${lastIndex}`}>
+        {renderJsonSegmentWithBrackets(
+          trailing,
+          lineGlobalOffset + lastIndex,
+          bracketMap,
+          hoveredPairId,
+          onHoverPair,
+        )}
+      </span>,
+    );
   }
 
   return nodes.length > 0 ? nodes : line;
@@ -76,6 +157,7 @@ export const JsonHighlightViewer = memo(function JsonHighlightViewer({
   const { t } = useTranslation();
   const prefs = usePreferences();
   const [copied, setCopied] = useState(false);
+  const [hoveredBracketPairId, setHoveredBracketPairId] = useState<number | null>(null);
 
   const formattedJson = useMemo(() => {
     try {
@@ -88,6 +170,23 @@ export const JsonHighlightViewer = memo(function JsonHighlightViewer({
   const lines = useMemo(() => {
     return formattedJson.split('\n');
   }, [formattedJson]);
+
+  // Compute global character offsets for each line in the formatted string
+  const lineOffsets = useMemo(() => {
+    const offsets: number[] = [0];
+    let curr = 0;
+    for (let i = 0; i < lines.length - 1; i++) {
+      curr += (lines[i]?.length ?? 0) + 1; // +1 for \n
+      offsets.push(curr);
+    }
+    return offsets;
+  }, [lines]);
+
+  // Analyze all structural JSON brackets (ignoring string literals) if rainbow brackets is enabled
+  const bracketMap = useMemo(() => {
+    if (!prefs.rainbowBrackets) return null;
+    return analyzeJsonBrackets(formattedJson);
+  }, [formattedJson, prefs.rainbowBrackets]);
 
   const handleCopy = async () => {
     try {
@@ -139,7 +238,13 @@ export const JsonHighlightViewer = memo(function JsonHighlightViewer({
               {idx + 1}
             </span>
             <span className="json-line-content">
-              {highlightJsonLine(lineStr)}
+              {highlightJsonLine(
+                lineStr,
+                lineOffsets[idx] ?? 0,
+                bracketMap,
+                hoveredBracketPairId,
+                setHoveredBracketPairId,
+              )}
             </span>
           </div>
         ))}

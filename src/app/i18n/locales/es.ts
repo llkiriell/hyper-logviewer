@@ -176,6 +176,8 @@ export const es: TranslationSchema = {
       highlightActiveLineHelp: 'Resalta visualmente la línea en la que se hace clic para mantenerla localizada.',
     },
     parser: {
+      colorizeInlineSeverity: 'Colorear severidad en el texto',
+      colorizeInlineSeverityHelp: 'Colorea y aplica negrita a palabras como INFO, WARN, ERROR directamente dentro del texto del registro.',
       levelColorsTitle: 'Colores de niveles de severidad estándar',
       levelColorsDesc: 'Personaliza el color de texto y fondo suave legible para severidades estándar.',
       textColor: 'Color de texto',

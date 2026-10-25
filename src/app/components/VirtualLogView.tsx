@@ -390,6 +390,15 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     return entries;
   }, [contextMenu, pinnedLine, t, handleTogglePin, handleExtractDateToTab]);
 
+  const inlineSeverityConfig = useMemo(() => {
+    if (!prefs.colorizeInlineSeverity) return undefined;
+    return {
+      enabled: true,
+      levelColors: prefs.levelColors,
+      customStandardLevels: prefs.customStandardLevels,
+    };
+  }, [prefs.colorizeInlineSeverity, prefs.levelColors, prefs.customStandardLevels]);
+
   return (
     <div className="viewer-container">
       {/* Top Toolbar (chips align to start if bottom search bar is enabled) */}
@@ -445,6 +454,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
               isRegex={isRegex}
               caseSensitive={caseSensitive}
               customRules={prefs.customHighlights}
+              inlineSeverityConfig={inlineSeverityConfig}
               levelColor={resolveLineColor(pinnedLine)}
               showSeparator={prefs.showLineSeparator}
               separatorColor={prefs.lineSeparatorColor}
@@ -533,6 +543,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
                       caseSensitive={caseSensitive}
                       activeSearchRange={activeRange}
                       customRules={prefs.customHighlights}
+                      inlineSeverityConfig={inlineSeverityConfig}
                       levelColor={resolveLineColor(line)}
                       showSeparator={prefs.showLineSeparator}
                       separatorColor={prefs.lineSeparatorColor}

@@ -98,3 +98,83 @@ export function analyzeBrackets(text: string): Map<number, BracketInfo> {
 
   return map;
 }
+
+/**
+ * Specialized bracket analyzer for JSON text that strictly ignores brackets inside string literals.
+ */
+export function analyzeJsonBrackets(jsonText: string): Map<number, BracketInfo> {
+  const map = new Map<number, BracketInfo>();
+  const stack: Array<{ char: string; index: number; depth: number; pairId: number }> = [];
+  let pairCounter = 0;
+  let inString = false;
+  let escapeNext = false;
+
+  for (let i = 0; i < jsonText.length; i++) {
+    const char = jsonText[i];
+    if (!char) continue;
+
+    if (inString) {
+      if (escapeNext) {
+        escapeNext = false;
+      } else if (char === '\\') {
+        escapeNext = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (OPENING_BRACKETS[char]) {
+      const depth = stack.length;
+      const pairId = ++pairCounter;
+      stack.push({ char, index: i, depth, pairId });
+    } else if (CLOSING_BRACKETS[char]) {
+      const expectedOpen = CLOSING_BRACKETS[char];
+      let matchIdx = -1;
+      for (let s = stack.length - 1; s >= 0; s--) {
+        if (stack[s]?.char === expectedOpen) {
+          matchIdx = s;
+          break;
+        }
+      }
+
+      if (matchIdx !== -1) {
+        const open = stack[matchIdx];
+        if (open) {
+          stack.splice(matchIdx, 1);
+          map.set(open.index, {
+            pairId: open.pairId,
+            depth: open.depth,
+            char: open.char,
+            isOpening: true,
+            partnerIndex: i,
+          });
+          map.set(i, {
+            pairId: open.pairId,
+            depth: open.depth,
+            char,
+            isOpening: false,
+            partnerIndex: open.index,
+          });
+        }
+      }
+    }
+  }
+
+  for (const unclosed of stack) {
+    map.set(unclosed.index, {
+      pairId: unclosed.pairId,
+      depth: unclosed.depth,
+      char: unclosed.char,
+      isOpening: true,
+      partnerIndex: -1,
+    });
+  }
+
+  return map;
+}

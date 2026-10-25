@@ -38,6 +38,7 @@ export interface Preferences {
   showLineSeparator: boolean;
   lineSeparatorColor: string;
   levelColors: Record<LogLevel, LevelColorConfig>;
+  colorizeInlineSeverity: boolean;
   customHighlights: CustomHighlightRule[];
   customStandardLevels: CustomStandardLevel[];
   // JSON viewer theme
@@ -73,6 +74,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   showLineSeparator: false,
   lineSeparatorColor: '#e5e5e3',
   levelColors: DEFAULT_LEVEL_COLORS,
+  colorizeInlineSeverity: true,
   customHighlights: [],
   customStandardLevels: [],
   jsonTheme: 'postman',
@@ -107,6 +109,7 @@ function load(): Preferences {
       showLineSeparator: typeof parsed.showLineSeparator === 'boolean' ? parsed.showLineSeparator : DEFAULT_PREFERENCES.showLineSeparator,
       lineSeparatorColor: parsed.lineSeparatorColor ?? DEFAULT_PREFERENCES.lineSeparatorColor,
       levelColors: { ...DEFAULT_LEVEL_COLORS, ...(parsed.levelColors ?? {}) },
+      colorizeInlineSeverity: typeof parsed.colorizeInlineSeverity === 'boolean' ? parsed.colorizeInlineSeverity : DEFAULT_PREFERENCES.colorizeInlineSeverity,
       customHighlights: Array.isArray(parsed.customHighlights) ? parsed.customHighlights : DEFAULT_PREFERENCES.customHighlights,
       customStandardLevels: Array.isArray(parsed.customStandardLevels) ? parsed.customStandardLevels : DEFAULT_PREFERENCES.customStandardLevels,
       jsonTheme: parsed.jsonTheme === 'insomnia' ? 'insomnia' : 'postman',

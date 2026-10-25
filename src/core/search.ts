@@ -1,7 +1,9 @@
 import type {
   CustomHighlightRule,
+  CustomStandardLevel,
   DateRangeFilter,
   FilterOptions,
+  LevelColorConfig,
   LogLevel,
   ParsedLogLine,
   SearchMatchLocation,
@@ -189,15 +191,28 @@ export interface FormattedTextChunk {
   };
 }
 
+export interface InlineSeverityConfig {
+  enabled: boolean;
+  levelColors: Record<LogLevel, LevelColorConfig>;
+  customStandardLevels?: CustomStandardLevel[];
+}
+
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export function splitTextWithSearchAndHighlights(
   text: string,
   searchRanges: SearchMatchRange[],
   activeMatchRange?: SearchMatchRange | null,
   customRules?: CustomHighlightRule[],
+  inlineSeverityConfig?: InlineSeverityConfig,
 ): FormattedTextChunk[] {
-  // If no search matches and no custom highlights, return plain text chunk
   const hasCustom = customRules && customRules.length > 0;
-  if (searchRanges.length === 0 && !hasCustom) {
+  const hasInline = inlineSeverityConfig && inlineSeverityConfig.enabled;
+
+  // If no search matches, no custom highlights, and no inline severity, return plain text chunk
+  if (searchRanges.length === 0 && !hasCustom && !hasInline) {
     return [{ text, startIndex: 0, isSearchMatch: false }];
   }
 
@@ -289,6 +304,51 @@ export function splitTextWithSearchAndHighlights(
               },
             });
           }
+        }
+      }
+    }
+  }
+
+  // Priority 3: Inline severity standard words (FATAL, ERROR, WARN, INFO, DEBUG, TRACE, etc.)
+  if (hasInline && inlineSeverityConfig) {
+    const standardWords: Array<{ word: string; color: string }> = [
+      { word: 'FATAL', color: inlineSeverityConfig.levelColors.fatal.textColor },
+      { word: 'ERROR', color: inlineSeverityConfig.levelColors.error.textColor },
+      { word: 'WARN', color: inlineSeverityConfig.levelColors.warn.textColor },
+      { word: 'WARNING', color: inlineSeverityConfig.levelColors.warn.textColor },
+      { word: 'INFO', color: inlineSeverityConfig.levelColors.info.textColor },
+      { word: 'DEBUG', color: inlineSeverityConfig.levelColors.debug.textColor },
+      { word: 'TRACE', color: inlineSeverityConfig.levelColors.trace.textColor },
+    ];
+
+    if (inlineSeverityConfig.customStandardLevels) {
+      for (const c of inlineSeverityConfig.customStandardLevels) {
+        if (c.word) {
+          standardWords.push({ word: c.word.toUpperCase(), color: c.textColor });
+        }
+      }
+    }
+
+    for (const sw of standardWords) {
+      if (!sw.word || sw.color === 'inherit' || sw.color === 'transparent') continue;
+      const pattern = new RegExp(`\\b${escapeRegExp(sw.word)}\\b`, 'gi');
+      let m: RegExpExecArray | null;
+      while ((m = pattern.exec(text)) !== null) {
+        const start = m.index;
+        const end = m.index + m[0].length;
+        const collides = spans.some((s) => s.start < end && s.end > start);
+        if (!collides) {
+          spans.push({
+            start,
+            end,
+            isSearch: false,
+            isActiveSearch: false,
+            customStyle: {
+              color: sw.color,
+              bold: true,
+              italic: false,
+            },
+          });
         }
       }
     }

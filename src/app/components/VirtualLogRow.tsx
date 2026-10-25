@@ -9,6 +9,7 @@ import {
 import { analyzeBrackets, type BracketInfo } from '../../core/brackets.ts';
 import {
   findMatchRanges,
+  type InlineSeverityConfig,
   splitTextWithSearchAndHighlights,
 } from '../../core/search.ts';
 import type {
@@ -26,6 +27,7 @@ interface VirtualLogRowProps {
   caseSensitive: boolean;
   activeSearchRange?: SearchMatchRange | null;
   customRules?: CustomHighlightRule[];
+  inlineSeverityConfig?: InlineSeverityConfig;
   levelColor?: LevelColorConfig;
   showSeparator?: boolean;
   separatorColor?: string;
@@ -105,6 +107,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
   caseSensitive,
   activeSearchRange,
   customRules,
+  inlineSeverityConfig,
   levelColor,
   showSeparator = false,
   separatorColor = '#e5e5e3',
@@ -140,8 +143,9 @@ export const VirtualLogRow = memo(function VirtualLogRow({
       searchRanges,
       activeSearchRange,
       customRules,
+      inlineSeverityConfig,
     );
-  }, [line.raw, searchRanges, activeSearchRange, customRules]);
+  }, [line.raw, searchRanges, activeSearchRange, customRules, inlineSeverityConfig]);
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();

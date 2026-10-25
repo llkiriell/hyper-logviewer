@@ -174,6 +174,8 @@ export const en = {
       highlightActiveLineHelp: 'Visually highlight the clicked line to keep it clearly identified.',
     },
     parser: {
+      colorizeInlineSeverity: 'Colorize Severity in Log Text',
+      colorizeInlineSeverityHelp: 'Colorize and bold standard severity keywords (INFO, WARN, ERROR, etc.) directly in the log line.',
       levelColorsTitle: 'Standard Log Level Colors',
       levelColorsDesc: 'Customize text color and readable background tint for standard severities.',
       textColor: 'Text Color',

@@ -21,6 +21,8 @@ import {
   setPreferences,
   usePreferences,
 } from '../../platform/preferences.ts';
+import { Switch } from '../primitives.tsx';
+import { SettingRow } from './SettingsRows.tsx';
 
 const STANDARD_LEVELS: LogLevel[] = ['fatal', 'error', 'warn', 'info', 'debug', 'trace'];
 
@@ -262,6 +264,20 @@ export function ParserSettings() {
 
   return (
     <div className="settings-section">
+      {/* 0. Colorize Inline Severity in Log Body */}
+      <div className="settings-group" style={{ marginBottom: '16px' }}>
+        <SettingRow
+          label={t('settings.parser.colorizeInlineSeverity')}
+          help={t('settings.parser.colorizeInlineSeverityHelp')}
+        >
+          <Switch
+            checked={prefs.colorizeInlineSeverity}
+            onChange={(colorizeInlineSeverity) => setPreferences({ colorizeInlineSeverity })}
+            label={t('settings.parser.colorizeInlineSeverity')}
+          />
+        </SettingRow>
+      </div>
+
       {/* 1. Standard Level Colors */}
       <div className="settings-group">
         <div className="settings-group-header">
