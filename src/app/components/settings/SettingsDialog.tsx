@@ -218,6 +218,32 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
                   )}
                 </div>
               </SettingRow>
+
+              <SettingRow
+                label={t('settings.appearance.jsonTheme')}
+                help={t('settings.appearance.jsonThemeHelp')}
+              >
+                <Segmented<'postman' | 'insomnia'>
+                  value={prefs.jsonTheme}
+                  label={t('settings.appearance.jsonTheme')}
+                  options={[
+                    ['postman', 'Postman'],
+                    ['insomnia', 'Insomnia'],
+                  ]}
+                  onChange={(jsonTheme) => setPreferences({ jsonTheme })}
+                />
+              </SettingRow>
+
+              <SettingRow
+                label={t('settings.appearance.bottomSearchBar')}
+                help={t('settings.appearance.bottomSearchBarHelp')}
+              >
+                <Switch
+                  checked={prefs.bottomSearchBar}
+                  onChange={(bottomSearchBar) => setPreferences({ bottomSearchBar })}
+                  label={t('settings.appearance.bottomSearchBar')}
+                />
+              </SettingRow>
             </SettingsGroup>
           )}
 

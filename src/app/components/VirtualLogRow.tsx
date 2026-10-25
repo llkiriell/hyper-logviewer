@@ -32,6 +32,7 @@ interface VirtualLogRowProps {
   fontSize: number;
   isPinned: boolean;
   isContextMenuTarget?: boolean;
+  isHighlighted?: boolean;
   onTogglePin: (line: ParsedLogLine) => void;
   onContextMenu: (event: React.MouseEvent, line: ParsedLogLine) => void;
   onInspectLine?: (line: ParsedLogLine) => void;
@@ -51,6 +52,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
   fontSize,
   isPinned,
   isContextMenuTarget = false,
+  isHighlighted = false,
   onTogglePin,
   onContextMenu,
   onInspectLine,
@@ -104,7 +106,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
 
   return (
     <div
-      className={`log-row log-row-${line.level} ${wordWrap ? 'is-wrapped' : ''} ${isPinned ? 'is-pinned-row' : ''} ${isContextMenuTarget ? 'is-context-target' : ''}`}
+      className={`log-row log-row-${line.level} ${wordWrap ? 'is-wrapped' : ''} ${isPinned ? 'is-pinned-row' : ''} ${isContextMenuTarget ? 'is-context-target' : ''} ${isHighlighted ? 'is-highlighted-focus' : ''}`}
       style={{
         fontSize: `${fontSize}px`,
         backgroundColor: rowBg,
@@ -112,7 +114,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
       }}
       onContextMenu={(e) => onContextMenu(e, line)}
     >
-      {/* Pin Button */}
+      {/* Sticky Pin Button */}
       <button
         type="button"
         className={`log-pin-btn ${isPinned ? 'is-active' : ''}`}
@@ -126,12 +128,12 @@ export const VirtualLogRow = memo(function VirtualLogRow({
         )}
       </button>
 
-      {/* Line Number Gutter */}
+      {/* Sticky Line Number Gutter */}
       <span className="log-gutter" title={`Line ${line.lineNumber}`}>
         {line.lineNumber}
       </span>
 
-      {/* Log Level Indicator */}
+      {/* Sticky Log Level Indicator */}
       <span
         className={`log-level-badge log-level-${line.level}`}
         style={levelColor ? { color: levelColor.textColor } : undefined}

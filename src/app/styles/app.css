@@ -933,6 +933,43 @@ select {
   border-left: 3px solid transparent;
   position: relative;
   box-sizing: border-box;
+  min-width: 100%;
+  width: max-content; /* Stretches background across all horizontal scroll! */
+}
+
+.log-pin-btn {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: inherit;
+}
+
+.log-gutter {
+  position: sticky;
+  left: 22px;
+  z-index: 3;
+  background: inherit;
+}
+
+.log-level-badge {
+  position: sticky;
+  left: 82px;
+  z-index: 3;
+  background: inherit;
+}
+
+/* Retained focus highlight when search filter is cleared */
+.log-row.is-highlighted-focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  background: var(--surface-hover) !important;
+  animation: pulseHighlight 2.5s ease-out;
+}
+
+@keyframes pulseHighlight {
+  0% { box-shadow: 0 0 12px var(--accent); }
+  50% { box-shadow: 0 0 6px var(--accent); }
+  100% { box-shadow: none; }
 }
 
 .log-row:hover {
@@ -1102,13 +1139,19 @@ select {
   align-items: center;
 }
 
+.status-filepath-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
 .status-filepath-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   background: transparent;
   border: none;
-  color: var(--text-muted);
+  color: var(--text-muted); /* Gray color, not bluish */
   font-size: var(--text-xs);
   cursor: pointer;
   padding: 2px 6px;
@@ -1120,14 +1163,53 @@ select {
 
 .status-filepath-btn:hover {
   background: var(--hover);
-  color: var(--accent);
-  text-decoration: underline;
+  color: var(--text); /* Neutral text color, not blue */
+  text-decoration: none;
 }
 
 .status-filepath-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Custom pleasant tooltip for file path */
+.status-filepath-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  flex-direction: column;
+  gap: 3px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  padding: 7px 12px;
+  border-radius: var(--radius);
+  font-size: 11px;
+  font-family: var(--font-ui);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  animation: fadeIn 0.12s ease;
+}
+
+.status-filepath-wrapper:hover .status-filepath-tooltip {
+  display: flex;
+}
+
+.status-filepath-tooltip .tooltip-title {
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.4px;
+}
+
+.status-filepath-tooltip .tooltip-path {
+  font-family: var(--font-mono);
+  color: var(--text);
 }
 
 .status-actions {
@@ -1780,11 +1862,11 @@ select {
    JSON Beauty Highlighting, Sidebar, Recent Files & Watched Folders
    ========================================================================== */
 
-/* JSON Highlight Viewer Card */
+/* JSON Highlight Viewer Card (Unified Single Scrollbar & Themes) */
 .json-viewer-card {
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: #ffffff; /* Explicit white background as requested */
+  background: #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   margin-bottom: 16px;
@@ -1799,6 +1881,12 @@ select {
   border-bottom: 1px solid #ebebeb;
 }
 
+.json-viewer-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .json-viewer-tag {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -1808,66 +1896,105 @@ select {
   letter-spacing: 0.5px;
 }
 
+.json-viewer-theme-label {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #ebebeb;
+  color: #666666;
+  font-weight: 500;
+}
+
+/* Single unified code container: fixes double scrollbars */
 .json-code-container {
   display: flex;
+  flex-direction: column;
   font-family: var(--font-mono);
   font-size: 12px;
   line-height: 1.6;
   max-height: 380px;
-  overflow: auto;
+  overflow: auto; /* Only ONE single scrollbar */
   background: #ffffff;
   color: #24292f;
 }
 
-.json-gutter-column {
-  user-select: none;
+.json-code-line {
   display: flex;
-  flex-direction: column;
-  padding: 10px 10px 10px 14px;
-  background: #fcfcfc;
-  border-right: 1px solid #eeeeee;
-  color: #999999;
-  text-align: right;
-  min-width: 36px;
+  min-width: 100%;
+  width: max-content;
+  align-items: flex-start;
+}
+
+.json-code-line:hover {
+  background: #f9f9fa;
 }
 
 .json-line-number {
+  position: sticky;
+  left: 0;
+  min-width: 40px;
+  padding: 0 10px 0 12px;
+  text-align: right;
+  color: #999999;
+  background: #fafafa;
+  border-right: 1px solid #eeeeee;
+  user-select: none;
+  flex: none;
   font-size: 11px;
+  z-index: 2;
 }
 
-.json-lines-column {
-  display: flex;
-  flex-direction: column;
-  padding: 10px 14px;
-  overflow-x: auto;
-  flex: 1;
+.json-line-content {
+  padding: 0 14px;
   white-space: pre;
+  flex: 1;
 }
 
-.json-code-line {
-  min-height: 1.6em;
-}
-
-.json-token-key {
-  color: #0550ae;
+/* --- Postman JSON Theme --- */
+.json-theme-postman .json-token-key {
+  color: #9a05a1; /* Postman vibrant purple */
   font-weight: 600;
 }
 
-.json-token-string {
-  color: #116329;
+.json-theme-postman .json-token-string {
+  color: #22863a; /* Postman forest green */
 }
 
-.json-token-number {
-  color: #b05a00;
+.json-theme-postman .json-token-number {
+  color: #e36209; /* Postman warm orange */
 }
 
-.json-token-boolean {
-  color: #8250df;
+.json-theme-postman .json-token-boolean {
+  color: #005cc5; /* Postman blue */
   font-weight: 600;
 }
 
-.json-token-null {
-  color: #6e7781;
+.json-theme-postman .json-token-null {
+  color: #6a737d;
+  font-style: italic;
+}
+
+/* --- Insomnia JSON Theme --- */
+.json-theme-insomnia .json-token-key {
+  color: #5a32a3; /* Insomnia deep indigo purple */
+  font-weight: 600;
+}
+
+.json-theme-insomnia .json-token-string {
+  color: #00875a; /* Insomnia emerald */
+}
+
+.json-theme-insomnia .json-token-number {
+  color: #d9381e; /* Insomnia coral red */
+}
+
+.json-theme-insomnia .json-token-boolean {
+  color: #0065ff; /* Insomnia bright azure */
+  font-weight: 600;
+}
+
+.json-theme-insomnia .json-token-null {
+  color: #8993a4;
   font-style: italic;
 }
 
@@ -2225,4 +2352,149 @@ select {
 .recent-file-remove:hover {
   background: var(--hover);
   color: var(--text);
+}
+
+
+/* Bottom Search Bar */
+.bottom-search-wrapper {
+  flex: none;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 6px 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.is-bottom-search-bar {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.log-toolbar.has-bottom-search .log-severity-chips.is-aligned-start {
+  flex: 1;
+  justify-content: flex-start;
+  margin-left: 0;
+}
+
+/* Go To Line Popover */
+.goto-line-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 1000;
+  width: 180px;
+}
+
+.goto-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.goto-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.goto-input {
+  flex: 1;
+  height: 24px;
+  padding: 0 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+
+.goto-input:focus {
+  border-color: var(--accent);
+}
+
+/* Tab sidebar toggle button */
+.tab-sidebar-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-left: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  flex: none;
+  transition: all 0.12s ease;
+}
+
+.tab-sidebar-toggle-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.empty-tabs-bar {
+  height: 34px;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+}
+
+/* Sidebar inline file search */
+.sidebar-search-bar {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  gap: 6px;
+}
+
+.sidebar-search-icon {
+  color: var(--text-muted);
+  flex: none;
+}
+
+.sidebar-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: var(--text-xs);
+  outline: none;
+}
+
+.sidebar-search-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 0;
+}
+
+.sidebar-search-clear:hover {
+  color: var(--text);
+}
+
+.sidebar-tool-btn.is-active {
+  background: var(--hover);
+  color: var(--accent);
 }

@@ -42,20 +42,6 @@ export function StatusBar({
   return (
     <footer className="status-bar" role="status">
       <div className="status-bar-section">
-        {/* Real file path hyperlink button */}
-        {filePath && (
-          <button
-            type="button"
-            className="status-filepath-btn"
-            onClick={handleOpenNativeFolder}
-            title={`${filePath} — ${t('statusBar.showInFolder')}`}
-            aria-label={t('statusBar.showInFolder')}
-          >
-            <IconFolder size={13} stroke={1.5} />
-            <span className="status-filepath-text">{filePath}</span>
-          </button>
-        )}
-
         <span className="status-metric">
           {isFiltered
             ? t('statusBar.filtered', {
@@ -72,6 +58,25 @@ export function StatusBar({
         )}
 
         <span className="status-metric">{encoding}</span>
+
+        {/* Real file path hyperlink button: placed after UTF-8, gray text, with custom pleasant tooltip */}
+        {filePath && (
+          <div className="status-filepath-wrapper">
+            <button
+              type="button"
+              className="status-filepath-btn"
+              onClick={handleOpenNativeFolder}
+              aria-label={t('statusBar.showInFolder')}
+            >
+              <IconFolder size={13} stroke={1.5} />
+              <span className="status-filepath-text">{filePath}</span>
+            </button>
+            <div className="status-filepath-tooltip" role="tooltip">
+              <span className="tooltip-title">{t('statusBar.showInFolder')}</span>
+              <span className="tooltip-path">{filePath}</span>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="status-bar-section status-actions">

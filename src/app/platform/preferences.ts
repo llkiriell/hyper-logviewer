@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import type {
   CustomHighlightRule,
   CustomStandardLevel,
+  JsonTheme,
   LevelColorConfig,
   LogLevel,
 } from '../../core/types.ts';
@@ -39,10 +40,16 @@ export interface Preferences {
   levelColors: Record<LogLevel, LevelColorConfig>;
   customHighlights: CustomHighlightRule[];
   customStandardLevels: CustomStandardLevel[];
+  // JSON viewer theme
+  jsonTheme: JsonTheme;
+  // Search bar placement
+  bottomSearchBar: boolean;
   // Auto-scroll configuration
   autoScrollDefault: boolean;
   autoScrollSmooth: boolean;
   autoScrollPauseOnManualScroll: boolean;
+  autoScrollMode: 'continuous' | 'tail';
+  autoScrollSpeed: 'slow' | 'medium' | 'fast';
   // Watched Folders & Sidebar configuration
   sidebarEnabled: boolean;
   sidebarCollapsed: boolean;
@@ -65,9 +72,13 @@ const DEFAULT_PREFERENCES: Preferences = {
   levelColors: DEFAULT_LEVEL_COLORS,
   customHighlights: [],
   customStandardLevels: [],
+  jsonTheme: 'postman',
+  bottomSearchBar: false,
   autoScrollDefault: false,
   autoScrollSmooth: false,
   autoScrollPauseOnManualScroll: true,
+  autoScrollMode: 'continuous',
+  autoScrollSpeed: 'medium',
   sidebarEnabled: false,
   sidebarCollapsed: false,
   watchedFolders: [],
@@ -93,9 +104,13 @@ function load(): Preferences {
       levelColors: { ...DEFAULT_LEVEL_COLORS, ...(parsed.levelColors ?? {}) },
       customHighlights: Array.isArray(parsed.customHighlights) ? parsed.customHighlights : DEFAULT_PREFERENCES.customHighlights,
       customStandardLevels: Array.isArray(parsed.customStandardLevels) ? parsed.customStandardLevels : DEFAULT_PREFERENCES.customStandardLevels,
+      jsonTheme: parsed.jsonTheme === 'insomnia' ? 'insomnia' : 'postman',
+      bottomSearchBar: typeof parsed.bottomSearchBar === 'boolean' ? parsed.bottomSearchBar : DEFAULT_PREFERENCES.bottomSearchBar,
       autoScrollDefault: typeof parsed.autoScrollDefault === 'boolean' ? parsed.autoScrollDefault : DEFAULT_PREFERENCES.autoScrollDefault,
       autoScrollSmooth: typeof parsed.autoScrollSmooth === 'boolean' ? parsed.autoScrollSmooth : DEFAULT_PREFERENCES.autoScrollSmooth,
       autoScrollPauseOnManualScroll: typeof parsed.autoScrollPauseOnManualScroll === 'boolean' ? parsed.autoScrollPauseOnManualScroll : DEFAULT_PREFERENCES.autoScrollPauseOnManualScroll,
+      autoScrollMode: parsed.autoScrollMode === 'tail' ? 'tail' : 'continuous',
+      autoScrollSpeed: parsed.autoScrollSpeed === 'slow' || parsed.autoScrollSpeed === 'fast' ? parsed.autoScrollSpeed : 'medium',
       sidebarEnabled: typeof parsed.sidebarEnabled === 'boolean' ? parsed.sidebarEnabled : DEFAULT_PREFERENCES.sidebarEnabled,
       sidebarCollapsed: typeof parsed.sidebarCollapsed === 'boolean' ? parsed.sidebarCollapsed : DEFAULT_PREFERENCES.sidebarCollapsed,
       watchedFolders: Array.isArray(parsed.watchedFolders) ? parsed.watchedFolders : DEFAULT_PREFERENCES.watchedFolders,

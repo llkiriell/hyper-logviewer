@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   IconChevronDown,
   IconChevronRight,
@@ -6,8 +6,9 @@ import {
   IconFolder,
   IconFolderOpen,
   IconFolderPlus,
-  IconLayoutSidebarLeftCollapse,
   IconRotate2,
+  IconSearch,
+  IconX,
 } from '@tabler/icons-react';
 import { useTranslation } from '../i18n/index.ts';
 import { desktop } from '../platform/desktop.ts';
@@ -25,16 +26,14 @@ interface LogFileInfo {
   mtime: number;
 }
 
-export function WatchedFoldersSidebar({
-  onCollapse,
-}: {
-  onCollapse: () => void;
-}) {
+export function WatchedFoldersSidebar() {
   const { t } = useTranslation();
   const prefs = usePreferences();
   const [folderFiles, setFolderFiles] = useState<Record<string, LogFileInfo[]>>({});
   const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Load log files for all watched folders
   const refreshFolders = async () => {
@@ -93,6 +92,18 @@ export function WatchedFoldersSidebar({
     }
   };
 
+  // Filtered files per folder based on search query
+  const filteredFolderFiles = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return folderFiles;
+
+    const result: Record<string, LogFileInfo[]> = {};
+    for (const [folder, files] of Object.entries(folderFiles)) {
+      result[folder] = files.filter((f) => f.name.toLowerCase().includes(q));
+    }
+    return result;
+  }, [folderFiles, searchQuery]);
+
   return (
     <aside className="watched-sidebar">
       {/* Sidebar Top Header */}
@@ -103,6 +114,20 @@ export function WatchedFoldersSidebar({
         </div>
 
         <div className="watched-sidebar-actions">
+          {/* Magnifying glass button to search files */}
+          <button
+            type="button"
+            className={`sidebar-tool-btn ${searchOpen ? 'is-active' : ''}`}
+            onClick={() => {
+              setSearchOpen((prev) => !prev);
+              if (searchOpen) setSearchQuery('');
+            }}
+            title={t('sidebar.searchPlaceholder')}
+            aria-label="Buscar archivos"
+          >
+            <IconSearch size={15} stroke={1.5} />
+          </button>
+
           <button
             type="button"
             className="sidebar-tool-btn"
@@ -122,18 +147,32 @@ export function WatchedFoldersSidebar({
           >
             <IconRotate2 size={15} stroke={1.5} />
           </button>
-
-          <button
-            type="button"
-            className="sidebar-tool-btn"
-            onClick={onCollapse}
-            title={t('sidebar.collapse')}
-            aria-label={t('sidebar.collapse')}
-          >
-            <IconLayoutSidebarLeftCollapse size={15} stroke={1.5} />
-          </button>
         </div>
       </div>
+
+      {/* Inline File Search Bar */}
+      {searchOpen && (
+        <div className="sidebar-search-bar">
+          <IconSearch size={13} stroke={1.5} className="sidebar-search-icon" />
+          <input
+            type="text"
+            className="sidebar-search-input"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t('sidebar.searchPlaceholder')}
+            autoFocus
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              className="sidebar-search-clear"
+              onClick={() => setSearchQuery('')}
+            >
+              <IconX size={12} stroke={1.5} />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Folders & Files Tree List */}
       <div className="watched-sidebar-content">
@@ -153,8 +192,12 @@ export function WatchedFoldersSidebar({
           <div className="watched-folder-tree">
             {prefs.watchedFolders.map((folder) => {
               const folderName = folder.split(/[/\\]/).filter(Boolean).pop() ?? folder;
-              const files = folderFiles[folder] ?? [];
-              const isCollapsed = Boolean(collapsedFolders[folder]);
+              const files = filteredFolderFiles[folder] ?? [];
+              const rawCount = folderFiles[folder]?.length ?? 0;
+              // If searching, auto-expand folders that have matches
+              const isCollapsed = searchQuery
+                ? files.length === 0
+                : Boolean(collapsedFolders[folder]);
 
               return (
                 <div key={folder} className="watched-folder-item">
@@ -172,7 +215,9 @@ export function WatchedFoldersSidebar({
                     </span>
                     <IconFolder size={15} stroke={1.5} className="folder-icon" />
                     <span className="watched-folder-name">{folderName}</span>
-                    <span className="watched-files-badge">{files.length}</span>
+                    <span className="watched-files-badge">
+                      {searchQuery ? `${files.length}/${rawCount}` : files.length}
+                    </span>
                   </div>
 
                   {!isCollapsed && (

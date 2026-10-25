@@ -3,7 +3,7 @@ import {
   setPreferences,
   usePreferences,
 } from '../../platform/preferences.ts';
-import { Switch } from '../primitives.tsx';
+import { Segmented, Switch } from '../primitives.tsx';
 import { SettingRow, SettingsGroup } from './SettingsRows.tsx';
 
 export function AutoscrollSettings() {
@@ -25,15 +25,37 @@ export function AutoscrollSettings() {
         </SettingRow>
 
         <SettingRow
-          label={t('settings.autoscroll.smooth')}
-          help={t('settings.autoscroll.smoothHelp')}
+          label={t('settings.autoscroll.mode')}
+          help={t('settings.autoscroll.modeHelp')}
         >
-          <Switch
-            checked={prefs.autoScrollSmooth}
-            onChange={(autoScrollSmooth) => setPreferences({ autoScrollSmooth })}
-            label={t('settings.autoscroll.smooth')}
+          <Segmented<'continuous' | 'tail'>
+            value={prefs.autoScrollMode}
+            label={t('settings.autoscroll.mode')}
+            options={[
+              ['continuous', t('settings.autoscroll.modeContinuous')],
+              ['tail', t('settings.autoscroll.modeTail')],
+            ]}
+            onChange={(autoScrollMode) => setPreferences({ autoScrollMode })}
           />
         </SettingRow>
+
+        {prefs.autoScrollMode === 'continuous' && (
+          <SettingRow
+            label={t('settings.autoscroll.speed')}
+            help={t('settings.autoscroll.modeHelp')}
+          >
+            <Segmented<'slow' | 'medium' | 'fast'>
+              value={prefs.autoScrollSpeed}
+              label={t('settings.autoscroll.speed')}
+              options={[
+                ['slow', t('settings.autoscroll.speedSlow')],
+                ['medium', t('settings.autoscroll.speedMedium')],
+                ['fast', t('settings.autoscroll.speedFast')],
+              ]}
+              onChange={(autoScrollSpeed) => setPreferences({ autoScrollSpeed })}
+            />
+          </SettingRow>
+        )}
 
         <SettingRow
           label={t('settings.autoscroll.pauseOnScrollUp')}

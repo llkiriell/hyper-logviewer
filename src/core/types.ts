@@ -7,6 +7,8 @@ export type LogLevel =
   | 'trace'
   | 'unknown';
 
+export type JsonTheme = 'postman' | 'insomnia';
+
 export interface ParsedLogLine {
   rawIndex: number;
   lineNumber: number;

@@ -18,14 +18,15 @@ import type {
   SearchMatchRange,
 } from '../../core/types.ts';
 import { useTranslation } from '../i18n/index.ts';
-import { usePreferences } from '../platform/preferences.ts';
-import { createTab } from '../tabs.ts';
+import { desktop } from '../platform/desktop.ts';
+import { setPreferences, usePreferences } from '../platform/preferences.ts';
+import { createTab, updateTab } from '../tabs.ts';
 import type { TabItem } from '../tabs.ts';
 import { ContextMenu } from './ContextMenu.tsx';
 import type { ContextMenuEntry } from './ContextMenu.tsx';
 import { DateFilterPopover } from './DateFilterPopover.tsx';
 import { LogDetailModal } from './LogDetailModal.tsx';
-import { LogToolbar } from './LogToolbar.tsx';
+import { LogSearchBar, LogToolbar } from './LogToolbar.tsx';
 import { StatusBar } from './StatusBar.tsx';
 import { VirtualLogRow } from './VirtualLogRow.tsx';
 
@@ -73,6 +74,10 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
   const [wordWrap, setWordWrap] = useState(prefs.wordWrap);
   const [autoScroll, setAutoScroll] = useState(prefs.autoScrollDefault);
 
+  // Retain position when clearing search
+  const lastActiveRawIndexRef = useRef<number | null>(null);
+  const [highlightedRawIndex, setHighlightedRawIndex] = useState<number | null>(null);
+
   // Compute filtered log lines
   const filteredLines = useMemo(() => {
     return filterLines(lines, {
@@ -109,6 +114,16 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
   // Search match navigation handlers
   const activeLocation = searchIndex.locations[currentMatchIndex];
 
+  // Remember active line rawIndex during match navigation
+  useEffect(() => {
+    if (activeLocation) {
+      const matchLine = filteredLines[activeLocation.lineIndex];
+      if (matchLine) {
+        lastActiveRawIndexRef.current = matchLine.rawIndex;
+      }
+    }
+  }, [activeLocation, filteredLines]);
+
   const handleNextMatch = useCallback(() => {
     if (searchIndex.totalMatches === 0) return;
     const next = (currentMatchIndex + 1) % searchIndex.totalMatches;
@@ -130,23 +145,70 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
     }
   }, [currentMatchIndex, searchIndex, rowVirtualizer]);
 
-  // Scroll to bottom when autoScroll is enabled
-  useEffect(() => {
-    if (autoScroll && filteredLines.length > 0) {
-      requestAnimationFrame(() => {
-        rowVirtualizer.scrollToIndex(filteredLines.length - 1, {
-          align: 'end',
-          behavior: prefs.autoScrollSmooth ? 'smooth' : 'auto',
-        });
-      });
-    }
-  }, [autoScroll, filteredLines.length, rowVirtualizer, prefs.autoScrollSmooth]);
+  // Search query change with position preservation on clear
+  const handleSearchChange = useCallback(
+    (newQuery: string) => {
+      const wasSearching = searchQuery.trim().length > 0;
+      const isClearing = wasSearching && newQuery.trim().length === 0;
+      const targetRawIndex = lastActiveRawIndexRef.current;
 
-  // Toggle autoscroll with immediate scroll to bottom
-  const handleToggleAutoScroll = useCallback(() => {
-    setAutoScroll((prev) => {
-      const next = !prev;
-      if (next && filteredLines.length > 0) {
+      setSearchQuery(newQuery);
+
+      if (isClearing && targetRawIndex !== null) {
+        setHighlightedRawIndex(targetRawIndex);
+        requestAnimationFrame(() => {
+          const targetIndex = lines.findIndex((l) => l.rawIndex === targetRawIndex);
+          if (targetIndex !== -1) {
+            rowVirtualizer.scrollToIndex(targetIndex, { align: 'center' });
+          }
+        });
+        setTimeout(() => setHighlightedRawIndex(null), 3000);
+      }
+    },
+    [searchQuery, lines, rowVirtualizer],
+  );
+
+  // Jump to specific line number
+  const handleGoToLine = useCallback(
+    (lineNum: number) => {
+      const targetIndex = lineNum - 1;
+      if (targetIndex >= 0 && targetIndex < filteredLines.length) {
+        const targetLine = filteredLines[targetIndex];
+        if (targetLine) {
+          setHighlightedRawIndex(targetLine.rawIndex);
+          rowVirtualizer.scrollToIndex(targetIndex, { align: 'center' });
+          setTimeout(() => setHighlightedRawIndex(null), 3000);
+        }
+      }
+    },
+    [filteredLines, rowVirtualizer],
+  );
+
+  // Continuous auto-scroll animation loop & tailing
+  useEffect(() => {
+    if (!autoScroll) return;
+
+    if (prefs.autoScrollMode === 'continuous') {
+      let animId: number;
+      const speedMap = { slow: 0.6, medium: 1.5, fast: 3.5 };
+      const pxPerFrame = speedMap[prefs.autoScrollSpeed] ?? 1.5;
+
+      const step = () => {
+        if (!parentRef.current) return;
+        const el = parentRef.current;
+        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 2) {
+          animId = requestAnimationFrame(step);
+          return;
+        }
+        el.scrollTop += pxPerFrame;
+        animId = requestAnimationFrame(step);
+      };
+
+      animId = requestAnimationFrame(step);
+      return () => cancelAnimationFrame(animId);
+    } else {
+      // Live tail mode
+      if (filteredLines.length > 0) {
         requestAnimationFrame(() => {
           rowVirtualizer.scrollToIndex(filteredLines.length - 1, {
             align: 'end',
@@ -154,9 +216,44 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
           });
         });
       }
-      return next;
-    });
-  }, [filteredLines.length, rowVirtualizer, prefs.autoScrollSmooth]);
+    }
+  }, [
+    autoScroll,
+    prefs.autoScrollMode,
+    prefs.autoScrollSpeed,
+    prefs.autoScrollSmooth,
+    filteredLines.length,
+    rowVirtualizer,
+  ]);
+
+  // Live file polling when autoScroll is active on a local file
+  useEffect(() => {
+    const filePath = tab.filePath;
+    if (!autoScroll || !filePath || !desktop?.readFile) return;
+
+    const readFileFn = desktop.readFile;
+    const interval = setInterval(async () => {
+      try {
+        const res = await readFileFn(filePath);
+        if (res.ok && res.content !== undefined && res.content !== tab.content) {
+          updateTab(tab.id, {
+            content: res.content,
+            size: new Blob([res.content]).size,
+            linesCount: res.content.split('\n').length,
+          });
+        }
+      } catch {
+        // ignore polling errors
+      }
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [autoScroll, tab.filePath, tab.content, tab.id]);
+
+  // Toggle autoscroll
+  const handleToggleAutoScroll = useCallback(() => {
+    setAutoScroll((prev) => !prev);
+  }, []);
 
   // Scroll handlers
   const handleScrollToTop = useCallback(() => {
@@ -218,7 +315,7 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
     return scrollTop > pinnedTop;
   }, [pinnedLine, pinnedInFilteredIndex, scrollTop]);
 
-  // Helper to resolve color config for a line (supporting standard levels & custom standard words)
+  // Helper to resolve color config for a line
   const resolveLineColor = useCallback(
     (line: ParsedLogLine) => {
       if (line.customLevelTag && prefs.customStandardLevels) {
@@ -287,10 +384,10 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
 
   return (
     <div className="viewer-container">
-      {/* Search, Filter Chips, Date Filter & Navigation Toolbar */}
+      {/* Top Toolbar (chips align to start if bottom search bar is enabled) */}
       <LogToolbar
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={handleSearchChange}
         isRegex={isRegex}
         onToggleRegex={() => setIsRegex((prev) => !prev)}
         caseSensitive={caseSensitive}
@@ -306,15 +403,22 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
         onOpenDateFilter={(anchor) => setDateAnchor(anchor)}
         wordWrap={wordWrap}
         onToggleWordWrap={() => setWordWrap((prev) => !prev)}
+        showLineSeparator={prefs.showLineSeparator}
+        onToggleLineSeparator={() =>
+          setPreferences({ showLineSeparator: !prefs.showLineSeparator })
+        }
+        onGoToLine={handleGoToLine}
+        totalLines={lines.length}
         autoScroll={autoScroll}
         onToggleAutoScroll={handleToggleAutoScroll}
         onScrollToTop={handleScrollToTop}
         onScrollToBottom={handleScrollToBottom}
+        hideSearchBar={prefs.bottomSearchBar}
       />
 
-      {/* Viewport wrapper with relative positioning so floating sticky bar overlays cleanly without layout shifts */}
+      {/* Viewport wrapper with relative positioning */}
       <div className="viewer-viewport-wrapper">
-        {/* Floating Sticky Pinned Header (appears when scrolled past pinned line) */}
+        {/* Floating Sticky Pinned Header */}
         {showFloatingStickyPin && pinnedLine && (
           <div className="sticky-pinned-bar">
             <div className="sticky-pinned-header">
@@ -379,7 +483,8 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
               className="viewer-virtual-canvas"
               style={{
                 height: `${rowVirtualizer.getTotalSize()}px`,
-                width: '100%',
+                minWidth: '100%',
+                width: 'max-content',
                 position: 'relative',
               }}
             >
@@ -387,7 +492,6 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
                 const line = filteredLines[virtualRow.index];
                 if (!line) return null;
 
-                // Check if active match is on this line
                 const isMatchOnThisLine =
                   activeLocation && activeLocation.lineIndex === virtualRow.index;
                 const activeRange: SearchMatchRange | null = isMatchOnThisLine
@@ -396,6 +500,7 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
 
                 const isPinned = pinnedLine?.rawIndex === line.rawIndex;
                 const isTarget = contextMenu?.line.rawIndex === line.rawIndex;
+                const isHighlighted = highlightedRawIndex === line.rawIndex;
 
                 return (
                   <div
@@ -407,7 +512,8 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
                       position: 'absolute',
                       top: 0,
                       left: 0,
-                      width: '100%',
+                      minWidth: '100%',
+                      width: 'max-content',
                       transform: `translateY(${virtualRow.start}px)`,
                     }}
                   >
@@ -425,6 +531,7 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
                       fontSize={prefs.fontSize}
                       isPinned={isPinned}
                       isContextMenuTarget={isTarget}
+                      isHighlighted={isHighlighted}
                       onTogglePin={handleTogglePin}
                       onContextMenu={handleContextMenu}
                       onInspectLine={(l) => setDetailModalLine(l)}
@@ -436,6 +543,25 @@ export function VirtualLogView({ tab }: VirtualLogViewProps) {
           )}
         </div>
       </div>
+
+      {/* Optional Full-width Bottom Search Bar */}
+      {prefs.bottomSearchBar && (
+        <div className="bottom-search-wrapper">
+          <LogSearchBar
+            searchQuery={searchQuery}
+            onSearchChange={handleSearchChange}
+            isRegex={isRegex}
+            onToggleRegex={() => setIsRegex((prev) => !prev)}
+            caseSensitive={caseSensitive}
+            onToggleCaseSensitive={() => setCaseSensitive((prev) => !prev)}
+            totalMatches={searchIndex.totalMatches}
+            currentMatchIndex={currentMatchIndex}
+            onNextMatch={handleNextMatch}
+            onPrevMatch={handlePrevMatch}
+            isBottom={true}
+          />
+        </div>
+      )}
 
       {/* Status Bar */}
       <StatusBar

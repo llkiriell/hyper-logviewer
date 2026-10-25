@@ -140,29 +140,6 @@ export function App() {
         {/* Top Header / Bar */}
         <header className="app-header">
           <div className="app-brand">
-            {/* Sidebar toggle button (only rendered if sidebar is enabled in settings) */}
-            {prefs.sidebarEnabled && (
-              <button
-                type="button"
-                className="button icon-only sidebar-toggle-btn"
-                onClick={() =>
-                  setPreferences({ sidebarCollapsed: !prefs.sidebarCollapsed })
-                }
-                title={
-                  prefs.sidebarCollapsed
-                    ? t('sidebar.expand')
-                    : t('sidebar.collapse')
-                }
-                aria-label="Toggle sidebar"
-              >
-                {prefs.sidebarCollapsed ? (
-                  <IconLayoutSidebar size={17} stroke={1.5} />
-                ) : (
-                  <IconLayoutSidebarLeftCollapse size={17} stroke={1.5} />
-                )}
-              </button>
-            )}
-
             <Logo size={22} />
             <span>{t('appName')}</span>
           </div>
@@ -217,14 +194,40 @@ export function App() {
         {/* Main Body Layout with Optional Watched Folders Sidebar */}
         <div className="app-body-layout">
           {prefs.sidebarEnabled && !prefs.sidebarCollapsed && (
-            <WatchedFoldersSidebar
-              onCollapse={() => setPreferences({ sidebarCollapsed: true })}
-            />
+            <WatchedFoldersSidebar />
           )}
 
           <div className="app-main-pane">
-            {/* Tabs Bar (displayed when tabs exist) */}
-            {tabs.length > 0 && <TabBar onNewTabClick={handleOpenFile} />}
+            {/* Tabs Bar or Empty State Tab-Strip Toggle */}
+            {tabs.length > 0 ? (
+              <TabBar onNewTabClick={handleOpenFile} />
+            ) : (
+              prefs.sidebarEnabled && (
+                <div className="empty-tabs-bar">
+                  <button
+                    type="button"
+                    className="tab-sidebar-toggle-btn"
+                    onClick={() =>
+                      setPreferences({
+                        sidebarCollapsed: !prefs.sidebarCollapsed,
+                      })
+                    }
+                    title={
+                      prefs.sidebarCollapsed
+                        ? t('sidebar.expand')
+                        : t('sidebar.collapse')
+                    }
+                    aria-label="Toggle sidebar"
+                  >
+                    {prefs.sidebarCollapsed ? (
+                      <IconLayoutSidebar size={15} stroke={1.5} />
+                    ) : (
+                      <IconLayoutSidebarLeftCollapse size={15} stroke={1.5} />
+                    )}
+                  </button>
+                </div>
+              )
+            )}
 
             {/* Main Content Area */}
             {activeTab ? (

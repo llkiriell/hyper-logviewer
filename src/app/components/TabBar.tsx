@@ -5,6 +5,8 @@ import {
   IconCopy,
   IconFileText,
   IconFolderOpen,
+  IconLayoutSidebar,
+  IconLayoutSidebarLeftCollapse,
   IconPin,
   IconPinFilled,
   IconPlus,
@@ -14,6 +16,10 @@ import {
 import { useTranslation } from '../i18n/index.ts';
 import { desktop } from '../platform/desktop.ts';
 import { openFileObjects } from '../platform/fileLoader.ts';
+import {
+  setPreferences,
+  usePreferences,
+} from '../platform/preferences.ts';
 import {
   activateTab,
   closeOtherTabs,
@@ -34,6 +40,7 @@ export function TabBar({
   onNewTabClick?: () => void;
 }) {
   const { t } = useTranslation();
+  const prefs = usePreferences();
   const { tabs, activeId } = useTabs();
   const stripRef = useRef<HTMLDivElement>(null);
 
@@ -127,6 +134,29 @@ export function TabBar({
       }}
       onDrop={handleDropFilesOnBar}
     >
+      {/* Sidebar toggle button at the very start of the tabs bar */}
+      {prefs.sidebarEnabled && (
+        <button
+          type="button"
+          className="tab-sidebar-toggle-btn"
+          onClick={() =>
+            setPreferences({ sidebarCollapsed: !prefs.sidebarCollapsed })
+          }
+          title={
+            prefs.sidebarCollapsed
+              ? t('sidebar.expand')
+              : t('sidebar.collapse')
+          }
+          aria-label="Toggle sidebar"
+        >
+          {prefs.sidebarCollapsed ? (
+            <IconLayoutSidebar size={15} stroke={1.5} />
+          ) : (
+            <IconLayoutSidebarLeftCollapse size={15} stroke={1.5} />
+          )}
+        </button>
+      )}
+
       <div
         ref={stripRef}
         className="tab-strip"
