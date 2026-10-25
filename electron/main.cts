@@ -14,7 +14,7 @@ import path from 'node:path';
 const DEV_URL = process.env.LOGVIEWER_DEV_URL ?? null;
 const DIST_INDEX = path.join(__dirname, '..', 'dist', 'index.html');
 const IS_MAC = process.platform === 'darwin';
-const TITLE_BAR_HEIGHT = 42;
+const TITLE_BAR_HEIGHT = 48;
 
 const THEMES = {
   light: { background: '#f8f8f7', symbols: '#5b5b5f' },

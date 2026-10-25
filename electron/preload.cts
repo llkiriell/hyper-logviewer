@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, webUtils } from 'electron';
 
 interface LogViewerApiBridge {
   platform: string;
@@ -8,6 +8,7 @@ interface LogViewerApiBridge {
   readFile: (filePath: string) => Promise<{ ok: boolean; content?: string; error?: string }>;
   readClipboard: () => Promise<string>;
   openExternal: (url: string) => Promise<void>;
+  getPathForFile: (file: File) => string;
 }
 
 const api: LogViewerApiBridge = {
@@ -27,6 +28,16 @@ const api: LogViewerApiBridge = {
   },
   openExternal: (url: string) => {
     return ipcRenderer.invoke('logviewer:open-external', url);
+  },
+  getPathForFile: (file: File) => {
+    try {
+      if (webUtils && typeof webUtils.getPathForFile === 'function') {
+        return webUtils.getPathForFile(file);
+      }
+      return (file as unknown as { path?: string }).path ?? '';
+    } catch {
+      return (file as unknown as { path?: string }).path ?? '';
+    }
   },
 };
 

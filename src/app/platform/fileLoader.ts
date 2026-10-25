@@ -50,8 +50,18 @@ export async function openFileObjects(files: FileList | File[]): Promise<number>
   const list = Array.from(files);
 
   for (const file of list) {
-    // If in Electron, check for native file path
-    const nativePath = (file as unknown as { path?: string }).path;
+    let nativePath = '';
+    if (desktop?.getPathForFile) {
+      try {
+        nativePath = desktop.getPathForFile(file);
+      } catch {
+        nativePath = '';
+      }
+    }
+    if (!nativePath) {
+      nativePath = (file as unknown as { path?: string }).path ?? '';
+    }
+
     if (desktop && nativePath) {
       const ok = await openFileByPath(nativePath);
       if (ok) {

@@ -6,6 +6,7 @@ export interface LogViewerApi {
   readFile: (filePath: string) => Promise<{ ok: boolean; content?: string; error?: string }>;
   readClipboard: () => Promise<string>;
   openExternal: (url: string) => Promise<void>;
+  getPathForFile?: (file: File) => string;
 }
 
 export const desktop: LogViewerApi | null =
