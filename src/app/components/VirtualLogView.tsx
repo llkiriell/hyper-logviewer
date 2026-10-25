@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   IconClipboardText,
@@ -116,10 +116,10 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
 
   const virtualItems = rowVirtualizer.getVirtualItems();
 
-  // Invalidate virtualizer cache when wordWrap, search or lines change so heights adapt immediately
-  useEffect(() => {
+  // Invalidate virtualizer cache when wordWrap, search or lines change so heights adapt immediately before paint
+  useLayoutEffect(() => {
     rowVirtualizer.measure();
-  }, [wordWrap, searchQuery, filteredLines, rowVirtualizer]);
+  }, [wordWrap, searchQuery, filteredLines.length, prefs.fontSize, rowVirtualizer]);
 
   // Search match navigation handlers
   const activeLocation = searchIndex.locations[currentMatchIndex];
@@ -141,8 +141,13 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     const loc = searchIndex.locations[next];
     if (loc) {
       rowVirtualizer.scrollToIndex(loc.lineIndex, { align: 'center' });
+      const targetLine = filteredLines[loc.lineIndex];
+      if (targetLine) {
+        setSelectedRawIndex(targetLine.rawIndex);
+        lastActiveRawIndexRef.current = targetLine.rawIndex;
+      }
     }
-  }, [currentMatchIndex, searchIndex, rowVirtualizer]);
+  }, [currentMatchIndex, searchIndex, filteredLines, rowVirtualizer]);
 
   const handlePrevMatch = useCallback(() => {
     if (searchIndex.totalMatches === 0) return;
@@ -152,15 +157,20 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     const loc = searchIndex.locations[prev];
     if (loc) {
       rowVirtualizer.scrollToIndex(loc.lineIndex, { align: 'center' });
+      const targetLine = filteredLines[loc.lineIndex];
+      if (targetLine) {
+        setSelectedRawIndex(targetLine.rawIndex);
+        lastActiveRawIndexRef.current = targetLine.rawIndex;
+      }
     }
-  }, [currentMatchIndex, searchIndex, rowVirtualizer]);
+  }, [currentMatchIndex, searchIndex, filteredLines, rowVirtualizer]);
 
-  // Search query change with position preservation on clear
+  // Search query change with position preservation on clear (prioritizes focused selected line)
   const handleSearchChange = useCallback(
     (newQuery: string) => {
       const wasSearching = searchQuery.trim().length > 0;
       const isClearing = wasSearching && newQuery.trim().length === 0;
-      const targetRawIndex = lastActiveRawIndexRef.current;
+      const targetRawIndex = selectedRawIndex ?? lastActiveRawIndexRef.current;
 
       setSearchQuery(newQuery);
 
@@ -175,8 +185,47 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
         setTimeout(() => setHighlightedRawIndex(null), 3000);
       }
     },
-    [searchQuery, lines, rowVirtualizer],
+    [searchQuery, selectedRawIndex, lines, rowVirtualizer],
   );
+
+  // Toggle word wrap preserving focused or geometrical center line on screen
+  const handleToggleWordWrap = useCallback(() => {
+    let targetIndex = -1;
+
+    // 1. Prioritize line currently selected with focus
+    if (selectedRawIndex !== null) {
+      targetIndex = filteredLines.findIndex((l) => l.rawIndex === selectedRawIndex);
+    }
+
+    // 2. Otherwise use the geometrical center line currently in the viewport
+    if (targetIndex === -1 && parentRef.current) {
+      const scroller = parentRef.current;
+      const centerY = scroller.scrollTop + scroller.clientHeight / 2;
+      const items = rowVirtualizer.getVirtualItems();
+      const centerItem =
+        items.find((v) => centerY >= v.start && centerY <= v.start + v.size) ??
+        items[Math.floor(items.length / 2)];
+      if (centerItem) {
+        targetIndex = centerItem.index;
+      }
+    }
+
+    if (targetIndex === -1 && filteredLines.length > 0) {
+      targetIndex = 0;
+    }
+
+    setWordWrap((prev) => !prev);
+
+    if (targetIndex !== -1) {
+      requestAnimationFrame(() => {
+        rowVirtualizer.measure();
+        rowVirtualizer.scrollToIndex(targetIndex, { align: 'center', behavior: 'auto' });
+        requestAnimationFrame(() => {
+          rowVirtualizer.scrollToIndex(targetIndex, { align: 'center', behavior: 'auto' });
+        });
+      });
+    }
+  }, [selectedRawIndex, filteredLines, rowVirtualizer]);
 
   // Jump to specific line number
   const handleGoToLine = useCallback(
@@ -450,7 +499,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
         isDateFilterActive={dateFilter.enabled}
         onOpenDateFilter={(anchor) => setDateAnchor(anchor)}
         wordWrap={wordWrap}
-        onToggleWordWrap={() => setWordWrap((prev) => !prev)}
+        onToggleWordWrap={handleToggleWordWrap}
         showLineSeparator={prefs.showLineSeparator}
         onToggleLineSeparator={() =>
           setPreferences({ showLineSeparator: !prefs.showLineSeparator })
@@ -470,7 +519,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
           >
             <div
               className="sticky-pinned-header"
-              onClick={handleScrollToPinnedLine}
+              onDoubleClick={handleScrollToPinnedLine}
               title={t('viewer.jumpToPinned')}
             >
               <span className="sticky-pinned-title">
@@ -511,7 +560,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
                 onTogglePin={handleTogglePin}
                 onContextMenu={handleContextMenu}
                 onInspectLine={(l) => setDetailModalLine(l)}
-                onSelectLine={() => handleScrollToPinnedLine()}
+                onSelectLine={(l) => setSelectedRawIndex(l.rawIndex)}
               />
             </div>
           </div>
@@ -569,7 +618,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
                 return (
                   <div
                     key={line.rawIndex}
-                    ref={wordWrap ? rowVirtualizer.measureElement : undefined}
+                    ref={rowVirtualizer.measureElement}
                     data-index={virtualRow.index}
                     className="viewer-virtual-row-wrapper"
                     style={{
@@ -642,7 +691,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
         filePath={tab.filePath}
         encoding="UTF-8"
         wordWrap={wordWrap}
-        onToggleWordWrap={() => setWordWrap((prev) => !prev)}
+        onToggleWordWrap={handleToggleWordWrap}
         autoScroll={autoScroll}
         onToggleAutoScroll={handleToggleAutoScroll}
         onGoToLine={handleGoToLine}

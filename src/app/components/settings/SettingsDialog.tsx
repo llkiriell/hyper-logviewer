@@ -15,6 +15,7 @@ import {
   IconInfoCircle,
   IconKeyboard,
   IconPalette,
+  IconRotate2,
   IconStarFilled,
   IconTarget,
   IconX,
@@ -22,6 +23,7 @@ import {
 import { SUPPORTED_LOCALES, useTranslation } from '../../i18n/index.ts';
 import type { SupportedLocale, TranslationKey } from '../../i18n/types.ts';
 import {
+  DEFAULT_PREFERENCES,
   setPreferences,
   usePreferences,
 } from '../../platform/preferences.ts';
@@ -221,12 +223,28 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
                     label={t('settings.appearance.lineSeparator')}
                   />
                   {prefs.showLineSeparator && (
-                    <div className="color-picker-wrapper" title={t('settings.appearance.separatorColor')}>
-                      <input
-                        type="color"
-                        value={prefs.lineSeparatorColor}
-                        onChange={(e) => setPreferences({ lineSeparatorColor: e.target.value })}
-                      />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div className="color-picker-wrapper" title={t('settings.appearance.separatorColor')}>
+                        <input
+                          type="color"
+                          value={prefs.lineSeparatorColor}
+                          onChange={(e) => setPreferences({ lineSeparatorColor: e.target.value })}
+                        />
+                      </div>
+                      {prefs.lineSeparatorColor.toLowerCase() !==
+                        DEFAULT_PREFERENCES.lineSeparatorColor.toLowerCase() && (
+                        <button
+                          type="button"
+                          className="search-tool-btn"
+                          onClick={() =>
+                            setPreferences({ lineSeparatorColor: DEFAULT_PREFERENCES.lineSeparatorColor })
+                          }
+                          title={t('settings.appearance.resetSeparatorColor')}
+                          aria-label={t('settings.appearance.resetSeparatorColor')}
+                        >
+                          <IconRotate2 size={14} stroke={1.5} />
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

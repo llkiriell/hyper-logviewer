@@ -55,7 +55,8 @@
         "ext": "log",
         "name": "Log File",
         "description": "Log file readable with Hyper LogViewer",
-        "role": "Viewer"
+        "role": "Viewer",
+        "icon": "public/file-log-icon.ico"
       }
     ],
     "win": {

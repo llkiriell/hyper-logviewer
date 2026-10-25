@@ -470,126 +470,157 @@ export function ParserSettings() {
         <h3>{t('settings.parser.customKeywordsTitle')}</h3>
         <p className="settings-desc">{t('settings.parser.customKeywordsDesc')}</p>
 
-        {/* Add / Edit keyword form */}
-        <div className={`keyword-add-bar ${editingId ? 'is-editing' : ''}`}>
+        {/* Add / Edit keyword form - Clean 2-row layout */}
+        <div className={`keyword-form-card ${editingId ? 'is-editing' : ''}`}>
           {editingId && (
-            <div className="keyword-editing-badge">
-              <IconPencil size={12} stroke={1.5} />
-              <span>{t('settings.parser.editingRule')}</span>
-            </div>
-          )}
-
-          <div className="keyword-input-wrapper">
-            <input
-              type="text"
-              className={`keyword-input ${regexError ? 'is-invalid' : ''}`}
-              value={newKeyword}
-              onChange={(e) => handleKeywordChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  if (editingId) handleSaveEdit();
-                  else handleAddKeyword();
-                } else if (e.key === 'Escape' && editingId) {
-                  handleCancelEdit();
-                }
-              }}
-              placeholder={
-                newIsRegex
-                  ? t('settings.parser.regexPlaceholder')
-                  : t('settings.parser.keywordPlaceholder')
-              }
-            />
-            {regexError && (
-              <span className="keyword-error-hint">{t('settings.parser.regexInvalid')}</span>
-            )}
-          </div>
-
-          <input
-            type="text"
-            className="keyword-label-input"
-            value={newLabel}
-            onChange={(e) => setNewLabel(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                if (editingId) handleSaveEdit();
-                else handleAddKeyword();
-              } else if (e.key === 'Escape' && editingId) {
-                handleCancelEdit();
-              }
-            }}
-            placeholder={t('settings.parser.labelPlaceholder')}
-            title={t('settings.parser.labelTitle')}
-          />
-
-          <div className="color-picker-wrapper">
-            <input
-              type="color"
-              value={newColor}
-              onChange={(e) => setNewColor(e.target.value)}
-              title={t('settings.parser.textColor')}
-            />
-          </div>
-
-          <button
-            type="button"
-            className={`button button-sm ${newIsRegex ? 'primary' : 'button-ghost'}`}
-            onClick={handleToggleRegex}
-            title={t('settings.parser.isRegex')}
-          >
-            <IconRegex size={15} stroke={1.5} />
-          </button>
-
-          <button
-            type="button"
-            className={`button button-sm ${newBold ? 'primary' : 'button-ghost'}`}
-            onClick={() => setNewBold((p) => !p)}
-            title={t('settings.parser.bold')}
-          >
-            <IconBold size={15} stroke={2} />
-          </button>
-
-          <button
-            type="button"
-            className={`button button-sm ${newItalic ? 'primary' : 'button-ghost'}`}
-            onClick={() => setNewItalic((p) => !p)}
-            title={t('settings.parser.italic')}
-          >
-            <IconItalic size={15} stroke={2} />
-          </button>
-
-          {editingId ? (
-            <div className="keyword-edit-actions">
-              <button
-                type="button"
-                className="button button-sm primary"
-                onClick={handleSaveEdit}
-                disabled={!newKeyword.trim() || regexError}
-                title={t('settings.parser.saveChanges')}
-              >
-                <IconCheck size={15} stroke={1.5} />
-                <span>{t('settings.parser.saveChanges')}</span>
-              </button>
+            <div className="keyword-editing-header">
+              <div className="keyword-editing-badge">
+                <IconPencil size={12} stroke={1.5} />
+                <span>{t('settings.parser.editingRule')}</span>
+              </div>
               <button
                 type="button"
                 className="button button-sm button-ghost"
                 onClick={handleCancelEdit}
                 title={t('settings.parser.cancelEdit')}
               >
-                <IconX size={15} stroke={1.5} />
+                <IconX size={14} stroke={1.5} />
                 <span>{t('settings.parser.cancelEdit')}</span>
               </button>
             </div>
-          ) : (
-            <button
-              type="button"
-              className="button button-sm primary"
-              onClick={handleAddKeyword}
-              disabled={!newKeyword.trim() || regexError}
-            >
-              <IconPlus size={15} stroke={1.5} />
-              <span>{t('common.add')}</span>
-            </button>
           )}
+
+          {/* Row 1: Main input fields (Keyword / Regex + Optional Label) */}
+          <div className="keyword-form-row">
+            <div className="keyword-input-wrapper">
+              <input
+                type="text"
+                className={`keyword-input ${regexError ? 'is-invalid' : ''}`}
+                value={newKeyword}
+                onChange={(e) => handleKeywordChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (editingId) handleSaveEdit();
+                    else handleAddKeyword();
+                  } else if (e.key === 'Escape' && editingId) {
+                    handleCancelEdit();
+                  }
+                }}
+                placeholder={
+                  newIsRegex
+                    ? t('settings.parser.regexPlaceholder')
+                    : t('settings.parser.keywordPlaceholder')
+                }
+              />
+              <button
+                type="button"
+                className={`keyword-regex-toggle ${newIsRegex ? 'is-active' : ''}`}
+                onClick={handleToggleRegex}
+                title={t('settings.parser.isRegex')}
+              >
+                <IconRegex size={14} stroke={1.5} />
+                <span>Regex</span>
+              </button>
+              {regexError && (
+                <span className="keyword-error-hint">{t('settings.parser.regexInvalid')}</span>
+              )}
+            </div>
+
+            <div className="keyword-label-wrapper">
+              <input
+                type="text"
+                className="keyword-label-input"
+                value={newLabel}
+                onChange={(e) => setNewLabel(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (editingId) handleSaveEdit();
+                    else handleAddKeyword();
+                  } else if (e.key === 'Escape' && editingId) {
+                    handleCancelEdit();
+                  }
+                }}
+                placeholder={t('settings.parser.labelPlaceholder')}
+                title={t('settings.parser.labelTitle')}
+              />
+            </div>
+          </div>
+
+          {/* Row 2: Format controls, Live preview & Action button */}
+          <div className="keyword-form-row keyword-controls-row">
+            <div className="keyword-style-group">
+              <div className="color-picker-wrapper" title={t('settings.parser.textColor')}>
+                <span className="keyword-style-label">{t('settings.parser.textColor')}</span>
+                <input
+                  type="color"
+                  value={newColor}
+                  onChange={(e) => setNewColor(e.target.value)}
+                />
+              </div>
+
+              <div className="keyword-format-buttons">
+                <button
+                  type="button"
+                  className={`button button-sm ${newBold ? 'primary' : 'button-ghost'}`}
+                  onClick={() => setNewBold((p) => !p)}
+                  title={t('settings.parser.bold')}
+                >
+                  <IconBold size={15} stroke={2} />
+                </button>
+
+                <button
+                  type="button"
+                  className={`button button-sm ${newItalic ? 'primary' : 'button-ghost'}`}
+                  onClick={() => setNewItalic((p) => !p)}
+                  title={t('settings.parser.italic')}
+                >
+                  <IconItalic size={15} stroke={2} />
+                </button>
+              </div>
+
+              {/* Live Preview */}
+              {newKeyword.trim() && !regexError && (
+                <div className="keyword-live-preview" title="Vista previa en vivo">
+                  <span
+                    className="keyword-preview-chip"
+                    style={{
+                      color: newColor,
+                      fontWeight: newBold ? 700 : 400,
+                      fontStyle: newItalic ? 'italic' : 'normal',
+                    }}
+                  >
+                    {newLabel.trim() ? `[${newLabel.trim()}] ` : ''}
+                    {newKeyword.trim()}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="keyword-action-buttons">
+              {editingId ? (
+                <button
+                  type="button"
+                  className="button button-sm primary"
+                  onClick={handleSaveEdit}
+                  disabled={!newKeyword.trim() || regexError}
+                  title={t('settings.parser.saveChanges')}
+                >
+                  <IconCheck size={15} stroke={1.5} />
+                  <span>{t('settings.parser.saveChanges')}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="button button-sm primary"
+                  onClick={handleAddKeyword}
+                  disabled={!newKeyword.trim() || regexError}
+                >
+                  <IconPlus size={15} stroke={1.5} />
+                  <span>{t('common.add')}</span>
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* List of custom keywords */}

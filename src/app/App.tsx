@@ -69,6 +69,29 @@ export function App() {
 
   useThemeManager();
 
+  // Open file from process arguments (e.g. double-click in Windows Explorer or second instance)
+  useEffect(() => {
+    if (!desktop) return;
+
+    void desktop.getInitialFile?.().then((initialFile) => {
+      if (initialFile) {
+        setShowHome(false);
+        void openFileByPath(initialFile);
+      }
+    });
+
+    const unsubscribe = desktop.onOpenFile?.((filePath) => {
+      if (filePath) {
+        setShowHome(false);
+        void openFileByPath(filePath);
+      }
+    });
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, []);
+
   // Set desktop attribute on document for native titlebar spacing
   useEffect(() => {
     if (desktop) {
