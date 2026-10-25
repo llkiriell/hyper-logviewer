@@ -50,6 +50,7 @@ export interface DateRangeFilter {
 export interface CustomHighlightRule {
   id: string;
   keyword: string;
+  label?: string;
   color: string;
   bold: boolean;
   italic: boolean;

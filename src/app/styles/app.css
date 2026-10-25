@@ -1779,6 +1779,49 @@ select {
   gap: 8px;
 }
 
+.detail-meta-item-copyable .detail-meta-value-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  max-width: 340px;
+}
+
+.detail-meta-item-copyable .detail-meta-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-meta-item-copyable .detail-copy-btn {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: var(--surface-hover);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  padding: 0;
+  flex: none;
+}
+
+.detail-meta-item-copyable:hover .detail-copy-btn,
+.detail-meta-value-container:hover .detail-copy-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.detail-meta-item-copyable .detail-copy-btn:hover {
+  color: var(--accent);
+  background: var(--hover);
+}
+
 .detail-meta-label {
   color: var(--text-muted);
 }
@@ -2018,6 +2061,24 @@ select {
   border-color: var(--accent);
 }
 
+.keyword-label-input {
+  width: 180px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.keyword-label-input:focus {
+  border-color: var(--accent);
+}
+
 .keyword-input.is-invalid {
   border-color: var(--danger) !important;
   background-color: var(--danger-soft);
@@ -2062,6 +2123,17 @@ select {
   border-color: var(--accent);
   background: var(--surface-hover);
   box-shadow: 0 0 0 1px var(--accent);
+}
+
+.keyword-chip-label {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 7px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  user-select: none;
 }
 
 .keyword-preview-text {

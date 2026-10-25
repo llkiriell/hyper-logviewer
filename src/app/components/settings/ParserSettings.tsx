@@ -52,6 +52,7 @@ export function ParserSettings() {
   // Custom keyword input / editing state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newKeyword, setNewKeyword] = useState('');
+  const [newLabel, setNewLabel] = useState('');
   const [newColor, setNewColor] = useState('#e67e22');
   const [newBold, setNewBold] = useState(true);
   const [newItalic, setNewItalic] = useState(false);
@@ -172,6 +173,7 @@ export function ParserSettings() {
   const handleStartEdit = (rule: CustomHighlightRule) => {
     setEditingId(rule.id);
     setNewKeyword(rule.keyword);
+    setNewLabel(rule.label ?? '');
     setNewColor(rule.color);
     setNewBold(rule.bold);
     setNewItalic(rule.italic);
@@ -182,6 +184,7 @@ export function ParserSettings() {
   const handleCancelEdit = () => {
     setEditingId(null);
     setNewKeyword('');
+    setNewLabel('');
     setNewColor('#e67e22');
     setNewBold(true);
     setNewItalic(false);
@@ -207,6 +210,7 @@ export function ParserSettings() {
         ? {
             ...r,
             keyword: trimmed,
+            label: newLabel.trim() || undefined,
             color: newColor,
             bold: newBold,
             italic: newItalic,
@@ -238,6 +242,7 @@ export function ParserSettings() {
     const newRule: CustomHighlightRule = {
       id: `kw-${Date.now()}`,
       keyword: trimmed,
+      label: newLabel.trim() || undefined,
       color: newColor,
       bold: newBold,
       italic: newItalic,
@@ -249,6 +254,7 @@ export function ParserSettings() {
     });
 
     setNewKeyword('');
+    setNewLabel('');
     setNewIsRegex(false);
     setRegexError(false);
   };
@@ -476,6 +482,23 @@ export function ParserSettings() {
             )}
           </div>
 
+          <input
+            type="text"
+            className="keyword-label-input"
+            value={newLabel}
+            onChange={(e) => setNewLabel(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                if (editingId) handleSaveEdit();
+                else handleAddKeyword();
+              } else if (e.key === 'Escape' && editingId) {
+                handleCancelEdit();
+              }
+            }}
+            placeholder={t('settings.parser.labelPlaceholder')}
+            title={t('settings.parser.labelTitle')}
+          />
+
           <div className="color-picker-wrapper">
             <input
               type="color"
@@ -559,6 +582,11 @@ export function ParserSettings() {
                   key={rule.id}
                   className={`keyword-chip-card ${isBeingEdited ? 'is-editing' : ''}`}
                 >
+                  {rule.label && (
+                    <span className="keyword-chip-label" title={rule.label}>
+                      {rule.label}
+                    </span>
+                  )}
                   <span
                     className="keyword-preview-text"
                     style={{

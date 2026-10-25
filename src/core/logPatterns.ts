@@ -211,3 +211,66 @@ export function detectJavaErrorPattern(rawLine: string, nextLines?: string[]): D
     rawBlock: rawParts.join('\n'),
   };
 }
+
+export interface ExtractedLogEntities {
+  uuids: string[];
+  filePaths: string[];
+  urls: string[];
+}
+
+/**
+ * Extracts key operational entities from a raw log line:
+ * - UUIDs (e.g. 8-4-4-4-12 hex formats with or without parentheses)
+ * - File paths (Windows: C:\... or C:/..., Unix: /var/log/...)
+ * - URLs (http:// or https://)
+ */
+export function extractLogEntities(rawLine: string): ExtractedLogEntities {
+  if (!rawLine) {
+    return { uuids: [], filePaths: [], urls: [] };
+  }
+
+  // 1. UUIDs (8-4-4-4-12 hex format)
+  const uuidRegex = /\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b/g;
+  const rawUuids = rawLine.match(uuidRegex) ?? [];
+  const uuids = Array.from(new Set(rawUuids));
+
+  // 2. URLs (http:// or https://)
+  const urlRegex = /\bhttps?:\/\/[^\s"'<>)\]]+/g;
+  const rawUrls = (rawLine.match(urlRegex) ?? []).map((u) => u.replace(/[,\.;:\)\]'"]+$/, ''));
+  const urls = Array.from(new Set(rawUrls));
+
+  // 3. File Paths (Windows: C:\... or C:/..., Unix: /var/log/...)
+  const filePaths: string[] = [];
+
+  // Windows absolute paths with drive letter (e.g., C:\Users\extanec/logs/wsrsctr/wsrsctr.log or D:\App\file.txt)
+  const winPathRegex = /\b[a-zA-Z]:[\\/](?:[^\\/:*?"<>|\r\n\s]+[\\/])*[^\\/:*?"<>|\r\n\s,;:)\]]+/g;
+  const rawWinPaths = rawLine.match(winPathRegex) ?? [];
+  for (const wp of rawWinPaths) {
+    const clean = wp.replace(/[,\.;:\)\]'"]+$/, '');
+    if (clean.length > 3 && (clean.includes('\\') || clean.includes('/'))) {
+      if (!filePaths.includes(clean)) {
+        filePaths.push(clean);
+      }
+    }
+  }
+
+  // Unix absolute paths (/var/log/..., /home/user/..., etc.)
+  const unixPathRegex = /(?:^|[\s"'(\[])(\/(?:[a-zA-Z0-9_.-]+[\\/])+[a-zA-Z0-9_.-]+)/g;
+  let match: RegExpExecArray | null;
+  while ((match = unixPathRegex.exec(rawLine)) !== null) {
+    const p = match[1];
+    if (p) {
+      const clean = p.replace(/[,\.;:\)\]'"]+$/, '');
+      const isPartOfUrl = urls.some((u) => u.includes(clean));
+      if (!isPartOfUrl && clean.length > 3 && !filePaths.includes(clean)) {
+        filePaths.push(clean);
+      }
+    }
+  }
+
+  return {
+    uuids,
+    filePaths,
+    urls,
+  };
+}
