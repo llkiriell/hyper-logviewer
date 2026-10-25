@@ -76,6 +76,7 @@ export const es: TranslationSchema = {
     pinLine: 'Fijar línea arriba',
     unpinLine: 'Desfijar línea',
     pinnedHeader: 'Línea fijada',
+    jumpToPinned: 'Doble clic para ir a la posición de la línea',
     dateFilterTitle: 'Filtrar por fecha y hora',
     dateRange: 'Rango de fechas',
     singleDay: 'Un solo día',

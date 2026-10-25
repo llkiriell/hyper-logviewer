@@ -143,20 +143,30 @@ export function detectCurlPattern(rawLine: string): DetectedCurlRequest | null {
 
 /**
  * Detects Java Exception and stack traces inside a log line or multi-line block.
+ * Strictly verifies that a real Java Exception class or legitimate Java stacktrace frames exist.
  */
 export function detectJavaErrorPattern(rawLine: string, nextLines?: string[]): DetectedJavaError | null {
-  // Regex for java exception class: e.g. org.springframework.web.client.RestClientException
-  const exceptionRegex = /([a-zA-Z_$][a-zA-Z0-9_$]*\.)+([a-zA-Z0-9_$]+Exception|[a-zA-Z0-9_$]+Error)(:\s*[\s\S]*)?/;
-  const hasException = exceptionRegex.test(rawLine);
-  const hasStackTrace = rawLine.includes('at ') || (nextLines && nextLines.some((l) => l.trim().startsWith('at ')));
+  if (!rawLine) return null;
 
-  if (!hasException && !hasStackTrace) {
+  // 1. Strict regex for Java exception class: e.g. java.lang.NullPointerException, java.nio.file.NoSuchFileException
+  const exceptionRegex = /\b(([a-zA-Z_$][a-zA-Z0-9_$]*\.)+([a-zA-Z0-9_$]+(?:Exception|Error)))(?::\s*([^\n\r]*))?/;
+  const match = rawLine.match(exceptionRegex);
+
+  // 2. Strict regex for Java stack trace frame: \tat com.example.MyClass.method(MyClass.java:123)
+  const atFrameRegex = /^\s*at\s+([a-zA-Z0-9_$./]+)\(([^)]+)\)/;
+  const lineHasFrame = atFrameRegex.test(rawLine);
+
+  // If the line neither contains a Java Exception class nor a Java stack frame,
+  // we do NOT treat it as a Java error (prevents false positives on plain English words like "at").
+  if (!match && !lineHasFrame) {
     return null;
   }
 
-  // Extract primary exception
-  const match = rawLine.match(/(([a-zA-Z_$][a-zA-Z0-9_$]*\.)+([a-zA-Z0-9_$]+(?:Exception|Error)))(?::\s*([^\n\r]+))?/);
-  const fullClass = match && match[1] ? match[1] : 'JavaException';
+  const fullClass = match ? match[1] : (lineHasFrame ? 'StackFrame' : null);
+  if (!fullClass) {
+    return null;
+  }
+
   const simpleName = match && match[3] ? match[3] : fullClass.split('.').pop() || fullClass;
   const message = match && match[4] ? match[4].trim() : '';
 
@@ -166,7 +176,7 @@ export function detectJavaErrorPattern(rawLine: string, nextLines?: string[]): D
 
   // Extract nested causes
   const nestedCauses: string[] = [];
-  const causeRegex = /(?:sun|java|javax|org|com)\.[a-zA-Z0-9_$.]+(?:Exception|Error):[^\n\r;:]+/g;
+  const causeRegex = /(?:sun|java|javax|org|com|[a-zA-Z_$][a-zA-Z0-9_$]*)\.[a-zA-Z0-9_$.]+(?:Exception|Error):[^\n\r;:]+/g;
   let causeMatch: RegExpExecArray | null;
   while ((causeMatch = causeRegex.exec(rawLine)) !== null) {
     const causeStr = causeMatch[0].trim();
@@ -177,21 +187,26 @@ export function detectJavaErrorPattern(rawLine: string, nextLines?: string[]): D
 
   // Extract stack trace frames from line or nextLines
   const stackTrace: string[] = [];
-  const atRegex = /\bat\s+([a-zA-Z0-9_$.]+)\(([^)]+)\)/g;
+  const globalAtRegex = /^\s*at\s+([a-zA-Z0-9_$./]+)\(([^)]+)\)/gm;
   let atMatch: RegExpExecArray | null;
-  while ((atMatch = atRegex.exec(rawLine)) !== null) {
+  while ((atMatch = globalAtRegex.exec(rawLine)) !== null) {
     stackTrace.push(`at ${atMatch[1]}(${atMatch[2]})`);
   }
 
   if (nextLines) {
     for (const line of nextLines) {
       const trimmed = line.trim();
-      if (trimmed.startsWith('at ') || trimmed.startsWith('Caused by:') || trimmed.startsWith('... ')) {
+      if (atFrameRegex.test(trimmed) || trimmed.startsWith('Caused by:') || trimmed.startsWith('... ')) {
         stackTrace.push(trimmed);
       } else {
         break; // Stop at end of stacktrace
       }
     }
+  }
+
+  // If there is no real exception class and no stack trace frames, it is NOT a Java error
+  if (!match && stackTrace.length === 0) {
+    return null;
   }
 
   // Build raw block for copying

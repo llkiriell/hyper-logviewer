@@ -1566,14 +1566,31 @@ select {
   border-bottom: 1px solid var(--border);
   font-size: 11px;
   color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.sticky-pinned-header:hover {
+  background: var(--hover);
 }
 
 .sticky-pinned-title {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-weight: 600;
   color: var(--accent);
+}
+
+.sticky-pinned-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  color: var(--text);
 }
 
 .sticky-unpin-btn {

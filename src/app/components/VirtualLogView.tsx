@@ -299,6 +299,16 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     setPinnedLine((prev) => (prev?.rawIndex === line.rawIndex ? null : line));
   }, []);
 
+  // Jump/scroll to pinned line position in the virtualized log list
+  const handleScrollToPinnedLine = useCallback(() => {
+    if (!pinnedLine) return;
+    const targetIdx = filteredLines.findIndex((l) => l.rawIndex === pinnedLine.rawIndex);
+    if (targetIdx !== -1) {
+      rowVirtualizer.scrollToIndex(targetIdx, { align: 'center' });
+      setSelectedRawIndex(pinnedLine.rawIndex);
+    }
+  }, [pinnedLine, filteredLines, rowVirtualizer]);
+
   // Context menu trigger
   const handleContextMenu = useCallback(
     (event: React.MouseEvent, line: ParsedLogLine) => {
@@ -450,42 +460,55 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
       <div className="viewer-viewport-wrapper">
         {/* Floating Sticky Pinned Header */}
         {showFloatingStickyPin && pinnedLine && (
-          <div className="sticky-pinned-bar">
-            <div className="sticky-pinned-header">
+          <div
+            className="sticky-pinned-bar"
+            onDoubleClick={handleScrollToPinnedLine}
+          >
+            <div
+              className="sticky-pinned-header"
+              onClick={handleScrollToPinnedLine}
+              title={t('viewer.jumpToPinned')}
+            >
               <span className="sticky-pinned-title">
                 <IconPinFilled size={13} stroke={1.5} />
                 <span>{t('viewer.pinnedHeader')}</span>
+                <span className="sticky-pinned-badge">#{pinnedLine.lineNumber}</span>
               </span>
               <button
                 type="button"
                 className="sticky-unpin-btn"
-                onClick={() => setPinnedLine(null)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPinnedLine(null);
+                }}
                 title={t('viewer.unpinLine')}
               >
                 <IconX size={14} stroke={1.5} />
               </button>
             </div>
-            <VirtualLogRow
-              line={pinnedLine}
-              searchQuery={searchQuery}
-              isRegex={isRegex}
-              caseSensitive={caseSensitive}
-              customRules={prefs.customHighlights}
-              inlineSeverityConfig={inlineSeverityConfig}
-              levelColor={resolveLineColor(pinnedLine)}
-              showSeparator={prefs.showLineSeparator}
-              separatorColor={prefs.lineSeparatorColor}
-              wordWrap={wordWrap}
-              fontSize={prefs.fontSize}
-              isPinned={true}
-              isSelected={prefs.highlightActiveLine && selectedRawIndex === pinnedLine.rawIndex}
-              rainbowBrackets={prefs.rainbowBrackets}
-              highlightGitPipeline={prefs.highlightGitPipeline}
-              onTogglePin={handleTogglePin}
-              onContextMenu={handleContextMenu}
-              onInspectLine={(l) => setDetailModalLine(l)}
-              onSelectLine={(l) => setSelectedRawIndex(l.rawIndex)}
-            />
+            <div onDoubleClick={handleScrollToPinnedLine}>
+              <VirtualLogRow
+                line={pinnedLine}
+                searchQuery={searchQuery}
+                isRegex={isRegex}
+                caseSensitive={caseSensitive}
+                customRules={prefs.customHighlights}
+                inlineSeverityConfig={inlineSeverityConfig}
+                levelColor={resolveLineColor(pinnedLine)}
+                showSeparator={prefs.showLineSeparator}
+                separatorColor={prefs.lineSeparatorColor}
+                wordWrap={wordWrap}
+                fontSize={prefs.fontSize}
+                isPinned={true}
+                isSelected={prefs.highlightActiveLine && selectedRawIndex === pinnedLine.rawIndex}
+                rainbowBrackets={prefs.rainbowBrackets}
+                highlightGitPipeline={prefs.highlightGitPipeline}
+                onTogglePin={handleTogglePin}
+                onContextMenu={handleContextMenu}
+                onInspectLine={(l) => setDetailModalLine(l)}
+                onSelectLine={() => handleScrollToPinnedLine()}
+              />
+            </div>
           </div>
         )}
 

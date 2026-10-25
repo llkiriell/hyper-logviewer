@@ -74,6 +74,7 @@ export const en = {
     pinLine: 'Pin line to top',
     unpinLine: 'Unpin line',
     pinnedHeader: 'Pinned Line',
+    jumpToPinned: 'Double-click to jump to line position',
     dateFilterTitle: 'Filter by Date & Time',
     dateRange: 'Date Range',
     singleDay: 'Single Day',
