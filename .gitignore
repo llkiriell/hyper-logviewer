@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Production and Electron builds
+dist/
+dist-electron/
+dist-mcp/
+release/
+build/
+
+# Local docs folder (local agent scratchpad, logs, and development notes - excluded from VCS)
+docs/
+
+# Environment and local overrides
+*.local
+.env
+.env.*
+
+# OS and Editor metadata
+.DS_Store
+Thumbs.db
+*.log
+.cursor/
+.vscode/
