@@ -27,7 +27,7 @@ import type {
   ParsedLogLine,
   SearchMatchRange,
 } from '../../core/types.ts';
-import type { ActiveLineIconType } from '../platform/preferences.ts';
+import type { ActiveLineIconType, FocusBackgroundMode } from '../platform/preferences.ts';
 import { useTranslation } from '../i18n/index.ts';
 
 interface VirtualLogRowProps {
@@ -48,6 +48,9 @@ interface VirtualLogRowProps {
   isHighlighted?: boolean;
   isSelected?: boolean;
   activeLineIcon?: ActiveLineIconType;
+  focusBackgroundMode?: FocusBackgroundMode;
+  customFocusBackgroundColor?: string;
+  isDeferredLoading?: boolean;
   rainbowBrackets?: boolean;
   highlightGitPipeline?: boolean;
   onTogglePin: (line: ParsedLogLine) => void;
@@ -167,6 +170,9 @@ export const VirtualLogRow = memo(function VirtualLogRow({
   isHighlighted = false,
   isSelected = false,
   activeLineIcon = 'hand',
+  focusBackgroundMode = 'transparent',
+  customFocusBackgroundColor = 'rgba(14, 165, 233, 0.15)',
+  isDeferredLoading = false,
   rainbowBrackets = true,
   highlightGitPipeline = true,
   onTogglePin,
@@ -179,16 +185,17 @@ export const VirtualLogRow = memo(function VirtualLogRow({
   const [hoveredBracketPairId, setHoveredBracketPairId] = useState<number | null>(null);
 
   const bracketMap = useMemo(() => {
-    if (!rainbowBrackets) return null;
+    if (!rainbowBrackets || isDeferredLoading) return null;
     return analyzeBrackets(line.raw);
-  }, [line.raw, rainbowBrackets]);
+  }, [line.raw, rainbowBrackets, isDeferredLoading]);
 
   const searchRanges = useMemo(() => {
-    if (!searchQuery) return [];
+    if (!searchQuery || isDeferredLoading) return [];
     return findMatchRanges(line.raw, searchQuery, isRegex, caseSensitive);
-  }, [line.raw, searchQuery, isRegex, caseSensitive]);
+  }, [line.raw, searchQuery, isRegex, caseSensitive, isDeferredLoading]);
 
   const chunks = useMemo(() => {
+    if (isDeferredLoading) return [];
     return splitTextWithSearchAndHighlights(
       line.raw,
       searchRanges,
@@ -204,6 +211,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
     customRules,
     inlineSeverityConfig,
     highlightGitPipeline,
+    isDeferredLoading,
   ]);
 
   const handleCopy = async (e: React.MouseEvent) => {
@@ -231,6 +239,24 @@ export const VirtualLogRow = memo(function VirtualLogRow({
     return levelColor.bgColor;
   }, [levelColor, line.isContinuation]);
 
+  // Effective row background considering focus customization
+  const effectiveRowBg = useMemo(() => {
+    if (isSelected) {
+      if (focusBackgroundMode === 'transparent') {
+        return undefined;
+      }
+      if (focusBackgroundMode === 'severity') {
+        return levelColor?.bgColor && levelColor.bgColor !== 'transparent'
+          ? levelColor.bgColor
+          : undefined;
+      }
+      if (focusBackgroundMode === 'custom') {
+        return customFocusBackgroundColor;
+      }
+    }
+    return rowBg;
+  }, [isSelected, focusBackgroundMode, customFocusBackgroundColor, levelColor, rowBg]);
+
   // Effective line separator color: uses user custom color, or theme-aware var(--border) if default
   const effectiveSeparatorColor = useMemo(() => {
     if (!showSeparator || isSelected) return undefined;
@@ -249,7 +275,10 @@ export const VirtualLogRow = memo(function VirtualLogRow({
     if (isSelected) {
       return {
         backgroundColor: 'var(--bg)',
-        backgroundImage: 'linear-gradient(var(--active), var(--active))',
+        backgroundImage: effectiveRowBg
+          ? `linear-gradient(${effectiveRowBg}, ${effectiveRowBg})`
+          : undefined,
+        boxShadow: separatorShadow,
       };
     }
     if (rowBg) {
@@ -263,7 +292,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
       backgroundColor: 'var(--bg)',
       boxShadow: separatorShadow,
     };
-  }, [isSelected, rowBg, effectiveSeparatorColor]);
+  }, [isSelected, effectiveRowBg, rowBg, effectiveSeparatorColor]);
 
   const rowBorderBottom = effectiveSeparatorColor
     ? `1px solid ${effectiveSeparatorColor}`
@@ -301,18 +330,46 @@ export const VirtualLogRow = memo(function VirtualLogRow({
     }
   }, [line.level, line.customLevelTag, levelColor]);
 
+  // High-performance deferred skeleton row during rapid momentum scroll on heavy logs
+  if (isDeferredLoading) {
+    return (
+      <div
+        className="log-row skeleton-log-row"
+        style={{
+          fontSize: `${fontSize}px`,
+          borderBottom: rowBorderBottom,
+        }}
+      >
+        <span className="log-pin-btn" style={stickySolidStyle} />
+        <span className="log-pointer-cell" style={stickySolidStyle} />
+        <span className="log-gutter" style={stickySolidStyle}>
+          {line.lineNumber}
+        </span>
+        <span className="log-level-badge" style={stickySolidStyle}>
+          <span className="skeleton-badge-pulse" />
+        </span>
+        <div className="log-content skeleton-content-box">
+          <span className="skeleton-bar" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`log-row log-row-${line.level} ${line.isContinuation ? 'is-continuation' : ''} ${wordWrap ? 'is-wrapped' : ''} ${isPinned ? 'is-pinned-row' : ''} ${isContextMenuTarget ? 'is-context-target' : ''} ${isHighlighted ? 'is-highlighted-focus' : ''} ${isSelected ? 'is-selected-line' : ''}`}
+      className={`log-row log-row-${line.level} ${line.isContinuation ? 'is-continuation' : ''} ${wordWrap ? 'is-wrapped' : ''} ${isPinned ? 'is-pinned-row' : ''} ${isContextMenuTarget ? 'is-context-target' : ''} ${isHighlighted ? 'is-highlighted-focus' : ''} ${isSelected ? 'is-selected-line' : ''} ${isSelected && !effectiveRowBg ? 'is-focus-transparent' : ''}`}
       style={{
         fontSize: `${fontSize}px`,
-        backgroundColor: rowBg,
+        backgroundColor: effectiveRowBg,
         borderBottom: rowBorderBottom,
         boxShadow: effectiveSeparatorColor
           ? `inset 0 -1px 0 0 ${effectiveSeparatorColor}`
           : undefined,
         ...(isSelected
-          ? ({ '--selected-line-border': activeBorderColor } as React.CSSProperties)
+          ? ({
+              '--selected-line-border': activeBorderColor,
+              '--selected-line-bg': effectiveRowBg || 'transparent',
+            } as React.CSSProperties)
           : {}),
       }}
       onClick={() => onSelectLine?.(line)}

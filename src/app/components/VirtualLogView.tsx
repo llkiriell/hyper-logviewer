@@ -50,7 +50,9 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isRegex, setIsRegex] = useState(false);
   const [caseSensitive, setCaseSensitive] = useState(false);
+  const [filterMatchesOnly, setFilterMatchesOnly] = useState(false);
   const [levelFilter, setLevelFilter] = useState<LogLevel | 'all'>('all');
+  const [hideSeverityBgTemporary, setHideSeverityBgTemporary] = useState(false);
   const [dateFilter, setDateFilter] = useState<DateRangeFilter>({
     enabled: false,
     mode: 'range',
@@ -89,9 +91,10 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
       searchQuery,
       isRegex,
       caseSensitive,
+      filterMatchesOnly,
       dateFilter,
     });
-  }, [lines, levelFilter, searchQuery, isRegex, caseSensitive, dateFilter]);
+  }, [lines, levelFilter, searchQuery, isRegex, caseSensitive, filterMatchesOnly, dateFilter]);
 
   // Index search matches across filtered lines for navigation
   const searchIndex = useMemo(() => {
@@ -103,7 +106,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
   // Reset match index when query or filtered lines change
   useEffect(() => {
     setCurrentMatchIndex(0);
-  }, [searchQuery, isRegex, caseSensitive, levelFilter, dateFilter]);
+  }, [searchQuery, isRegex, caseSensitive, filterMatchesOnly, levelFilter, dateFilter]);
 
   // Virtualizer setup with per-item key tracking to avoid search overlapping
   const rowVirtualizer = useVirtualizer({
@@ -326,6 +329,151 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     }
   }, [filteredLines.length, rowVirtualizer]);
 
+  // Step navigation line-by-line handlers (single click on up/down toolbar buttons)
+  const handleNavLineUp = useCallback(() => {
+    if (filteredLines.length === 0) return;
+    let nextIdx: number;
+    if (selectedRawIndex === null) {
+      const scroller = parentRef.current;
+      const vItems = rowVirtualizer.getVirtualItems();
+      if (scroller && vItems.length > 0) {
+        const visible = vItems.filter(
+          (v) =>
+            v.start + v.size > scroller.scrollTop &&
+            v.start < scroller.scrollTop + scroller.clientHeight,
+        );
+        const second = visible[1];
+        const first = visible[0];
+        nextIdx = second ? second.index : first ? first.index : 0;
+      } else {
+        nextIdx = 0;
+      }
+    } else {
+      const curIdx = filteredLines.findIndex((l) => l.rawIndex === selectedRawIndex);
+      nextIdx = curIdx > 0 ? curIdx - 1 : 0;
+    }
+    const targetLine = filteredLines[nextIdx];
+    if (targetLine) {
+      setSelectedRawIndex(targetLine.rawIndex);
+      rowVirtualizer.scrollToIndex(nextIdx, { align: 'auto' });
+    }
+  }, [filteredLines, selectedRawIndex, rowVirtualizer]);
+
+  const handleNavLineDown = useCallback(() => {
+    if (filteredLines.length === 0) return;
+    let nextIdx: number;
+    if (selectedRawIndex === null) {
+      const scroller = parentRef.current;
+      const vItems = rowVirtualizer.getVirtualItems();
+      if (scroller && vItems.length > 0) {
+        const visible = vItems.filter(
+          (v) =>
+            v.start + v.size > scroller.scrollTop &&
+            v.start < scroller.scrollTop + scroller.clientHeight,
+        );
+        const penultimate = visible.length >= 2 ? visible[visible.length - 2] : undefined;
+        const last = visible[visible.length - 1];
+        nextIdx = penultimate ? penultimate.index : last ? last.index : 0;
+      } else {
+        nextIdx = 0;
+      }
+    } else {
+      const curIdx = filteredLines.findIndex((l) => l.rawIndex === selectedRawIndex);
+      nextIdx =
+        curIdx >= 0 && curIdx < filteredLines.length - 1
+          ? curIdx + 1
+          : filteredLines.length - 1;
+    }
+    const targetLine = filteredLines[nextIdx];
+    if (targetLine) {
+      setSelectedRawIndex(targetLine.rawIndex);
+      rowVirtualizer.scrollToIndex(nextIdx, { align: 'auto' });
+    }
+  }, [filteredLines, selectedRawIndex, rowVirtualizer]);
+
+  // Physical keyboard arrow navigation (line by line without browser window scroll)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable ||
+          target.closest('.dialog-scrim'))
+      ) {
+        return;
+      }
+
+      if (detailModalLine !== null || filteredLines.length === 0) return;
+
+      e.preventDefault();
+
+      const scroller = parentRef.current;
+      const vItems = rowVirtualizer.getVirtualItems();
+      const visible =
+        scroller && vItems.length > 0
+          ? vItems.filter(
+              (v) =>
+                v.start + v.size > scroller.scrollTop &&
+                v.start < scroller.scrollTop + scroller.clientHeight,
+            )
+          : [];
+
+      if (selectedRawIndex === null) {
+        if (e.key === 'ArrowUp') {
+          // Focus on the second visible line (just below the toolbar and severity tags)
+          const second = visible[1];
+          const first = visible[0];
+          const chosen = second ?? first;
+          if (chosen) {
+            const line = filteredLines[chosen.index];
+            if (line) {
+              setSelectedRawIndex(line.rawIndex);
+              rowVirtualizer.scrollToIndex(chosen.index, { align: 'auto' });
+            }
+          }
+        } else if (e.key === 'ArrowDown') {
+          // Focus starts from the penultimate visible line
+          const penultimate = visible.length >= 2 ? visible[visible.length - 2] : undefined;
+          const last = visible[visible.length - 1];
+          const first = visible[0];
+          const chosen = penultimate ?? last ?? first;
+          if (chosen) {
+            const line = filteredLines[chosen.index];
+            if (line) {
+              setSelectedRawIndex(line.rawIndex);
+              rowVirtualizer.scrollToIndex(chosen.index, { align: 'auto' });
+            }
+          }
+        }
+      } else {
+        const curIdx = filteredLines.findIndex((l) => l.rawIndex === selectedRawIndex);
+        if (e.key === 'ArrowUp') {
+          const targetIdx = curIdx > 0 ? curIdx - 1 : 0;
+          if (filteredLines[targetIdx]) {
+            setSelectedRawIndex(filteredLines[targetIdx].rawIndex);
+            rowVirtualizer.scrollToIndex(targetIdx, { align: 'auto' });
+          }
+        } else if (e.key === 'ArrowDown') {
+          const targetIdx =
+            curIdx >= 0 && curIdx < filteredLines.length - 1
+              ? curIdx + 1
+              : filteredLines.length - 1;
+          if (filteredLines[targetIdx]) {
+            setSelectedRawIndex(filteredLines[targetIdx].rawIndex);
+            rowVirtualizer.scrollToIndex(targetIdx, { align: 'auto' });
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [detailModalLine, filteredLines, selectedRawIndex, rowVirtualizer]);
+
   // Extract by date to a brand new tab
   const handleExtractDateToTab = useCallback(
     (targetDate: string) => {
@@ -388,9 +536,24 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     return scrollTop > pinnedTop;
   }, [pinnedLine, pinnedInFilteredIndex, scrollTop]);
 
+  const effectiveShowSeverityBg = prefs.showSeverityBackground && !hideSeverityBgTemporary;
+
   // Helper to resolve color config for a line
   const resolveLineColor = useCallback(
     (line: ParsedLogLine) => {
+      if (!effectiveShowSeverityBg) {
+        if (line.customLevelTag && prefs.customStandardLevels) {
+          const found = prefs.customStandardLevels.find(
+            (c) => c.word.toLowerCase() === line.customLevelTag!.toLowerCase(),
+          );
+          if (found) {
+            return { textColor: found.textColor, bgColor: 'transparent' };
+          }
+        }
+        const baseColor = prefs.levelColors[line.level];
+        return { ...baseColor, bgColor: 'transparent' };
+      }
+
       if (line.customLevelTag && prefs.customStandardLevels) {
         const found = prefs.customStandardLevels.find(
           (c) => c.word.toLowerCase() === line.customLevelTag!.toLowerCase(),
@@ -399,13 +562,9 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
           return { textColor: found.textColor, bgColor: found.bgColor };
         }
       }
-      const baseColor = prefs.levelColors[line.level];
-      if (line.level === 'info' && prefs.removeInfoBg) {
-        return { ...baseColor, bgColor: 'transparent' };
-      }
-      return baseColor;
+      return prefs.levelColors[line.level];
     },
-    [prefs.customStandardLevels, prefs.levelColors, prefs.removeInfoBg],
+    [prefs.customStandardLevels, prefs.levelColors, effectiveShowSeverityBg],
   );
 
   // Build context menu entries
@@ -489,6 +648,8 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
         onToggleRegex={() => setIsRegex((prev) => !prev)}
         caseSensitive={caseSensitive}
         onToggleCaseSensitive={() => setCaseSensitive((prev) => !prev)}
+        filterMatchesOnly={filterMatchesOnly}
+        onToggleFilterMatchesOnly={() => setFilterMatchesOnly((prev) => !prev)}
         totalMatches={searchIndex.totalMatches}
         currentMatchIndex={currentMatchIndex}
         onNextMatch={handleNextMatch}
@@ -500,10 +661,14 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
         onOpenDateFilter={(anchor) => setDateAnchor(anchor)}
         wordWrap={wordWrap}
         onToggleWordWrap={handleToggleWordWrap}
+        showSeverityBg={effectiveShowSeverityBg}
+        onToggleSeverityBg={() => setHideSeverityBgTemporary((prev) => !prev)}
         showLineSeparator={prefs.showLineSeparator}
         onToggleLineSeparator={() =>
           setPreferences({ showLineSeparator: !prefs.showLineSeparator })
         }
+        onNavLineUp={handleNavLineUp}
+        onNavLineDown={handleNavLineDown}
         onScrollToTop={handleScrollToTop}
         onScrollToBottom={handleScrollToBottom}
         hideSearchBar={prefs.bottomSearchBar}
@@ -511,6 +676,11 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
 
       {/* Viewport wrapper with relative positioning */}
       <div className="viewer-viewport-wrapper">
+        {/* Streaming loading bar for rapid scrolling on heavy logs */}
+        {rowVirtualizer.isScrolling && filteredLines.length > 1500 && (
+          <div className="viewer-scroll-loading-bar" />
+        )}
+
         {/* Floating Sticky Pinned Header */}
         {showFloatingStickyPin && pinnedLine && (
           <div
@@ -555,6 +725,8 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
                 isPinned={true}
                 isSelected={prefs.highlightActiveLine && selectedRawIndex === pinnedLine.rawIndex}
                 activeLineIcon={prefs.activeLineIcon}
+                focusBackgroundMode={prefs.focusBackgroundMode}
+                customFocusBackgroundColor={prefs.customFocusBackgroundColor}
                 rainbowBrackets={prefs.rainbowBrackets}
                 highlightGitPipeline={prefs.highlightGitPipeline}
                 onTogglePin={handleTogglePin}
@@ -649,6 +821,9 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
                       isHighlighted={isHighlighted}
                       isSelected={prefs.highlightActiveLine && selectedRawIndex === line.rawIndex}
                       activeLineIcon={prefs.activeLineIcon}
+                      focusBackgroundMode={prefs.focusBackgroundMode}
+                      customFocusBackgroundColor={prefs.customFocusBackgroundColor}
+                      isDeferredLoading={rowVirtualizer.isScrolling && filteredLines.length > 1500}
                       rainbowBrackets={prefs.rainbowBrackets}
                       highlightGitPipeline={prefs.highlightGitPipeline}
                       onTogglePin={handleTogglePin}
@@ -674,6 +849,8 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
             onToggleRegex={() => setIsRegex((prev) => !prev)}
             caseSensitive={caseSensitive}
             onToggleCaseSensitive={() => setCaseSensitive((prev) => !prev)}
+            filterMatchesOnly={filterMatchesOnly}
+            onToggleFilterMatchesOnly={() => setFilterMatchesOnly((prev) => !prev)}
             totalMatches={searchIndex.totalMatches}
             currentMatchIndex={currentMatchIndex}
             onNextMatch={handleNextMatch}
