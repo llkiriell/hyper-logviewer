@@ -80,11 +80,12 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
   const [wordWrap, setWordWrap] = useState(prefs.wordWrap);
   const [autoScroll, setAutoScroll] = useState(prefs.autoScrollDefault);
 
-  // Retain position when clearing search
+  // Retain position and active focus across filters and search
   const lastActiveRawIndexRef = useRef<number | null>(null);
-  const [highlightedRawIndex, setHighlightedRawIndex] = useState<number | null>(null);
   const [selectedRawIndex, setSelectedRawIndex] = useState<number | null>(null);
   const [selectedRawIndices, setSelectedRawIndices] = useState<Set<number>>(new Set());
+  const pendingFunnelToggleRef = useRef<{ activeRawIndex: number | null } | null>(null);
+  const pendingSearchClearRef = useRef<{ targetRawIndex: number | null } | null>(null);
 
   // Compute filtered log lines
   const filteredLines = useMemo(() => {
@@ -120,12 +121,23 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
       const line = filteredLines[index];
       return `${line?.rawIndex ?? index}-${wordWrap ? 'w' : 'nw'}`;
     },
-    measureElement: (element, entry) => {
+    measureElement: (element, entry, instance) => {
       if (!element) return 24;
       if (entry?.borderBoxSize?.[0]) {
-        return Math.round(entry.borderBoxSize[0].blockSize);
+        const size = Math.round(entry.borderBoxSize[0].blockSize);
+        if (size > 0) return size;
       }
-      return Math.ceil(element.getBoundingClientRect().height) || (element as HTMLElement).offsetHeight || 24;
+      if (!entry && instance) {
+        const index = instance.indexFromElement(element);
+        const key = instance.options.getItemKey(index);
+        const cached = instance.itemSizeCache.get(key);
+        if (typeof cached === 'number' && cached > 0) {
+          return cached;
+        }
+      }
+      const rectHeight = Math.ceil(element.getBoundingClientRect().height);
+      if (rectHeight > 0) return rectHeight;
+      return (element as HTMLElement).offsetHeight || 24;
     },
   });
 
@@ -139,21 +151,23 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
       const idxAttr = el.getAttribute('data-index');
       if (idxAttr !== null) {
         const idx = Number(idxAttr);
-        const height = Math.ceil(el.getBoundingClientRect().height) || el.offsetHeight;
-        if (height > 0) {
-          rowVirtualizer.resizeItem(idx, height);
+        if (idx >= 0 && idx < filteredLines.length) {
+          const height = Math.ceil(el.getBoundingClientRect().height) || el.offsetHeight;
+          if (height > 0) {
+            rowVirtualizer.resizeItem(idx, height);
+          }
         }
       }
     });
-  }, [rowVirtualizer]);
+  }, [filteredLines.length, rowVirtualizer]);
 
-  // Invalidate virtualizer cache when wordWrap, filter, or line count changes (not on every search query keystroke)
+  // Invalidate virtualizer cache ONLY when wordWrap or font size changes (never on search or line filtering)
   useLayoutEffect(() => {
     rowVirtualizer.measure();
     requestAnimationFrame(() => {
       remeasureMountedRows();
     });
-  }, [wordWrap, filterMatchesOnly, filteredLines.length, prefs.fontSize, rowVirtualizer, remeasureMountedRows]);
+  }, [wordWrap, prefs.fontSize, rowVirtualizer, remeasureMountedRows]);
 
   // Recalculate heights on scroller width resize when word wrap is enabled
   useEffect(() => {
@@ -257,7 +271,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     }
   }, [currentMatchIndex, searchIndex, filteredLines, rowVirtualizer]);
 
-  // Search query change with position preservation on clear (prioritizes focused selected line)
+  // Search query change with focus and scroll preservation on clear (prioritizes focused selected line)
   const handleSearchChange = useCallback(
     (newQuery: string) => {
       const wasSearching = searchQuery.trim().length > 0;
@@ -267,51 +281,78 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
       setSearchQuery(newQuery);
 
       if (isClearing && targetRawIndex !== null) {
-        setHighlightedRawIndex(targetRawIndex);
-        requestAnimationFrame(() => {
-          const targetIndex = lines.findIndex((l) => l.rawIndex === targetRawIndex);
-          if (targetIndex !== -1) {
-            rowVirtualizer.scrollToIndex(targetIndex, { align: 'center' });
-          }
-        });
-        setTimeout(() => setHighlightedRawIndex(null), 3000);
+        pendingSearchClearRef.current = { targetRawIndex };
       }
     },
-    [searchQuery, selectedRawIndex, lines, rowVirtualizer],
+    [searchQuery, selectedRawIndex],
   );
 
-  // Toggle filterMatchesOnly (embudo) sharing the identical focus and scroll preservation logic as search clear
+  // Synchronize focus and scroll when search query is cleared
+  useEffect(() => {
+    if (!pendingSearchClearRef.current) return;
+    const { targetRawIndex } = pendingSearchClearRef.current;
+    pendingSearchClearRef.current = null;
+
+    if (targetRawIndex !== null && filteredLines.length > 0) {
+      let targetIdx = filteredLines.findIndex((l) => l.rawIndex === targetRawIndex);
+      if (targetIdx === -1) targetIdx = 0;
+      const targetLine = filteredLines[targetIdx];
+      if (targetLine) {
+        setSelectedRawIndex(targetLine.rawIndex);
+        setSelectedRawIndices(new Set([targetLine.rawIndex]));
+        lastActiveRawIndexRef.current = targetLine.rawIndex;
+        rowVirtualizer.scrollToIndex(targetIdx, { align: 'center', behavior: 'auto' });
+        requestAnimationFrame(() => {
+          remeasureMountedRows();
+          rowVirtualizer.scrollToIndex(targetIdx, { align: 'center', behavior: 'auto' });
+        });
+      }
+    }
+  }, [searchQuery, filteredLines, rowVirtualizer, remeasureMountedRows]);
+
+  // Toggle filterMatchesOnly (embudo) preserving active match focus and scrolling directly to it
   const handleToggleFilterMatchesOnly = useCallback(() => {
-    const turningOff = filterMatchesOnly;
-    const targetRawIndex = selectedRawIndex ?? lastActiveRawIndexRef.current;
+    const targetRawIndex =
+      selectedRawIndex ??
+      (activeLocation ? filteredLines[activeLocation.lineIndex]?.rawIndex : null) ??
+      lastActiveRawIndexRef.current;
+
+    pendingFunnelToggleRef.current = {
+      activeRawIndex: targetRawIndex,
+    };
 
     setFilterMatchesOnly((prev) => !prev);
+  }, [selectedRawIndex, activeLocation, filteredLines]);
 
-    if (turningOff && targetRawIndex !== null) {
-      setHighlightedRawIndex(targetRawIndex);
+  // Synchronize focus and scroll when filterMatchesOnly toggles (using fresh filteredLines)
+  useEffect(() => {
+    if (!pendingFunnelToggleRef.current) return;
+    const { activeRawIndex } = pendingFunnelToggleRef.current;
+    pendingFunnelToggleRef.current = null;
+
+    if (filteredLines.length === 0) return;
+
+    let targetIdx = -1;
+    if (activeRawIndex !== null) {
+      targetIdx = filteredLines.findIndex((l) => l.rawIndex === activeRawIndex);
+    }
+    if (targetIdx === -1) {
+      targetIdx = 0;
+    }
+
+    const targetLine = filteredLines[targetIdx];
+    if (targetLine) {
+      setSelectedRawIndex(targetLine.rawIndex);
+      setSelectedRawIndices(new Set([targetLine.rawIndex]));
+      lastActiveRawIndexRef.current = targetLine.rawIndex;
+
+      rowVirtualizer.scrollToIndex(targetIdx, { align: 'center', behavior: 'auto' });
       requestAnimationFrame(() => {
-        const targetIndex = lines.findIndex((l) => l.rawIndex === targetRawIndex);
-        if (targetIndex !== -1) {
-          rowVirtualizer.scrollToIndex(targetIndex, { align: 'center' });
-        }
-      });
-      setTimeout(() => setHighlightedRawIndex(null), 3000);
-    } else if (!turningOff) {
-      requestAnimationFrame(() => {
-        if (targetRawIndex !== null) {
-          const matchIndexInFiltered = filteredLines.findIndex((l) => l.rawIndex === targetRawIndex);
-          if (matchIndexInFiltered !== -1) {
-            rowVirtualizer.scrollToIndex(matchIndexInFiltered, { align: 'center' });
-            return;
-          }
-        }
-        if (searchIndex.totalMatches > 0 && searchIndex.locations[0]) {
-          const firstLoc = searchIndex.locations[0];
-          rowVirtualizer.scrollToIndex(firstLoc.lineIndex, { align: 'center' });
-        }
+        remeasureMountedRows();
+        rowVirtualizer.scrollToIndex(targetIdx, { align: 'center', behavior: 'auto' });
       });
     }
-  }, [filterMatchesOnly, selectedRawIndex, lines, filteredLines, searchIndex, rowVirtualizer]);
+  }, [filterMatchesOnly, filteredLines, rowVirtualizer, remeasureMountedRows]);
 
   // Toggle word wrap preserving focused or geometrical center line on screen and re-measuring accurately
   const handleToggleWordWrap = useCallback(() => {
@@ -389,9 +430,10 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
       if (targetIndex >= 0 && targetIndex < filteredLines.length) {
         const targetLine = filteredLines[targetIndex];
         if (targetLine) {
-          setHighlightedRawIndex(targetLine.rawIndex);
-          rowVirtualizer.scrollToIndex(targetIndex, { align: 'center' });
-          setTimeout(() => setHighlightedRawIndex(null), 3000);
+          setSelectedRawIndex(targetLine.rawIndex);
+          setSelectedRawIndices(new Set([targetLine.rawIndex]));
+          lastActiveRawIndexRef.current = targetLine.rawIndex;
+          rowVirtualizer.scrollToIndex(targetIndex, { align: 'center', behavior: 'auto' });
         }
       }
     },
@@ -489,70 +531,6 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
       }
     }
   }, [filteredLines, rowVirtualizer]);
-
-  // Step navigation line-by-line handlers (single click on up/down toolbar buttons)
-  const handleNavLineUp = useCallback(() => {
-    if (filteredLines.length === 0) return;
-    let nextIdx: number;
-    if (selectedRawIndex === null) {
-      const scroller = parentRef.current;
-      const vItems = rowVirtualizer.getVirtualItems();
-      if (scroller && vItems.length > 0) {
-        const visible = vItems.filter(
-          (v) =>
-            v.start + v.size > scroller.scrollTop &&
-            v.start < scroller.scrollTop + scroller.clientHeight,
-        );
-        const second = visible[1];
-        const first = visible[0];
-        nextIdx = second ? second.index : first ? first.index : 0;
-      } else {
-        nextIdx = 0;
-      }
-    } else {
-      const curIdx = filteredLines.findIndex((l) => l.rawIndex === selectedRawIndex);
-      nextIdx = curIdx > 0 ? curIdx - 1 : 0;
-    }
-    const targetLine = filteredLines[nextIdx];
-    if (targetLine) {
-      setSelectedRawIndex(targetLine.rawIndex);
-      setSelectedRawIndices(new Set([targetLine.rawIndex]));
-      rowVirtualizer.scrollToIndex(nextIdx, { align: 'auto' });
-    }
-  }, [filteredLines, selectedRawIndex, rowVirtualizer]);
-
-  const handleNavLineDown = useCallback(() => {
-    if (filteredLines.length === 0) return;
-    let nextIdx: number;
-    if (selectedRawIndex === null) {
-      const scroller = parentRef.current;
-      const vItems = rowVirtualizer.getVirtualItems();
-      if (scroller && vItems.length > 0) {
-        const visible = vItems.filter(
-          (v) =>
-            v.start + v.size > scroller.scrollTop &&
-            v.start < scroller.scrollTop + scroller.clientHeight,
-        );
-        const penultimate = visible.length >= 2 ? visible[visible.length - 2] : undefined;
-        const last = visible[visible.length - 1];
-        nextIdx = penultimate ? penultimate.index : last ? last.index : 0;
-      } else {
-        nextIdx = 0;
-      }
-    } else {
-      const curIdx = filteredLines.findIndex((l) => l.rawIndex === selectedRawIndex);
-      nextIdx =
-        curIdx >= 0 && curIdx < filteredLines.length - 1
-          ? curIdx + 1
-          : filteredLines.length - 1;
-    }
-    const targetLine = filteredLines[nextIdx];
-    if (targetLine) {
-      setSelectedRawIndex(targetLine.rawIndex);
-      setSelectedRawIndices(new Set([targetLine.rawIndex]));
-      rowVirtualizer.scrollToIndex(nextIdx, { align: 'auto' });
-    }
-  }, [filteredLines, selectedRawIndex, rowVirtualizer]);
 
   // Physical keyboard arrow navigation (line by line without browser window scroll)
   useEffect(() => {
@@ -883,8 +861,6 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
         onToggleLineSeparator={() =>
           setPreferences({ showLineSeparator: !prefs.showLineSeparator })
         }
-        onNavLineUp={handleNavLineUp}
-        onNavLineDown={handleNavLineDown}
         onScrollToTop={handleScrollToTop}
         onScrollToBottom={handleScrollToBottom}
         hideSearchBar={prefs.bottomSearchBar}
@@ -1001,7 +977,6 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
 
                 const isPinned = pinnedLine?.rawIndex === line.rawIndex;
                 const isTarget = contextMenu?.line.rawIndex === line.rawIndex;
-                const isHighlighted = highlightedRawIndex === line.rawIndex;
                 const isSelected = prefs.highlightActiveLine && selectedRawIndices.has(line.rawIndex);
 
                 let selectionBlockPosition: 'single' | 'top' | 'middle' | 'bottom' | null = null;
@@ -1053,7 +1028,6 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
                       fontSize={prefs.fontSize}
                       isPinned={isPinned}
                       isContextMenuTarget={isTarget}
-                      isHighlighted={isHighlighted}
                       isSelected={isSelected}
                       selectionBlockPosition={selectionBlockPosition}
                       activeLineIcon={prefs.activeLineIcon}

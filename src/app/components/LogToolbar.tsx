@@ -278,8 +278,6 @@ interface LogToolbarProps {
   onToggleSeverityBg: () => void;
   showLineSeparator: boolean;
   onToggleLineSeparator: () => void;
-  onNavLineUp: () => void;
-  onNavLineDown: () => void;
   onScrollToTop: () => void;
   onScrollToBottom: () => void;
   hideSearchBar?: boolean;
@@ -309,8 +307,6 @@ export function LogToolbar({
   onToggleSeverityBg,
   showLineSeparator,
   onToggleLineSeparator,
-  onNavLineUp,
-  onNavLineDown,
   onScrollToTop,
   onScrollToBottom,
   hideSearchBar = false,
@@ -460,24 +456,22 @@ export function LogToolbar({
           <IconBorderHorizontal size={16} stroke={1.5} />
         </button>
 
-        {/* Navigate Up / Double click: Jump to top */}
+        {/* Jump to top */}
         <button
           type="button"
           className="toolbar-btn"
-          onClick={onNavLineUp}
-          onDoubleClick={onScrollToTop}
-          title={t('viewer.navUpTooltip')}
+          onClick={onScrollToTop}
+          title={t('viewer.jumpToTop')}
         >
           <IconArrowUp size={16} stroke={1.5} />
         </button>
 
-        {/* Navigate Down / Double click: Jump to bottom */}
+        {/* Jump to bottom */}
         <button
           type="button"
           className="toolbar-btn"
-          onClick={onNavLineDown}
-          onDoubleClick={onScrollToBottom}
-          title={t('viewer.navDownTooltip')}
+          onClick={onScrollToBottom}
+          title={t('viewer.jumpToBottom')}
         >
           <IconArrowDown size={16} stroke={1.5} />
         </button>

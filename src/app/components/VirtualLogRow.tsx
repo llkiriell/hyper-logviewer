@@ -45,7 +45,6 @@ interface VirtualLogRowProps {
   fontSize: number;
   isPinned: boolean;
   isContextMenuTarget?: boolean;
-  isHighlighted?: boolean;
   isSelected?: boolean;
   selectionBlockPosition?: 'single' | 'top' | 'middle' | 'bottom' | null;
   activeLineIcon?: ActiveLineIconType;
@@ -168,7 +167,6 @@ export const VirtualLogRow = memo(function VirtualLogRow({
   fontSize,
   isPinned,
   isContextMenuTarget = false,
-  isHighlighted = false,
   isSelected = false,
   selectionBlockPosition = null,
   activeLineIcon = 'hand',
@@ -359,7 +357,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
 
   return (
     <div
-      className={`log-row log-row-${line.level} ${line.isContinuation ? 'is-continuation' : ''} ${wordWrap ? 'is-wrapped' : ''} ${isPinned ? 'is-pinned-row' : ''} ${isContextMenuTarget ? 'is-context-target' : ''} ${isHighlighted ? 'is-highlighted-focus' : ''} ${isSelected ? 'is-selected-line' : ''} ${isSelected && selectionBlockPosition ? `selection-block-${selectionBlockPosition}` : ''} ${isSelected && !effectiveRowBg ? 'is-focus-transparent' : ''}`}
+      className={`log-row log-row-${line.level} ${line.isContinuation ? 'is-continuation' : ''} ${wordWrap ? 'is-wrapped' : ''} ${isPinned ? 'is-pinned-row' : ''} ${isContextMenuTarget ? 'is-context-target' : ''} ${isSelected ? 'is-selected-line' : ''} ${isSelected && selectionBlockPosition ? `selection-block-${selectionBlockPosition}` : ''} ${isSelected && !effectiveRowBg ? 'is-focus-transparent' : ''}`}
       style={{
         fontSize: `${fontSize}px`,
         backgroundColor: effectiveRowBg,

@@ -1141,10 +1141,6 @@ select {
 }
 
 /* Sticky columns compose background dynamically via inline styles (stickySolidStyle) */
-.log-row.is-highlighted-focus .log-pin-btn,
-.log-row.is-highlighted-focus .log-pointer-cell,
-.log-row.is-highlighted-focus .log-gutter,
-.log-row.is-highlighted-focus .log-level-badge,
 .log-row.is-context-target .log-pin-btn,
 .log-row.is-context-target .log-pointer-cell,
 .log-row.is-context-target .log-gutter,
@@ -1200,20 +1196,6 @@ select {
 
 .log-row.is-selected-line.selection-block-single::after {
   border: 1.5px solid var(--selected-line-border, var(--accent));
-}
-
-/* Retained focus highlight when search filter is cleared */
-.log-row.is-highlighted-focus {
-  outline: 2px solid var(--accent);
-  outline-offset: -1px;
-  background: var(--surface-hover) !important;
-  animation: pulseHighlight 2.5s ease-out;
-}
-
-@keyframes pulseHighlight {
-  0% { box-shadow: 0 0 12px var(--accent); }
-  50% { box-shadow: 0 0 6px var(--accent); }
-  100% { box-shadow: none; }
 }
 
 .log-row:hover {
