@@ -76,6 +76,7 @@ export interface FilterOptions {
   searchQuery: string;
   isRegex: boolean;
   caseSensitive: boolean;
+  filterMatchesOnly?: boolean;
   dateFilter?: DateRangeFilter;
 }
 

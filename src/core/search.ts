@@ -49,19 +49,20 @@ export function filterLines(
   lines: ParsedLogLine[],
   options: FilterOptions,
 ): ParsedLogLine[] {
-  const { level, searchQuery, isRegex, caseSensitive, dateFilter } = options;
+  const { level, searchQuery, isRegex, caseSensitive, filterMatchesOnly, dateFilter } = options;
   const hasQuery = searchQuery.trim().length > 0;
+  const shouldFilterBySearch = hasQuery && filterMatchesOnly === true;
   const hasLevelFilter = level !== 'all';
   const hasDateFilter = dateFilter?.enabled === true;
 
-  if (!hasQuery && !hasLevelFilter && !hasDateFilter) {
+  if (!shouldFilterBySearch && !hasLevelFilter && !hasDateFilter) {
     return lines;
   }
 
   let regex: RegExp | null = null;
   let lowerQuery = '';
 
-  if (hasQuery) {
+  if (shouldFilterBySearch) {
     if (isRegex) {
       try {
         regex = new RegExp(searchQuery, caseSensitive ? '' : 'i');
@@ -81,7 +82,7 @@ export function filterLines(
   };
 
   const matchesSearch = (raw: string): boolean => {
-    if (!hasQuery) return true;
+    if (!shouldFilterBySearch) return true;
     if (regex) return regex.test(raw);
     const target = caseSensitive ? raw : raw.toLowerCase();
     return target.includes(lowerQuery);
