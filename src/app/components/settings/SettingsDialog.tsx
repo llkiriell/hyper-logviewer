@@ -436,31 +436,43 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
                       </div>
                     </div>
 
-                    {/* WCAG 2.1 Contrast Feedback Banner */}
-                    <div
-                      className={`wcag-contrast-badge ${
-                        wcagResult.isAaCompliant ? 'is-compliant' : 'is-warning'
-                      }`}
-                    >
-                      {wcagResult.isAaCompliant ? (
-                        <>
-                          <IconCheck size={14} stroke={2} className="wcag-icon" />
-                          <span>
-                            {t('settings.appearance.wcagCompliant', {
-                              ratio: wcagResult.ratio,
-                            })}
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <IconAlertTriangle size={15} stroke={2} className="wcag-icon" />
-                          <span>
-                            {t('settings.appearance.wcagWarning', {
-                              ratio: wcagResult.ratio,
-                            })}
-                          </span>
-                        </>
-                      )}
+                    {/* Visual Preview Box with Check / Warning Icon */}
+                    <div className="custom-focus-preview-card">
+                      <div className="preview-header-label">
+                        <span>{t('settings.appearance.preview')}</span>
+                        <span
+                          className={`preview-status-pill ${
+                            wcagResult.isAaCompliant ? 'is-compliant' : 'is-warning'
+                          }`}
+                        >
+                          {wcagResult.isAaCompliant ? (
+                            <>
+                              <IconCheck size={13} stroke={2.5} />
+                              <span>WCAG AA ({wcagResult.ratio}:1)</span>
+                            </>
+                          ) : (
+                            <>
+                              <IconAlertTriangle size={13} stroke={2.5} />
+                              <span>
+                                {t('settings.appearance.wcagWarningShort')} ({wcagResult.ratio}:1)
+                              </span>
+                            </>
+                          )}
+                        </span>
+                      </div>
+                      <div
+                        className="custom-focus-mock-row"
+                        style={{
+                          backgroundColor: prefs.customFocusBackgroundColor,
+                          borderLeft: '3px solid var(--accent)',
+                        }}
+                      >
+                        <span className="mock-gutter">142</span>
+                        <span className="mock-badge">INFO</span>
+                        <span className="mock-text" style={{ color: currentTextColor }}>
+                          2026-10-27 12:45:00 [Worker-3] Task processed successfully
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )}

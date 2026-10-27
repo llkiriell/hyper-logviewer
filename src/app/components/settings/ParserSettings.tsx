@@ -352,14 +352,16 @@ export function ParserSettings() {
                     />
                   </div>
 
-                  <label className="bg-toggle-label">
-                    <input
-                      type="checkbox"
+                  <div className="level-switch-wrapper">
+                    <Switch
                       checked={hasBg}
-                      onChange={(e) => handleToggleLevelBg(lvl, e.target.checked)}
+                      onChange={(enabled) => handleToggleLevelBg(lvl, enabled)}
+                      label={`${lvl.toUpperCase()} ${hasBg ? t('settings.parser.bgEnabled') : t('settings.parser.bgDisabled')}`}
                     />
-                    <span>{t('settings.parser.softBg')}</span>
-                  </label>
+                    <span className="level-switch-label">
+                      {hasBg ? t('settings.parser.bgEnabled') : t('settings.parser.bgDisabled')}
+                    </span>
+                  </div>
                 </div>
               </div>
             );
@@ -393,14 +395,16 @@ export function ParserSettings() {
               />
             </div>
 
-            <label className="bg-toggle-label">
-              <input
-                type="checkbox"
+            <div className="level-switch-wrapper">
+              <Switch
                 checked={newStdHasBg}
-                onChange={(e) => setNewStdHasBg(e.target.checked)}
+                onChange={setNewStdHasBg}
+                label={t('settings.parser.softBg')}
               />
-              <span>{t('settings.parser.softBg')}</span>
-            </label>
+              <span className="level-switch-label">
+                {newStdHasBg ? t('settings.parser.bgEnabled') : t('settings.parser.bgDisabled')}
+              </span>
+            </div>
 
             {newStdWord.trim() && (
               <div className="std-word-preview" title="Vista previa en vivo del badge">
@@ -457,14 +461,16 @@ export function ParserSettings() {
                       />
                     </div>
 
-                    <label className="bg-toggle-label">
-                      <input
-                        type="checkbox"
+                    <div className="level-switch-wrapper">
+                      <Switch
                         checked={hasBg}
-                        onChange={(e) => handleToggleStdWordBg(std.id, e.target.checked)}
+                        onChange={(enabled) => handleToggleStdWordBg(std.id, enabled)}
+                        label={`${std.word} ${hasBg ? t('settings.parser.bgEnabled') : t('settings.parser.bgDisabled')}`}
                       />
-                      <span>{t('settings.parser.softBg')}</span>
-                    </label>
+                      <span className="level-switch-label">
+                        {hasBg ? t('settings.parser.bgEnabled') : t('settings.parser.bgDisabled')}
+                      </span>
+                    </div>
 
                     <button
                       type="button"

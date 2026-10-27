@@ -1140,26 +1140,7 @@ select {
   background-image: linear-gradient(var(--hover), var(--hover));
 }
 
-.log-row-fatal .log-pin-btn,
-.log-row-fatal .log-pointer-cell,
-.log-row-fatal .log-gutter,
-.log-row-fatal .log-level-badge,
-.log-row-error .log-pin-btn,
-.log-row-error .log-pointer-cell,
-.log-row-error .log-gutter,
-.log-row-error .log-level-badge {
-  background-color: var(--bg);
-  background-image: linear-gradient(var(--danger-soft), var(--danger-soft));
-}
-
-.log-row-warn .log-pin-btn,
-.log-row-warn .log-pointer-cell,
-.log-row-warn .log-gutter,
-.log-row-warn .log-level-badge {
-  background-color: var(--bg);
-  background-image: linear-gradient(var(--mark-soft), var(--mark-soft));
-}
-
+/* Sticky columns compose background dynamically via inline styles (stickySolidStyle) */
 .log-row.is-highlighted-focus .log-pin-btn,
 .log-row.is-highlighted-focus .log-pointer-cell,
 .log-row.is-highlighted-focus .log-gutter,
@@ -1224,12 +1205,10 @@ select {
 .log-row-fatal,
 .log-row-error {
   border-left-color: var(--danger);
-  background: var(--danger-soft);
 }
 
 .log-row-warn {
   border-left-color: var(--mark);
-  background: var(--mark-soft);
 }
 
 .log-row-info {
@@ -1241,65 +1220,18 @@ select {
   border-left-color: transparent !important;
 }
 
-.log-row-fatal.is-continuation,
-.log-row-error.is-continuation {
-  background-color: var(--bg);
-  background-image: linear-gradient(rgba(179, 38, 30, 0.035), rgba(179, 38, 30, 0.035)) !important;
+/* When severity background is toggled off (or temporarily disabled via toolbar button) */
+.viewer-scroller.hide-severity-bg .log-row {
+  background-color: transparent !important;
+  background-image: none !important;
 }
 
-.log-row-warn.is-continuation {
-  background-color: var(--bg);
-  background-image: linear-gradient(rgba(214, 160, 40, 0.035), rgba(214, 160, 40, 0.035)) !important;
-}
-
-.log-row-info.is-continuation {
-  background-color: var(--bg);
-  background-image: linear-gradient(rgba(25, 118, 210, 0.025), rgba(25, 118, 210, 0.025)) !important;
-}
-
-:root[data-theme='dark'] .log-row-fatal.is-continuation,
-:root[data-theme='dark'] .log-row-error.is-continuation {
-  background-color: var(--bg);
-  background-image: linear-gradient(rgba(239, 83, 80, 0.045), rgba(239, 83, 80, 0.045)) !important;
-}
-
-:root[data-theme='dark'] .log-row-warn.is-continuation {
-  background-color: var(--bg);
-  background-image: linear-gradient(rgba(255, 183, 77, 0.045), rgba(255, 183, 77, 0.045)) !important;
-}
-
-:root[data-theme='dark'] .log-row-info.is-continuation {
-  background-color: var(--bg);
-  background-image: linear-gradient(rgba(79, 195, 247, 0.035), rgba(79, 195, 247, 0.035)) !important;
-}
-
-/* Sticky columns for continuation rows */
-.log-row-fatal.is-continuation .log-pin-btn,
-.log-row-fatal.is-continuation .log-pointer-cell,
-.log-row-fatal.is-continuation .log-gutter,
-.log-row-fatal.is-continuation .log-level-badge,
-.log-row-error.is-continuation .log-pin-btn,
-.log-row-error.is-continuation .log-pointer-cell,
-.log-row-error.is-continuation .log-gutter,
-.log-row-error.is-continuation .log-level-badge {
-  background-color: var(--bg);
-  background-image: linear-gradient(rgba(179, 38, 30, 0.035), rgba(179, 38, 30, 0.035));
-}
-
-.log-row-warn.is-continuation .log-pin-btn,
-.log-row-warn.is-continuation .log-pointer-cell,
-.log-row-warn.is-continuation .log-gutter,
-.log-row-warn.is-continuation .log-level-badge {
-  background-color: var(--bg);
-  background-image: linear-gradient(rgba(214, 160, 40, 0.035), rgba(214, 160, 40, 0.035));
-}
-
-.log-row-info.is-continuation .log-pin-btn,
-.log-row-info.is-continuation .log-pointer-cell,
-.log-row-info.is-continuation .log-gutter,
-.log-row-info.is-continuation .log-level-badge {
-  background-color: var(--bg);
-  background-image: linear-gradient(rgba(25, 118, 210, 0.025), rgba(25, 118, 210, 0.025));
+.viewer-scroller.hide-severity-bg .log-pin-btn,
+.viewer-scroller.hide-severity-bg .log-pointer-cell,
+.viewer-scroller.hide-severity-bg .log-gutter,
+.viewer-scroller.hide-severity-bg .log-level-badge {
+  background-color: var(--bg) !important;
+  background-image: none !important;
 }
 
 
@@ -2196,6 +2128,20 @@ select {
   font-size: 12px;
   color: var(--text-muted);
   cursor: pointer;
+}
+
+.level-switch-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.level-switch-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  min-width: 68px;
+  user-select: none;
 }
 
 /* Custom Standard Word Form Card - Clean Balanced Layout */
@@ -3796,5 +3742,92 @@ select {
 .wcag-contrast-badge .wcag-icon {
   flex: none;
 }
+
+/* Custom Focus Live Preview Box in Settings */
+.custom-focus-preview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+}
+
+.preview-header-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.preview-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.preview-status-pill.is-compliant {
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+[data-theme='dark'] .preview-status-pill.is-compliant {
+  background: rgba(34, 197, 94, 0.18);
+  color: #4ade80;
+}
+
+.preview-status-pill.is-warning {
+  background: rgba(234, 88, 12, 0.12);
+  color: #ea580c;
+  border: 1px solid rgba(234, 88, 12, 0.35);
+}
+
+[data-theme='dark'] .preview-status-pill.is-warning {
+  background: rgba(249, 115, 22, 0.18);
+  color: #fb923c;
+}
+
+.custom-focus-mock-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.mock-gutter {
+  color: var(--text-faint);
+  font-size: 11px;
+  user-select: none;
+}
+
+.mock-badge {
+  font-weight: 700;
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(25, 118, 210, 0.15);
+  color: #1976d2;
+}
+
+.mock-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 
 
