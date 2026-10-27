@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import type {
   CustomHighlightRule,
+  CustomLogEntityPattern,
   CustomStandardLevel,
   JsonTheme,
   LevelColorConfig,
@@ -52,6 +53,7 @@ export interface Preferences {
   colorizeInlineSeverity: boolean;
   customHighlights: CustomHighlightRule[];
   customStandardLevels: CustomStandardLevel[];
+  customEntityPatterns: CustomLogEntityPattern[];
   // JSON viewer theme
   jsonTheme: JsonTheme;
   // Search bar placement
@@ -96,6 +98,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   colorizeInlineSeverity: true,
   customHighlights: [],
   customStandardLevels: [],
+  customEntityPatterns: [],
   jsonTheme: 'postman',
   bottomSearchBar: false,
   autoScrollDefault: false,
@@ -137,6 +140,7 @@ function load(): Preferences {
       colorizeInlineSeverity: typeof parsed.colorizeInlineSeverity === 'boolean' ? parsed.colorizeInlineSeverity : DEFAULT_PREFERENCES.colorizeInlineSeverity,
       customHighlights: Array.isArray(parsed.customHighlights) ? parsed.customHighlights : DEFAULT_PREFERENCES.customHighlights,
       customStandardLevels: Array.isArray(parsed.customStandardLevels) ? parsed.customStandardLevels : DEFAULT_PREFERENCES.customStandardLevels,
+      customEntityPatterns: Array.isArray(parsed.customEntityPatterns) ? parsed.customEntityPatterns : DEFAULT_PREFERENCES.customEntityPatterns,
       jsonTheme: parsed.jsonTheme === 'insomnia' ? 'insomnia' : 'postman',
       bottomSearchBar: typeof parsed.bottomSearchBar === 'boolean' ? parsed.bottomSearchBar : DEFAULT_PREFERENCES.bottomSearchBar,
       autoScrollDefault: typeof parsed.autoScrollDefault === 'boolean' ? parsed.autoScrollDefault : DEFAULT_PREFERENCES.autoScrollDefault,

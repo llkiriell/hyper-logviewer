@@ -109,16 +109,12 @@ export function parseLogTimestamp(line: string): {
 
 export function extractJsonPayloads(raw: string): string[] {
   const payloads: string[] = [];
-  const firstBrace = raw.indexOf('{');
-  if (firstBrace === -1) return payloads;
-
-  // Balanced braces scanner
-  let depth = 0;
+  const bracketStack: Array<'{' | '['> = [];
   let start = -1;
   let inString = false;
   let escape = false;
 
-  for (let i = firstBrace; i < raw.length; i++) {
+  for (let i = 0; i < raw.length; i++) {
     const char = raw[i];
 
     if (inString) {
@@ -137,21 +133,31 @@ export function extractJsonPayloads(raw: string): string[] {
       continue;
     }
 
-    if (char === '{') {
-      if (depth === 0) {
+    if (char === '{' || char === '[') {
+      if (bracketStack.length === 0) {
         start = i;
       }
-      depth++;
-    } else if (char === '}') {
-      depth--;
-      if (depth === 0 && start !== -1) {
-        const candidate = raw.substring(start, i + 1);
-        try {
-          JSON.parse(candidate);
-          payloads.push(candidate);
-        } catch {
-          // not valid JSON, ignore
+      bracketStack.push(char);
+    } else if (char === '}' || char === ']') {
+      if (bracketStack.length === 0) continue;
+      const top = bracketStack[bracketStack.length - 1];
+      if ((char === '}' && top === '{') || (char === ']' && top === '[')) {
+        bracketStack.pop();
+        if (bracketStack.length === 0 && start !== -1) {
+          const candidate = raw.substring(start, i + 1);
+          try {
+            const parsed = JSON.parse(candidate);
+            if (typeof parsed === 'object' && parsed !== null) {
+              payloads.push(candidate);
+            }
+          } catch {
+            // not valid JSON, ignore
+          }
+          start = -1;
         }
+      } else {
+        // Mismatched closing delimiter, reset stack
+        bracketStack.length = 0;
         start = -1;
       }
     }
@@ -167,7 +173,7 @@ export function parseSingleLine(
 ): ParsedLogLine {
   const { level, customLevelTag } = detectLogLevel(raw, customStandardLevels);
   const tsInfo = parseLogTimestamp(raw);
-  const jsonPayloads = raw.includes('{') ? extractJsonPayloads(raw) : undefined;
+  const jsonPayloads = (raw.includes('{') || raw.includes('[')) ? extractJsonPayloads(raw) : undefined;
 
   return {
     rawIndex,

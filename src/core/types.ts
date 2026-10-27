@@ -59,6 +59,13 @@ export interface CustomHighlightRule {
   isRegex?: boolean;
 }
 
+export interface CustomLogEntityPattern {
+  id: string;
+  pattern: string; // regex pattern
+  label: string;   // label displayed in visor
+  enabled: boolean;
+}
+
 export interface LevelColorConfig {
   textColor: string;
   bgColor: string;

@@ -1,3 +1,5 @@
+import type { CustomLogEntityPattern } from './types.ts';
+
 export interface DetectedCurlRequest {
   raw: string;
   command: string;
@@ -374,4 +376,49 @@ export function detectGitPipeline(rawText: string): DetectedGitPipeline | null {
   }
 
   return null;
+}
+
+export interface ExtractedCustomEntity {
+  id: string;
+  label: string;
+  value: string;
+}
+
+/**
+ * Extracts matches for custom configured entity patterns (e.g. JPA procedures, tokens)
+ */
+export function extractCustomEntities(
+  rawLine: string,
+  patterns?: CustomLogEntityPattern[],
+): ExtractedCustomEntity[] {
+  if (!rawLine || !patterns || patterns.length === 0) return [];
+  const results: ExtractedCustomEntity[] = [];
+
+  for (const pat of patterns) {
+    if (!pat.enabled || !pat.pattern.trim()) continue;
+    try {
+      const rx = new RegExp(pat.pattern, 'gi');
+      let match: RegExpExecArray | null;
+      let count = 0;
+      while ((match = rx.exec(rawLine)) !== null) {
+        const val = match[0].trim();
+        if (val) {
+          count++;
+          results.push({
+            id: pat.id,
+            label: pat.label.trim()
+              ? `${pat.label.trim()}${count > 1 ? ` ${count}` : ''}`
+              : `Elemento ${count}`,
+            value: val,
+          });
+        }
+        if (rx.lastIndex === match.index) rx.lastIndex++;
+        if (count >= 20) break;
+      }
+    } catch {
+      // ignore invalid regex
+    }
+  }
+
+  return results;
 }

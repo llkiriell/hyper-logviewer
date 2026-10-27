@@ -254,6 +254,11 @@ export const es: TranslationSchema = {
       bold: 'Negrita',
       italic: 'Cursiva',
       noKeywords: 'No hay palabras clave personalizadas configuradas.',
+      customPatternsTitle: 'Patrones de elementos para el visor',
+      customPatternsDesc: 'Define expresiones regulares para capturar elementos específicos en tus logs (ej. llamadas a procedimientos JPA, tokens) y mostrarlos en el visor listos para copiar.',
+      patternRegexPlaceholder: 'Patrón regex (ej. call\\s+[A-Za-z0-9_.]+\\([^)]*\\))...',
+      patternLabelPlaceholder: 'Etiqueta en el visor (ej. Llamada JPA, Token)...',
+      noCustomPatterns: 'No hay patrones de elementos personalizados configurados aún.',
     },
     folders: {
       title: 'Seguimiento de carpetas y barra lateral',

@@ -12,10 +12,12 @@ import {
   detectCurlPattern,
   detectGitPipeline,
   detectJavaErrorPattern,
+  extractCustomEntities,
   extractLogEntities,
 } from '../../core/logPatterns.ts';
 import type { ParsedLogLine } from '../../core/types.ts';
 import { useTranslation } from '../i18n/index.ts';
+import { usePreferences } from '../platform/preferences.ts';
 import { JsonHighlightViewer } from './JsonHighlightViewer.tsx';
 
 interface LogDetailModalProps {
@@ -26,6 +28,7 @@ interface LogDetailModalProps {
 
 export function LogDetailModal({ line, allLines, onClose }: LogDetailModalProps) {
   const { t } = useTranslation();
+  const prefs = usePreferences();
   const [copiedRaw, setCopiedRaw] = useState(false);
   const [copiedCurl, setCopiedCurl] = useState(false);
   const [copiedJava, setCopiedJava] = useState(false);
@@ -74,6 +77,11 @@ export function LogDetailModal({ line, allLines, onClose }: LogDetailModalProps)
   const detectedGit = useMemo(() => {
     return detectGitPipeline(fullRawMessage);
   }, [fullRawMessage]);
+
+  // 6. Extract custom configured element patterns (e.g. JPA procedure calls, tokens)
+  const customEntities = useMemo(() => {
+    return extractCustomEntities(fullRawMessage, prefs.customEntityPatterns);
+  }, [fullRawMessage, prefs.customEntityPatterns]);
 
   const [copiedEntityKey, setCopiedEntityKey] = useState<string | null>(null);
 
@@ -240,6 +248,31 @@ export function LogDetailModal({ line, allLines, onClose }: LogDetailModalProps)
                       type="button"
                       className="detail-copy-btn"
                       onClick={() => handleCopyEntity(url, copyKey)}
+                      title={t('common.copy')}
+                    >
+                      {copiedEntityKey === copyKey ? (
+                        <IconCheck size={12} stroke={1.5} className="copy-success-icon" />
+                      ) : (
+                        <IconCopy size={12} stroke={1.5} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Extracted Custom Configured Entities */}
+            {customEntities.map((entity, i) => {
+              const copyKey = `custom-${entity.id}-${i}`;
+              return (
+                <div key={copyKey} className="detail-meta-item detail-meta-item-copyable detail-meta-item-fullwidth">
+                  <span className="detail-meta-label">{entity.label}:</span>
+                  <div className="detail-meta-value-container">
+                    <span className="detail-meta-value" title={entity.value}>{entity.value}</span>
+                    <button
+                      type="button"
+                      className="detail-copy-btn"
+                      onClick={() => handleCopyEntity(entity.value, copyKey)}
                       title={t('common.copy')}
                     >
                       {copiedEntityKey === copyKey ? (

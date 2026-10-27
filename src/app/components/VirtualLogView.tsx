@@ -115,25 +115,17 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
   const rowVirtualizer = useVirtualizer({
     count: filteredLines.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => (wordWrap ? 48 : 24),
+    estimateSize: () => 24,
     overscan: 25,
     getItemKey: (index) => {
       const line = filteredLines[index];
       return `${line?.rawIndex ?? index}-${wordWrap ? 'w' : 'nw'}`;
     },
-    measureElement: (element, entry, instance) => {
+    measureElement: (element, entry) => {
       if (!element) return 24;
       if (entry?.borderBoxSize?.[0]) {
         const size = Math.round(entry.borderBoxSize[0].blockSize);
         if (size > 0) return size;
-      }
-      if (!entry && instance) {
-        const index = instance.indexFromElement(element);
-        const key = instance.options.getItemKey(index);
-        const cached = instance.itemSizeCache.get(key);
-        if (typeof cached === 'number' && cached > 0) {
-          return cached;
-        }
       }
       const rectHeight = Math.ceil(element.getBoundingClientRect().height);
       if (rectHeight > 0) return rectHeight;
@@ -143,42 +135,20 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
 
   const virtualItems = rowVirtualizer.getVirtualItems();
 
-  // Helper to re-measure all row wrappers currently mounted in DOM
-  const remeasureMountedRows = useCallback(() => {
-    if (!parentRef.current) return;
-    const elements = parentRef.current.querySelectorAll<HTMLElement>('.viewer-virtual-row-wrapper');
-    elements.forEach((el) => {
-      const idxAttr = el.getAttribute('data-index');
-      if (idxAttr !== null) {
-        const idx = Number(idxAttr);
-        if (idx >= 0 && idx < filteredLines.length) {
-          const height = Math.ceil(el.getBoundingClientRect().height) || el.offsetHeight;
-          if (height > 0) {
-            rowVirtualizer.resizeItem(idx, height);
-          }
-        }
-      }
-    });
-  }, [filteredLines.length, rowVirtualizer]);
-
   // Invalidate virtualizer cache ONLY when wordWrap or font size changes (never on search or line filtering)
   useLayoutEffect(() => {
     rowVirtualizer.measure();
-    requestAnimationFrame(() => {
-      remeasureMountedRows();
-    });
-  }, [wordWrap, prefs.fontSize, rowVirtualizer, remeasureMountedRows]);
+  }, [wordWrap, prefs.fontSize, rowVirtualizer]);
 
   // Recalculate heights on scroller width resize when word wrap is enabled
   useEffect(() => {
     if (!wordWrap || !parentRef.current) return;
     const observer = new ResizeObserver(() => {
       rowVirtualizer.measure();
-      remeasureMountedRows();
     });
     observer.observe(parentRef.current);
     return () => observer.disconnect();
-  }, [wordWrap, rowVirtualizer, remeasureMountedRows]);
+  }, [wordWrap, rowVirtualizer]);
 
   // Auto-focus on first match when searching without funnel filter
   const prevSearchTriggerRef = useRef<{
@@ -303,12 +273,11 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
         lastActiveRawIndexRef.current = targetLine.rawIndex;
         rowVirtualizer.scrollToIndex(targetIdx, { align: 'center', behavior: 'auto' });
         requestAnimationFrame(() => {
-          remeasureMountedRows();
           rowVirtualizer.scrollToIndex(targetIdx, { align: 'center', behavior: 'auto' });
         });
       }
     }
-  }, [searchQuery, filteredLines, rowVirtualizer, remeasureMountedRows]);
+  }, [searchQuery, filteredLines, rowVirtualizer]);
 
   // Toggle filterMatchesOnly (embudo) preserving active match focus and scrolling directly to it
   const handleToggleFilterMatchesOnly = useCallback(() => {
@@ -348,11 +317,10 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
 
       rowVirtualizer.scrollToIndex(targetIdx, { align: 'center', behavior: 'auto' });
       requestAnimationFrame(() => {
-        remeasureMountedRows();
         rowVirtualizer.scrollToIndex(targetIdx, { align: 'center', behavior: 'auto' });
       });
     }
-  }, [filterMatchesOnly, filteredLines, rowVirtualizer, remeasureMountedRows]);
+  }, [filterMatchesOnly, filteredLines, rowVirtualizer]);
 
   // Toggle word wrap preserving focused or geometrical center line on screen and re-measuring accurately
   const handleToggleWordWrap = useCallback(() => {
@@ -384,16 +352,14 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
 
     requestAnimationFrame(() => {
       rowVirtualizer.measure();
-      remeasureMountedRows();
       if (targetIndex !== -1) {
         rowVirtualizer.scrollToIndex(targetIndex, { align: 'center', behavior: 'auto' });
         requestAnimationFrame(() => {
-          remeasureMountedRows();
           rowVirtualizer.scrollToIndex(targetIndex, { align: 'center', behavior: 'auto' });
         });
       }
     });
-  }, [selectedRawIndex, filteredLines, rowVirtualizer, remeasureMountedRows]);
+  }, [selectedRawIndex, filteredLines, rowVirtualizer]);
 
   // Multi-selection line handler supporting Ctrl/Cmd key
   const handleSelectLine = useCallback(

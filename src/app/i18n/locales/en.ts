@@ -252,6 +252,11 @@ export const en = {
       bold: 'Bold',
       italic: 'Italic',
       noKeywords: 'No custom highlight keywords configured yet.',
+      customPatternsTitle: 'Viewer Element Patterns',
+      customPatternsDesc: 'Define custom regular expressions to extract specific operational data from logs (e.g. JPA procedure calls, tokens) and display them in the line detail viewer ready to copy.',
+      patternRegexPlaceholder: 'Regex pattern (e.g. call\\s+[A-Za-z0-9_.]+\\([^)]*\\))...',
+      patternLabelPlaceholder: 'Viewer label (e.g. JPA Call, Auth Token)...',
+      noCustomPatterns: 'No custom element patterns configured yet.',
     },
     folders: {
       title: 'Folder Tracking & Sidebar',

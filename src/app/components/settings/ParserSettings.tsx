@@ -12,6 +12,7 @@ import {
 } from '@tabler/icons-react';
 import type {
   CustomHighlightRule,
+  CustomLogEntityPattern,
   CustomStandardLevel,
   LogLevel,
 } from '../../../core/types.ts';
@@ -58,6 +59,12 @@ export function ParserSettings() {
   const [newItalic, setNewItalic] = useState(false);
   const [newIsRegex, setNewIsRegex] = useState(false);
   const [regexError, setRegexError] = useState(false);
+
+  // Custom Element Patterns for Visor
+  const [patternEditingId, setPatternEditingId] = useState<string | null>(null);
+  const [newPatternRegex, setNewPatternRegex] = useState('');
+  const [newPatternLabel, setNewPatternLabel] = useState('');
+  const [patternRegexError, setPatternRegexError] = useState(false);
 
   const handleUpdateLevelText = (level: LogLevel, textColor: string) => {
     const current = prefs.levelColors[level] ?? DEFAULT_LEVEL_COLORS[level];
@@ -265,6 +272,91 @@ export function ParserSettings() {
     }
     setPreferences({
       customHighlights: prefs.customHighlights.filter((r) => r.id !== id),
+    });
+  };
+
+  // Handlers for Custom Element Patterns in Visor
+  const handlePatternRegexChange = (val: string) => {
+    setNewPatternRegex(val);
+    if (!val.trim()) {
+      setPatternRegexError(false);
+      return;
+    }
+    try {
+      new RegExp(val, 'gi');
+      setPatternRegexError(false);
+    } catch {
+      setPatternRegexError(true);
+    }
+  };
+
+  const handleAddPattern = () => {
+    const pattern = newPatternRegex.trim();
+    if (!pattern || patternRegexError) return;
+    const label = newPatternLabel.trim() || 'Elemento';
+
+    const newPat: CustomLogEntityPattern = {
+      id: `pat-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      pattern,
+      label,
+      enabled: true,
+    };
+
+    setPreferences({
+      customEntityPatterns: [...(prefs.customEntityPatterns ?? []), newPat],
+    });
+
+    setNewPatternRegex('');
+    setNewPatternLabel('');
+    setPatternRegexError(false);
+  };
+
+  const handleStartEditPattern = (pat: CustomLogEntityPattern) => {
+    setPatternEditingId(pat.id);
+    setNewPatternRegex(pat.pattern);
+    setNewPatternLabel(pat.label);
+    setPatternRegexError(false);
+  };
+
+  const handleSaveEditPattern = () => {
+    if (!patternEditingId) return;
+    const pattern = newPatternRegex.trim();
+    if (!pattern || patternRegexError) return;
+    const label = newPatternLabel.trim() || 'Elemento';
+
+    setPreferences({
+      customEntityPatterns: (prefs.customEntityPatterns ?? []).map((pat) =>
+        pat.id === patternEditingId ? { ...pat, pattern, label } : pat,
+      ),
+    });
+
+    setPatternEditingId(null);
+    setNewPatternRegex('');
+    setNewPatternLabel('');
+    setPatternRegexError(false);
+  };
+
+  const handleCancelEditPattern = () => {
+    setPatternEditingId(null);
+    setNewPatternRegex('');
+    setNewPatternLabel('');
+    setPatternRegexError(false);
+  };
+
+  const handleTogglePattern = (id: string, enabled: boolean) => {
+    setPreferences({
+      customEntityPatterns: (prefs.customEntityPatterns ?? []).map((pat) =>
+        pat.id === id ? { ...pat, enabled } : pat,
+      ),
+    });
+  };
+
+  const handleDeletePattern = (id: string) => {
+    if (patternEditingId === id) {
+      handleCancelEditPattern();
+    }
+    setPreferences({
+      customEntityPatterns: (prefs.customEntityPatterns ?? []).filter((pat) => pat.id !== id),
     });
   };
 
@@ -693,6 +785,154 @@ export function ParserSettings() {
                       type="button"
                       className="search-tool-btn"
                       onClick={() => handleRemoveKeyword(rule.id)}
+                      title={t('common.delete')}
+                    >
+                      <IconTrash size={13} stroke={1.5} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* 4. Custom Element Patterns for Visor */}
+      <div className="settings-group">
+        <h3>{t('settings.parser.customPatternsTitle')}</h3>
+        <p className="settings-desc">{t('settings.parser.customPatternsDesc')}</p>
+
+        {/* Add / Edit pattern form */}
+        <div className={`keyword-form-card ${patternEditingId ? 'is-editing' : ''}`}>
+          {patternEditingId && (
+            <div className="keyword-editing-header">
+              <div className="keyword-editing-badge">
+                <IconPencil size={12} stroke={1.5} />
+                <span>{t('settings.parser.editingRule')}</span>
+              </div>
+              <button
+                type="button"
+                className="button button-sm button-ghost"
+                onClick={handleCancelEditPattern}
+                title={t('settings.parser.cancelEdit')}
+              >
+                <IconX size={14} stroke={1.5} />
+                <span>{t('settings.parser.cancelEdit')}</span>
+              </button>
+            </div>
+          )}
+
+          {/* Row 1: Regex pattern and Label input */}
+          <div className="keyword-form-row">
+            <div className="keyword-input-wrapper">
+              <input
+                type="text"
+                className={`keyword-input ${patternRegexError ? 'is-invalid' : ''}`}
+                value={newPatternRegex}
+                onChange={(e) => handlePatternRegexChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (patternEditingId) handleSaveEditPattern();
+                    else handleAddPattern();
+                  } else if (e.key === 'Escape' && patternEditingId) {
+                    handleCancelEditPattern();
+                  }
+                }}
+                placeholder={t('settings.parser.patternRegexPlaceholder')}
+              />
+              <span className="keyword-regex-toggle is-active" title="Regex">
+                <IconRegex size={14} stroke={1.5} />
+                <span>Regex</span>
+              </span>
+              {patternRegexError && (
+                <span className="keyword-error-hint">{t('settings.parser.regexInvalid')}</span>
+              )}
+            </div>
+
+            <div className="keyword-label-wrapper">
+              <input
+                type="text"
+                className="keyword-label-input"
+                value={newPatternLabel}
+                onChange={(e) => setNewPatternLabel(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (patternEditingId) handleSaveEditPattern();
+                    else handleAddPattern();
+                  } else if (e.key === 'Escape' && patternEditingId) {
+                    handleCancelEditPattern();
+                  }
+                }}
+                placeholder={t('settings.parser.patternLabelPlaceholder')}
+              />
+            </div>
+          </div>
+
+          {/* Row 2: Actions */}
+          <div className="keyword-form-row keyword-controls-row">
+            <div style={{ flex: 1 }} />
+            <div className="keyword-action-buttons">
+              {patternEditingId ? (
+                <button
+                  type="button"
+                  className="button button-sm primary"
+                  onClick={handleSaveEditPattern}
+                  disabled={!newPatternRegex.trim() || patternRegexError}
+                  title={t('settings.parser.saveChanges')}
+                >
+                  <IconCheck size={15} stroke={1.5} />
+                  <span>{t('settings.parser.saveChanges')}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="button button-sm primary"
+                  onClick={handleAddPattern}
+                  disabled={!newPatternRegex.trim() || patternRegexError}
+                >
+                  <IconPlus size={15} stroke={1.5} />
+                  <span>{t('common.add')}</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* List of configured custom patterns */}
+        <div className="custom-patterns-list">
+          {(!prefs.customEntityPatterns || prefs.customEntityPatterns.length === 0) ? (
+            <p className="empty-keywords-hint">{t('settings.parser.noCustomPatterns')}</p>
+          ) : (
+            prefs.customEntityPatterns.map((pat) => {
+              const isBeingEdited = patternEditingId === pat.id;
+              return (
+                <div
+                  key={pat.id}
+                  className={`pattern-chip-card ${isBeingEdited ? 'is-editing' : ''}`}
+                >
+                  <div className="pattern-chip-info">
+                    <span className="pattern-chip-label">{pat.label}</span>
+                    <span className="pattern-chip-regex">{pat.pattern}</span>
+                  </div>
+
+                  <div className="pattern-chip-actions">
+                    <Switch
+                      checked={pat.enabled}
+                      onChange={(enabled) => handleTogglePattern(pat.id, enabled)}
+                      label={pat.label}
+                    />
+                    <button
+                      type="button"
+                      className={`search-tool-btn ${isBeingEdited ? 'is-active' : ''}`}
+                      onClick={() => handleStartEditPattern(pat)}
+                      title={t('common.edit')}
+                    >
+                      <IconPencil size={13} stroke={1.5} />
+                    </button>
+                    <button
+                      type="button"
+                      className="search-tool-btn"
+                      onClick={() => handleDeletePattern(pat.id)}
                       title={t('common.delete')}
                     >
                       <IconTrash size={13} stroke={1.5} />

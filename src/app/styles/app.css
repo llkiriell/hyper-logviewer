@@ -1886,13 +1886,15 @@ select {
   align-items: center;
   gap: 6px;
   position: relative;
-  max-width: 340px;
+  max-width: 100%;
+  width: fit-content;
 }
 
 .detail-meta-item-copyable .detail-meta-value {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 0 1 auto;
 }
 
 .detail-meta-item.detail-meta-item-fullwidth,
@@ -1904,9 +1906,10 @@ select {
 
 .detail-meta-item-copyable.detail-meta-item-fullwidth .detail-meta-value-container {
   max-width: 100%;
-  width: 100%;
-  flex: 1;
+  width: fit-content;
+  display: inline-flex;
   align-items: flex-start;
+  flex: 0 1 auto;
 }
 
 .detail-meta-item-copyable.detail-meta-item-fullwidth .detail-meta-value {
@@ -1914,11 +1917,11 @@ select {
   text-overflow: unset;
   white-space: pre-wrap;
   word-break: break-all;
-  flex: 1;
+  flex: 0 1 auto;
 }
 
 .detail-meta-item-copyable.detail-meta-item-fullwidth .detail-copy-btn {
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 .detail-meta-item-copyable .detail-copy-btn {
@@ -2457,6 +2460,72 @@ select {
   font-size: var(--text-sm);
   color: var(--text-faint);
   font-style: italic;
+}
+
+/* Custom Element Patterns for Visor */
+.custom-patterns-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.pattern-chip-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  transition: all 0.12s ease;
+}
+
+.pattern-chip-card.is-editing {
+  border-color: var(--accent);
+  background: var(--surface-hover);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.pattern-chip-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.pattern-chip-label {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  white-space: nowrap;
+  flex: none;
+}
+
+.pattern-chip-regex {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs, 2px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pattern-chip-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
 }
 
 
