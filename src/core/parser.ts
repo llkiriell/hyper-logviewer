@@ -107,7 +107,23 @@ export function parseLogTimestamp(line: string): {
   };
 }
 
+function isJsonObject(val: unknown): boolean {
+  return typeof val === 'object' && val !== null && !Array.isArray(val);
+}
+
+function isArrayOfObjects(val: unknown): boolean {
+  return (
+    Array.isArray(val) &&
+    val.length > 0 &&
+    val.every((item) => typeof item === 'object' && item !== null && !Array.isArray(item))
+  );
+}
+
 export function extractJsonPayloads(raw: string): string[] {
+  if (!raw || !raw.includes('{')) {
+    return [];
+  }
+
   const payloads: string[] = [];
   const bracketStack: Array<'{' | '['> = [];
   let start = -1;
@@ -135,6 +151,17 @@ export function extractJsonPayloads(raw: string): string[] {
 
     if (char === '{' || char === '[') {
       if (bracketStack.length === 0) {
+        if (char === '[') {
+          // A candidate JSON array block must contain objects between braces: look ahead for '{'
+          let j = i + 1;
+          while (j < raw.length && /\s/.test(raw[j] ?? '')) {
+            j++;
+          }
+          if (raw[j] !== '{') {
+            // Not an array of objects, skip this bracket
+            continue;
+          }
+        }
         start = i;
       }
       bracketStack.push(char);
@@ -147,7 +174,7 @@ export function extractJsonPayloads(raw: string): string[] {
           const candidate = raw.substring(start, i + 1);
           try {
             const parsed = JSON.parse(candidate);
-            if (typeof parsed === 'object' && parsed !== null) {
+            if (isJsonObject(parsed) || isArrayOfObjects(parsed)) {
               payloads.push(candidate);
             }
           } catch {
@@ -173,7 +200,7 @@ export function parseSingleLine(
 ): ParsedLogLine {
   const { level, customLevelTag } = detectLogLevel(raw, customStandardLevels);
   const tsInfo = parseLogTimestamp(raw);
-  const jsonPayloads = (raw.includes('{') || raw.includes('[')) ? extractJsonPayloads(raw) : undefined;
+  const jsonPayloads = raw.includes('{') ? extractJsonPayloads(raw) : undefined;
 
   return {
     rawIndex,
