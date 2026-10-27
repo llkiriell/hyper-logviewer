@@ -251,8 +251,10 @@ html, body, #root {
 }
 
 .dialog.large {
-  max-width: 760px;
-  height: 520px;
+  max-width: 912px;
+  width: 92vw;
+  height: 624px;
+  max-height: 88vh;
 }
 
 .dialog-header {
@@ -344,6 +346,19 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.settings-content-header {
+  position: sticky;
+  top: -24px;
+  z-index: 10;
+  background: var(--popover);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -24px -24px 0 -24px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
 }
 
 /* Setting Rows */
@@ -1161,16 +1176,18 @@ select {
 .log-row.is-selected-line .log-pointer-cell,
 .log-row.is-selected-line .log-gutter,
 .log-row.is-selected-line .log-level-badge {
-  background-color: var(--bg) !important;
-  background-image: linear-gradient(var(--active), var(--active)) !important;
   border: none !important;
 }
 
 /* Selected row highlight on click (full overlay ensures continuous seamless border) */
 .log-row.is-selected-line {
   position: relative;
-  background-color: var(--bg) !important;
-  background-image: linear-gradient(var(--active), var(--active)) !important;
+  background-color: var(--selected-line-bg, transparent);
+}
+
+.log-row.is-selected-line.is-focus-transparent {
+  background-color: transparent !important;
+  background-image: none !important;
 }
 
 .log-row.is-selected-line::after {
@@ -1893,9 +1910,10 @@ select {
 
 /* Detail Modal */
 .dialog.log-detail-dialog {
-  max-width: 820px;
-  width: 90vw;
-  max-height: 85vh;
+  max-width: 945px;
+  width: 92vw;
+  height: 88vh;
+  max-height: 92vh;
   display: flex;
   flex-direction: column;
 }
@@ -2997,11 +3015,21 @@ select {
 /* Bottom Search Bar */
 .bottom-search-wrapper {
   flex: none;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  padding: 6px 12px;
+  background: var(--bg-sidebar);
+  border-top: 1px solid var(--border-strong);
+  padding: 6px 14px;
   width: 100%;
   box-sizing: border-box;
+}
+
+.bottom-search-wrapper .log-search-container {
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='dark'] .bottom-search-wrapper .log-search-container {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
 }
 
 .is-bottom-search-bar {
@@ -3626,4 +3654,147 @@ select {
     transform: translateY(0) scale(1);
   }
 }
+
+/* ==========================================================================
+   Beta 1.2: Deferred Loading, Skeleton Rows & Focus Customization with WCAG
+   ========================================================================== */
+
+/* Deferred stream loading bar during rapid scrolling on heavy logs */
+.viewer-scroll-loading-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  background-size: 200% 100%;
+  animation: viewerShimmerBeam 1s infinite linear;
+  z-index: 20;
+  pointer-events: none;
+}
+
+@keyframes viewerShimmerBeam {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Skeleton rows during rapid scroll */
+.skeleton-log-row {
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.skeleton-badge-pulse {
+  display: inline-block;
+  width: 42px;
+  height: 13px;
+  border-radius: var(--radius-sm);
+  background: var(--hover);
+  animation: skeletonPulse 0.9s ease-in-out infinite alternate;
+}
+
+.skeleton-content-box {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.skeleton-bar {
+  display: block;
+  height: 11px;
+  width: 65%;
+  max-width: 520px;
+  border-radius: var(--radius-sm);
+  background: var(--hover);
+  animation: skeletonPulse 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes skeletonPulse {
+  0% { opacity: 0.35; }
+  100% { opacity: 0.85; }
+}
+
+/* Custom Focus Background in Settings */
+.custom-focus-bg-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-top: 4px;
+}
+
+.custom-focus-bg-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.custom-focus-bg-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.custom-focus-color-input {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: transparent;
+}
+
+.custom-focus-text-input {
+  width: 200px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  padding: 4px 8px;
+  height: 28px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.wcag-contrast-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+}
+
+.wcag-contrast-badge.is-compliant {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+[data-theme='dark'] .wcag-contrast-badge.is-compliant {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+.wcag-contrast-badge.is-warning {
+  background: rgba(234, 88, 12, 0.1);
+  color: #ea580c;
+  border: 1px solid rgba(234, 88, 12, 0.3);
+}
+
+[data-theme='dark'] .wcag-contrast-badge.is-warning {
+  background: rgba(249, 115, 22, 0.15);
+  color: #fb923c;
+}
+
+.wcag-contrast-badge .wcag-icon {
+  flex: none;
+}
+
 
