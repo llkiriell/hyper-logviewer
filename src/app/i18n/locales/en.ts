@@ -101,7 +101,12 @@ export const en = {
   },
   contextMenu: {
     copySelection: 'Copy',
+    searchSelection: 'Search',
     copyLine: 'Copy Entire Line',
+    copySelectedLines: 'Copy {count} Selected Lines',
+    cut: 'Cut',
+    copy: 'Copy',
+    paste: 'Paste',
     pinLine: 'Pin Line to Top',
     unpinLine: 'Unpin Line',
     inspectLine: 'Inspect Line Details...',

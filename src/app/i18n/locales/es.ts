@@ -103,7 +103,12 @@ export const es: TranslationSchema = {
   },
   contextMenu: {
     copySelection: 'Copiar',
+    searchSelection: 'Buscar',
     copyLine: 'Copiar línea completa',
+    copySelectedLines: 'Copiar {count} líneas seleccionadas',
+    cut: 'Cortar',
+    copy: 'Copiar',
+    paste: 'Pegar',
     pinLine: 'Fijar línea arriba',
     unpinLine: 'Desfijar línea',
     inspectLine: 'Inspeccionar registro...',

@@ -85,5 +85,7 @@ When modifying, generating, or refactoring code, every agent must respect:
 5. **Clean IPC Boundaries:** Keep native OS interactions (file dialogs, raw file reading, clipboard access) strictly inside `electron/` and expose them via safe contextBridge channels in `electron/preload.cts`.
 6. **Virtualizer Dynamic Heights & Filtering Overlap Prevention:** When rendering virtualized log rows with dynamic heights (e.g. `wordWrap` enabled, line filtering with funnel, search query changes):
    * Always use composite keys on row wrapper elements that incorporate the raw index, virtual index, and wrap state: `key={`${line.rawIndex}-${virtualRow.index}-${wordWrap ? 'w' : 'nw'}`}`. Reusing DOM elements across shifted virtual indices bypasses TanStack Virtualizer's internal resize measurements and causes row overlapping.
-   * Call `rowVirtualizer.measure()` in `useLayoutEffect` whenever filtering (`filterMatchesOnly`), queries, line counts, or font sizes change.
+   * Re-measure currently mounted DOM wrappers (`resizeItem`) whenever `measure()` is called, because `measure()` clears TanStack's size cache and browser ResizeObserver does not re-fire on already-rendered elements with unchanged dimensions.
+   * Never pass raw `searchQuery` keystrokes to trigger `measure()`; searching only highlights tokens and does not change text wrap height unless line filtering (`filterMatchesOnly`) is toggled.
+   * Never render fixed-height skeleton rows when `wordWrap` is enabled during momentum scrolling; collapsing wrapped items into 24px skeletons corrupts dynamic virtualizer height measurements.
    * Attach a `ResizeObserver` on the scroll container when `wordWrap` is active to remeasure row heights on window or panel resize.

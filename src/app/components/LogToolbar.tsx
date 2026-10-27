@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import {
   IconArrowDown,
   IconArrowUp,
@@ -6,7 +6,10 @@ import {
   IconCalendar,
   IconChevronDown,
   IconChevronUp,
+  IconClipboard,
   IconColorSwatch,
+  IconCopy,
+  IconCut,
   IconFilter,
   IconLetterCase,
   IconRegex,
@@ -16,6 +19,8 @@ import {
 } from '@tabler/icons-react';
 import type { LogLevel, LogStats } from '../../core/types.ts';
 import { useTranslation } from '../i18n/index.ts';
+import { ContextMenu } from './ContextMenu.tsx';
+import type { ContextMenuEntry } from './ContextMenu.tsx';
 
 interface LogSearchBarProps {
   searchQuery: string;
@@ -50,11 +55,108 @@ export function LogSearchBar({
 }: LogSearchBarProps) {
   const { t } = useTranslation();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const [searchContextMenu, setSearchContextMenu] = useState<{ anchor: DOMRect } | null>(null);
 
   const handleClear = () => {
     onSearchChange('');
     searchInputRef.current?.focus();
   };
+
+  const handleInputContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setSearchContextMenu({
+      anchor: new DOMRect(e.clientX, e.clientY, 0, 0),
+    });
+  };
+
+  const handleCut = async () => {
+    const input = searchInputRef.current;
+    if (!input) return;
+    const start = input.selectionStart ?? 0;
+    const end = input.selectionEnd ?? searchQuery.length;
+    let textToCut = '';
+    if (start !== end) {
+      textToCut = searchQuery.substring(start, end);
+      const next = searchQuery.substring(0, start) + searchQuery.substring(end);
+      onSearchChange(next);
+      requestAnimationFrame(() => {
+        input.focus();
+        input.setSelectionRange(start, start);
+      });
+    } else {
+      textToCut = searchQuery;
+      onSearchChange('');
+      input.focus();
+    }
+    if (textToCut) {
+      try {
+        await navigator.clipboard.writeText(textToCut);
+      } catch (err) {
+        console.error('Failed to cut text:', err);
+      }
+    }
+  };
+
+  const handleCopy = async () => {
+    const input = searchInputRef.current;
+    if (!input) return;
+    const start = input.selectionStart ?? 0;
+    const end = input.selectionEnd ?? searchQuery.length;
+    const textToCopy = start !== end ? searchQuery.substring(start, end) : searchQuery;
+    if (textToCopy) {
+      try {
+        await navigator.clipboard.writeText(textToCopy);
+      } catch (err) {
+        console.error('Failed to copy text:', err);
+      }
+    }
+  };
+
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text) return;
+      const input = searchInputRef.current;
+      if (!input) {
+        onSearchChange(text);
+        return;
+      }
+      const start = input.selectionStart ?? searchQuery.length;
+      const end = input.selectionEnd ?? searchQuery.length;
+      const next = searchQuery.substring(0, start) + text + searchQuery.substring(end);
+      onSearchChange(next);
+      requestAnimationFrame(() => {
+        input.focus();
+        const nextPos = start + text.length;
+        input.setSelectionRange(nextPos, nextPos);
+      });
+    } catch (err) {
+      console.error('Failed to paste text:', err);
+    }
+  };
+
+  const searchContextMenuEntries: ContextMenuEntry[] = [
+    {
+      label: t('contextMenu.cut'),
+      icon: IconCut,
+      shortcut: 'Ctrl+X',
+      disabled: searchQuery.length === 0,
+      onSelect: () => void handleCut(),
+    },
+    {
+      label: t('contextMenu.copy'),
+      icon: IconCopy,
+      shortcut: 'Ctrl+C',
+      disabled: searchQuery.length === 0,
+      onSelect: () => void handleCopy(),
+    },
+    {
+      label: t('contextMenu.paste'),
+      icon: IconClipboard,
+      shortcut: 'Ctrl+V',
+      onSelect: () => void handlePaste(),
+    },
+  ];
 
   return (
     <div className={`log-search-container ${isBottom ? 'is-bottom-search-bar' : ''}`}>
@@ -65,6 +167,7 @@ export function LogSearchBar({
         className="log-search-input"
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
+        onContextMenu={handleInputContextMenu}
         placeholder={t('viewer.searchPlaceholder')}
         spellCheck={false}
       />
@@ -139,6 +242,14 @@ export function LogSearchBar({
           </button>
         )}
       </div>
+
+      {searchContextMenu && (
+        <ContextMenu
+          anchor={searchContextMenu.anchor}
+          entries={searchContextMenuEntries}
+          onClose={() => setSearchContextMenu(null)}
+        />
+      )}
     </div>
   );
 }
