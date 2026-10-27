@@ -34,11 +34,16 @@ export const RAINBOW_COLORS_DARK = [
   '#7ee787', // Bright Mint (depth 4)
 ];
 
+const HAS_BRACKETS_REGEX = /[()[\]{}]/;
+
 /**
  * Parses all brackets in a string and maps their nesting depth and paired partner index.
  */
 export function analyzeBrackets(text: string): Map<number, BracketInfo> {
   const map = new Map<number, BracketInfo>();
+  if (!text || !HAS_BRACKETS_REGEX.test(text)) {
+    return map;
+  }
   const stack: Array<{ char: string; index: number; depth: number; pairId: number }> = [];
   let pairCounter = 0;
 

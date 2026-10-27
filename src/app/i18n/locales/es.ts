@@ -190,6 +190,8 @@ export const es: TranslationSchema = {
       lineSeparatorHelp: 'Muestra una sutil línea divisoria entre cada registro.',
       separatorColor: 'Color de separador',
       resetSeparatorColor: 'Restaurar color del separador por defecto',
+      separatorWidth: 'Grosor del separador',
+      resetSeparatorWidth: 'Restablecer grosor del separador por defecto',
       jsonTheme: 'Tema del visor JSON',
       jsonThemeHelp: 'Selecciona el esquema de colores inspirado en Postman o Insomnia.',
       bottomSearchBar: 'Barra de búsqueda inferior',

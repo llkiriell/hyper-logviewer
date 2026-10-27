@@ -188,6 +188,8 @@ export const en = {
       lineSeparatorHelp: 'Show a subtle divider line between log entries.',
       separatorColor: 'Separator Color',
       resetSeparatorColor: 'Reset separator color to default',
+      separatorWidth: 'Separator Thickness',
+      resetSeparatorWidth: 'Reset separator thickness to default',
       jsonTheme: 'JSON Block Theme',
       jsonThemeHelp: 'Select the syntax highlighting palette for detected JSON.',
       bottomSearchBar: 'Bottom Search Bar',

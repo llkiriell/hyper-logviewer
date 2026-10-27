@@ -116,7 +116,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     count: filteredLines.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 24,
-    overscan: 25,
+    overscan: filteredLines.length > 1500 ? 50 : 35,
     getItemKey: (index) => {
       const line = filteredLines[index];
       return `${line?.rawIndex ?? index}-${wordWrap ? 'w' : 'nw'}`;
@@ -834,11 +834,6 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
 
       {/* Viewport wrapper with relative positioning */}
       <div className="viewer-viewport-wrapper">
-        {/* Streaming loading bar for rapid scrolling on heavy logs */}
-        {rowVirtualizer.isScrolling && filteredLines.length > 1500 && (
-          <div className="viewer-scroll-loading-bar" />
-        )}
-
         {/* Floating Sticky Pinned Header */}
         {showFloatingStickyPin && pinnedLine && (
           <div
@@ -878,6 +873,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
                 levelColor={resolveLineColor(pinnedLine)}
                 showSeparator={prefs.showLineSeparator}
                 separatorColor={prefs.lineSeparatorColor}
+                separatorWidth={prefs.lineSeparatorWidth}
                 wordWrap={wordWrap}
                 fontSize={prefs.fontSize}
                 isPinned={true}
@@ -990,6 +986,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
                       levelColor={resolveLineColor(line)}
                       showSeparator={prefs.showLineSeparator}
                       separatorColor={prefs.lineSeparatorColor}
+                      separatorWidth={prefs.lineSeparatorWidth}
                       wordWrap={wordWrap}
                       fontSize={prefs.fontSize}
                       isPinned={isPinned}
@@ -999,7 +996,6 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
                       activeLineIcon={prefs.activeLineIcon}
                       focusBackgroundMode={prefs.focusBackgroundMode}
                       customFocusBackgroundColor={prefs.customFocusBackgroundColor}
-                      isDeferredLoading={!wordWrap && rowVirtualizer.isScrolling && filteredLines.length > 1500}
                       rainbowBrackets={prefs.rainbowBrackets}
                       highlightGitPipeline={prefs.highlightGitPipeline}
                       onTogglePin={handleTogglePin}

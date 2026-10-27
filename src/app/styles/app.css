@@ -1005,6 +1005,7 @@ select {
 /* Wrapping overrides */
 .viewer-virtual-row-wrapper {
   box-sizing: border-box;
+  contain: layout style;
 }
 
 .viewer-scroller.is-wrapped .viewer-virtual-canvas {
@@ -3671,62 +3672,36 @@ select {
 }
 
 /* ==========================================================================
-   Beta 1.2: Deferred Loading, Skeleton Rows & Focus Customization with WCAG
+   Beta 1.2: Focus Customization with WCAG & Separator Width Control
    ========================================================================== */
 
-/* Deferred stream loading bar during rapid scrolling on heavy logs */
-.viewer-scroll-loading-bar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2.5px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  background-size: 200% 100%;
-  animation: viewerShimmerBeam 1s infinite linear;
-  z-index: 20;
-  pointer-events: none;
-}
-
-@keyframes viewerShimmerBeam {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-/* Skeleton rows during rapid scroll */
-.skeleton-log-row {
-  opacity: 0.75;
-  pointer-events: none;
-}
-
-.skeleton-badge-pulse {
-  display: inline-block;
-  width: 42px;
-  height: 13px;
-  border-radius: var(--radius-sm);
-  background: var(--hover);
-  animation: skeletonPulse 0.9s ease-in-out infinite alternate;
-}
-
-.skeleton-content-box {
-  display: flex;
+/* Line separator width control in Settings */
+.separator-width-control {
+  display: inline-flex;
   align-items: center;
-  width: 100%;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 2px 6px;
+  height: 28px;
+  box-sizing: border-box;
 }
 
-.skeleton-bar {
-  display: block;
-  height: 11px;
-  width: 65%;
-  max-width: 520px;
-  border-radius: var(--radius-sm);
-  background: var(--hover);
-  animation: skeletonPulse 0.9s ease-in-out infinite alternate;
+.separator-width-input {
+  width: 48px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  outline: none;
 }
 
-@keyframes skeletonPulse {
-  0% { opacity: 0.35; }
-  100% { opacity: 0.85; }
+.separator-width-unit {
+  font-size: 11px;
+  color: var(--text-muted);
+  user-select: none;
 }
 
 /* Custom Focus Background in Settings */

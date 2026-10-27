@@ -49,6 +49,7 @@ export interface Preferences {
   fontFamily: string;
   showLineSeparator: boolean;
   lineSeparatorColor: string;
+  lineSeparatorWidth: number;
   levelColors: Record<LogLevel, LevelColorConfig>;
   colorizeInlineSeverity: boolean;
   customHighlights: CustomHighlightRule[];
@@ -93,7 +94,8 @@ export const DEFAULT_PREFERENCES: Preferences = {
   wordWrap: false,
   fontFamily: 'JetBrains Mono, Consolas, monospace',
   showLineSeparator: false,
-  lineSeparatorColor: '#e5e5e3',
+  lineSeparatorColor: '#c4c4c2',
+  lineSeparatorWidth: 0.75,
   levelColors: DEFAULT_LEVEL_COLORS,
   colorizeInlineSeverity: true,
   customHighlights: [],
@@ -136,6 +138,7 @@ function load(): Preferences {
       fontFamily: parsed.fontFamily ?? DEFAULT_PREFERENCES.fontFamily,
       showLineSeparator: typeof parsed.showLineSeparator === 'boolean' ? parsed.showLineSeparator : DEFAULT_PREFERENCES.showLineSeparator,
       lineSeparatorColor: parsed.lineSeparatorColor ?? DEFAULT_PREFERENCES.lineSeparatorColor,
+      lineSeparatorWidth: typeof parsed.lineSeparatorWidth === 'number' && parsed.lineSeparatorWidth > 0 ? parsed.lineSeparatorWidth : DEFAULT_PREFERENCES.lineSeparatorWidth,
       levelColors: { ...DEFAULT_LEVEL_COLORS, ...(parsed.levelColors ?? {}) },
       colorizeInlineSeverity: typeof parsed.colorizeInlineSeverity === 'boolean' ? parsed.colorizeInlineSeverity : DEFAULT_PREFERENCES.colorizeInlineSeverity,
       customHighlights: Array.isArray(parsed.customHighlights) ? parsed.customHighlights : DEFAULT_PREFERENCES.customHighlights,

@@ -224,14 +224,14 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
                 label={t('settings.appearance.lineSeparator')}
                 help={t('settings.appearance.lineSeparatorHelp')}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                   <Switch
                     checked={prefs.showLineSeparator}
                     onChange={(showLineSeparator) => setPreferences({ showLineSeparator })}
                     label={t('settings.appearance.lineSeparator')}
                   />
                   {prefs.showLineSeparator && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       <div className="color-picker-wrapper" title={t('settings.appearance.separatorColor')}>
                         <input
                           type="color"
@@ -249,6 +249,38 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
                           }
                           title={t('settings.appearance.resetSeparatorColor')}
                           aria-label={t('settings.appearance.resetSeparatorColor')}
+                        >
+                          <IconRotate2 size={14} stroke={1.5} />
+                        </button>
+                      )}
+
+                      <div className="separator-width-control" title={t('settings.appearance.separatorWidth')}>
+                        <input
+                          type="number"
+                          min={0.25}
+                          max={5}
+                          step={0.25}
+                          value={prefs.lineSeparatorWidth}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value);
+                            if (!isNaN(val) && val > 0) {
+                              setPreferences({ lineSeparatorWidth: Math.round(val * 100) / 100 });
+                            }
+                          }}
+                          className="separator-width-input"
+                          aria-label={t('settings.appearance.separatorWidth')}
+                        />
+                        <span className="separator-width-unit">px</span>
+                      </div>
+                      {prefs.lineSeparatorWidth !== DEFAULT_PREFERENCES.lineSeparatorWidth && (
+                        <button
+                          type="button"
+                          className="search-tool-btn"
+                          onClick={() =>
+                            setPreferences({ lineSeparatorWidth: DEFAULT_PREFERENCES.lineSeparatorWidth })
+                          }
+                          title={t('settings.appearance.resetSeparatorWidth')}
+                          aria-label={t('settings.appearance.resetSeparatorWidth')}
                         >
                           <IconRotate2 size={14} stroke={1.5} />
                         </button>

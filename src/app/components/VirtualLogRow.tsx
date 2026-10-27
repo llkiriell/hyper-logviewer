@@ -41,6 +41,7 @@ interface VirtualLogRowProps {
   levelColor?: LevelColorConfig;
   showSeparator?: boolean;
   separatorColor?: string;
+  separatorWidth?: number;
   wordWrap: boolean;
   fontSize: number;
   isPinned: boolean;
@@ -50,7 +51,6 @@ interface VirtualLogRowProps {
   activeLineIcon?: ActiveLineIconType;
   focusBackgroundMode?: FocusBackgroundMode;
   customFocusBackgroundColor?: string;
-  isDeferredLoading?: boolean;
   rainbowBrackets?: boolean;
   highlightGitPipeline?: boolean;
   onTogglePin: (line: ParsedLogLine) => void;
@@ -162,7 +162,8 @@ export const VirtualLogRow = memo(function VirtualLogRow({
   inlineSeverityConfig,
   levelColor,
   showSeparator = false,
-  separatorColor = '#e5e5e3',
+  separatorColor = '#c4c4c2',
+  separatorWidth = 0.75,
   wordWrap,
   fontSize,
   isPinned,
@@ -172,7 +173,6 @@ export const VirtualLogRow = memo(function VirtualLogRow({
   activeLineIcon = 'hand',
   focusBackgroundMode = 'transparent',
   customFocusBackgroundColor = 'rgba(14, 165, 233, 0.15)',
-  isDeferredLoading = false,
   rainbowBrackets = true,
   highlightGitPipeline = true,
   onTogglePin,
@@ -185,17 +185,16 @@ export const VirtualLogRow = memo(function VirtualLogRow({
   const [hoveredBracketPairId, setHoveredBracketPairId] = useState<number | null>(null);
 
   const bracketMap = useMemo(() => {
-    if (!rainbowBrackets || isDeferredLoading) return null;
+    if (!rainbowBrackets) return null;
     return analyzeBrackets(line.raw);
-  }, [line.raw, rainbowBrackets, isDeferredLoading]);
+  }, [line.raw, rainbowBrackets]);
 
   const searchRanges = useMemo(() => {
-    if (!searchQuery || isDeferredLoading) return [];
+    if (!searchQuery) return [];
     return findMatchRanges(line.raw, searchQuery, isRegex, caseSensitive);
-  }, [line.raw, searchQuery, isRegex, caseSensitive, isDeferredLoading]);
+  }, [line.raw, searchQuery, isRegex, caseSensitive]);
 
   const chunks = useMemo(() => {
-    if (isDeferredLoading) return [];
     return splitTextWithSearchAndHighlights(
       line.raw,
       searchRanges,
@@ -211,7 +210,6 @@ export const VirtualLogRow = memo(function VirtualLogRow({
     customRules,
     inlineSeverityConfig,
     highlightGitPipeline,
-    isDeferredLoading,
   ]);
 
   const handleCopy = async (e: React.MouseEvent) => {
@@ -257,19 +255,21 @@ export const VirtualLogRow = memo(function VirtualLogRow({
     return rowBg;
   }, [isSelected, focusBackgroundMode, customFocusBackgroundColor, levelColor, rowBg]);
 
-  // Effective line separator color: uses user custom color, or theme-aware var(--border) if default
+  // Effective line separator color: uses user custom color, or theme-aware var(--line-separator-default) if default
   const effectiveSeparatorColor = useMemo(() => {
     if (!showSeparator || isSelected) return undefined;
-    if (separatorColor && separatorColor.toLowerCase() !== '#e5e5e3') {
+    if (separatorColor && separatorColor.toLowerCase() !== '#c4c4c2') {
       return separatorColor;
     }
-    return 'var(--border)';
+    return 'var(--line-separator-default, #c4c4c2)';
   }, [showSeparator, isSelected, separatorColor]);
+
+  const effectiveSeparatorWidth = separatorWidth && separatorWidth > 0 ? separatorWidth : 0.75;
 
   // Fully opaque solid composite background for sticky columns (prevents any bleed-through on horizontal scroll)
   const stickySolidStyle = useMemo(() => {
     const separatorShadow = effectiveSeparatorColor
-      ? `inset 0 -1px 0 0 ${effectiveSeparatorColor}`
+      ? `inset 0 -${effectiveSeparatorWidth}px 0 0 ${effectiveSeparatorColor}`
       : undefined;
 
     if (isSelected) {
@@ -292,10 +292,10 @@ export const VirtualLogRow = memo(function VirtualLogRow({
       backgroundColor: 'var(--bg)',
       boxShadow: separatorShadow,
     };
-  }, [isSelected, effectiveRowBg, rowBg, effectiveSeparatorColor]);
+  }, [isSelected, effectiveRowBg, rowBg, effectiveSeparatorColor, effectiveSeparatorWidth]);
 
   const rowBorderBottom = effectiveSeparatorColor
-    ? `1px solid ${effectiveSeparatorColor}`
+    ? `${effectiveSeparatorWidth}px solid ${effectiveSeparatorColor}`
     : undefined;
 
   const badgeText = line.customLevelTag
@@ -330,31 +330,6 @@ export const VirtualLogRow = memo(function VirtualLogRow({
     }
   }, [line.level, line.customLevelTag, levelColor]);
 
-  // High-performance deferred skeleton row during rapid momentum scroll on heavy logs (only when nowrap to avoid breaking variable heights)
-  if (!wordWrap && isDeferredLoading) {
-    return (
-      <div
-        className="log-row skeleton-log-row"
-        style={{
-          fontSize: `${fontSize}px`,
-          borderBottom: rowBorderBottom,
-        }}
-      >
-        <span className="log-pin-btn" style={stickySolidStyle} />
-        <span className="log-pointer-cell" style={stickySolidStyle} />
-        <span className="log-gutter" style={stickySolidStyle}>
-          {line.lineNumber}
-        </span>
-        <span className="log-level-badge" style={stickySolidStyle}>
-          <span className="skeleton-badge-pulse" />
-        </span>
-        <div className="log-content skeleton-content-box">
-          <span className="skeleton-bar" />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div
       className={`log-row log-row-${line.level} ${line.isContinuation ? 'is-continuation' : ''} ${wordWrap ? 'is-wrapped' : ''} ${isPinned ? 'is-pinned-row' : ''} ${isContextMenuTarget ? 'is-context-target' : ''} ${isSelected ? 'is-selected-line' : ''} ${isSelected && selectionBlockPosition ? `selection-block-${selectionBlockPosition}` : ''} ${isSelected && !effectiveRowBg ? 'is-focus-transparent' : ''}`}
@@ -363,7 +338,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
         backgroundColor: effectiveRowBg,
         borderBottom: rowBorderBottom,
         boxShadow: effectiveSeparatorColor
-          ? `inset 0 -1px 0 0 ${effectiveSeparatorColor}`
+          ? `inset 0 -${effectiveSeparatorWidth}px 0 0 ${effectiveSeparatorColor}`
           : undefined,
         ...(isSelected
           ? ({

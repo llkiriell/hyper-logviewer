@@ -202,6 +202,23 @@ function escapeRegExp(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+const WORD_REGEX_CACHE = new Map<string, RegExp>();
+function getWordRegex(word: string): RegExp {
+  let re = WORD_REGEX_CACHE.get(word);
+  if (!re) {
+    re = new RegExp(`\\b${escapeRegExp(word)}\\b`, 'gi');
+    WORD_REGEX_CACHE.set(word, re);
+  }
+  re.lastIndex = 0;
+  return re;
+}
+
+const GIT_DELIM_REGEX = /#############/g;
+const GIT_BRANCH_REGEX = /\b(?:refs\/remotes\/origin\/|refs\/heads\/|origin\/)?((?:feature|hotfix|bugfix|release|fix)\/[a-zA-Z0-9_\-\.\/]+)\b/gi;
+const GIT_KEYWORDS_REGEX = /\b(git\s+merge|git\s+checkout|git\s+fetch|git\s+branch|git|merge|checkout|fetch|commit|pull|push|rebase|CONFLICT|Automatic merge failed|Auto-merging)\b/gi;
+const GIT_DIFF_STAT_REGEX = /([a-zA-Z0-9_\-\.\/]+(?:\.[a-zA-Z0-9_]+)?)\s*\|\s*(\d+)\s*([+\-]+)/;
+const GIT_DIFF_SUM_REGEX = /(\d+)\s+(files?\s+changed)|(\d+)\s+(insertions?\(\+\))|(\d+)\s+(deletions?\(-\))/g;
+
 export function splitTextWithSearchAndHighlights(
   text: string,
   searchRanges: SearchMatchRange[],
@@ -334,7 +351,7 @@ export function splitTextWithSearchAndHighlights(
 
     for (const sw of standardWords) {
       if (!sw.word || sw.color === 'inherit' || sw.color === 'transparent') continue;
-      const pattern = new RegExp(`\\b${escapeRegExp(sw.word)}\\b`, 'gi');
+      const pattern = getWordRegex(sw.word);
       let m: RegExpExecArray | null;
       while ((m = pattern.exec(text)) !== null) {
         const start = m.index;
@@ -361,9 +378,9 @@ export function splitTextWithSearchAndHighlights(
   if (hasGit) {
     // 4a. Merge Delimiter #############
     if (text.includes('#############')) {
-      const delimRegex = /#############/g;
+      GIT_DELIM_REGEX.lastIndex = 0;
       let dm: RegExpExecArray | null;
-      while ((dm = delimRegex.exec(text)) !== null) {
+      while ((dm = GIT_DELIM_REGEX.exec(text)) !== null) {
         const start = dm.index;
         const end = dm.index + dm[0].length;
         if (!spans.some((s) => s.start < end && s.end > start)) {
@@ -383,122 +400,129 @@ export function splitTextWithSearchAndHighlights(
     }
 
     // 4b. Git Branches (feature/..., hotfix/..., bugfix/..., release/..., fix/..., master/develop in context)
-    const branchRegex = /\b(?:refs\/remotes\/origin\/|refs\/heads\/|origin\/)?((?:feature|hotfix|bugfix|release|fix)\/[a-zA-Z0-9_\-\.\/]+)\b/gi;
-    let bm: RegExpExecArray | null;
-    while ((bm = branchRegex.exec(text)) !== null) {
-      const start = bm.index;
-      const end = bm.index + bm[0].length;
-      if (!spans.some((s) => s.start < end && s.end > start)) {
-        spans.push({
-          start,
-          end,
-          isSearch: false,
-          isActiveSearch: false,
-          customStyle: {
-            color: '#0284c7', // Distinct cyan/teal for branches
-            bold: true,
-            italic: false,
-          },
-        });
-      }
-    }
-
-    // 4c. Git reserved keywords & operations
-    const gitKeywordsRegex = /\b(git\s+merge|git\s+checkout|git\s+fetch|git\s+branch|git|merge|checkout|fetch|commit|pull|push|rebase|CONFLICT|Automatic merge failed|Auto-merging)\b/gi;
-    let km: RegExpExecArray | null;
-    while ((km = gitKeywordsRegex.exec(text)) !== null) {
-      const start = km.index;
-      const end = km.index + km[0].length;
-      if (!spans.some((s) => s.start < end && s.end > start)) {
-        const isConflict = /conflict|failed/i.test(km[0]);
-        spans.push({
-          start,
-          end,
-          isSearch: false,
-          isActiveSearch: false,
-          customStyle: {
-            color: isConflict ? '#dc2626' : '#9333ea', // Red for conflict, violet for git keywords
-            bold: true,
-            italic: false,
-          },
-        });
-      }
-    }
-
-    // 4d. Git Diff Stat Lines (e.g. scripts/sql/INV00003229.plsql | 12 ++++++++----)
-    const statMatch = text.match(/([a-zA-Z0-9_\-\.\/]+(?:\.[a-zA-Z0-9_]+)?)\s*\|\s*(\d+)\s*([+\-]+)/);
-    if (statMatch && statMatch.index !== undefined) {
-      const baseIdx = statMatch.index;
-      const pathStr = statMatch[1];
-      const numStr = statMatch[2];
-      const barStr = statMatch[3];
-
-      if (pathStr && numStr && barStr) {
-        const pathIdx = text.indexOf(pathStr, baseIdx);
-        if (pathIdx !== -1 && !spans.some((s) => s.start < pathIdx + pathStr.length && s.end > pathIdx)) {
+    if (text.includes('/') && /feature|hotfix|bugfix|release|fix/i.test(text)) {
+      GIT_BRANCH_REGEX.lastIndex = 0;
+      let bm: RegExpExecArray | null;
+      while ((bm = GIT_BRANCH_REGEX.exec(text)) !== null) {
+        const start = bm.index;
+        const end = bm.index + bm[0].length;
+        if (!spans.some((s) => s.start < end && s.end > start)) {
           spans.push({
-            start: pathIdx,
-            end: pathIdx + pathStr.length,
+            start,
+            end,
             isSearch: false,
             isActiveSearch: false,
             customStyle: {
-              color: 'inherit',
-              bold: true, // Soft bold for diff path
-              italic: false,
-            },
-          });
-        }
-
-        const numIdx = text.indexOf(numStr, pathIdx + pathStr.length);
-        if (numIdx !== -1 && !spans.some((s) => s.start < numIdx + numStr.length && s.end > numIdx)) {
-          spans.push({
-            start: numIdx,
-            end: numIdx + numStr.length,
-            isSearch: false,
-            isActiveSearch: false,
-            customStyle: {
-              color: '#0284c7', // Distinct color for change count
+              color: '#0284c7', // Distinct cyan/teal for branches
               bold: true,
               italic: false,
             },
           });
         }
+      }
+    }
 
-        const barIdx = text.indexOf(barStr, numIdx + numStr.length);
-        if (barIdx !== -1) {
-          let currentIdx = barIdx;
-          let i = 0;
-          while (i < barStr.length) {
-            const char = barStr[i];
-            let j = i;
-            while (j < barStr.length && barStr[j] === char) j++;
-            const segment = barStr.substring(i, j);
-            const segStart = currentIdx;
-            const segEnd = currentIdx + segment.length;
-            if (!spans.some((s) => s.start < segEnd && s.end > segStart)) {
-              spans.push({
-                start: segStart,
-                end: segEnd,
-                isSearch: false,
-                isActiveSearch: false,
-                customStyle: {
-                  color: char === '+' ? '#16a34a' : '#dc2626', // Green for +, Red for -
-                  bold: true,
-                  italic: false,
-                },
-              });
+    // 4c. Git reserved keywords & operations
+    if (/git|merge|checkout|fetch|commit|pull|push|rebase|conflict|failed|auto-merging/i.test(text)) {
+      GIT_KEYWORDS_REGEX.lastIndex = 0;
+      let km: RegExpExecArray | null;
+      while ((km = GIT_KEYWORDS_REGEX.exec(text)) !== null) {
+        const start = km.index;
+        const end = km.index + km[0].length;
+        if (!spans.some((s) => s.start < end && s.end > start)) {
+          const isConflict = /conflict|failed/i.test(km[0]);
+          spans.push({
+            start,
+            end,
+            isSearch: false,
+            isActiveSearch: false,
+            customStyle: {
+              color: isConflict ? '#dc2626' : '#9333ea', // Red for conflict, violet for git keywords
+              bold: true,
+              italic: false,
+            },
+          });
+        }
+      }
+    }
+
+    // 4d. Git Diff Stat Lines (e.g. scripts/sql/INV00003229.plsql | 12 ++++++++----)
+    if (text.includes('|') && (text.includes('+') || text.includes('-'))) {
+      const statMatch = text.match(GIT_DIFF_STAT_REGEX);
+      if (statMatch && statMatch.index !== undefined) {
+        const baseIdx = statMatch.index;
+        const pathStr = statMatch[1];
+        const numStr = statMatch[2];
+        const barStr = statMatch[3];
+
+        if (pathStr && numStr && barStr) {
+          const pathIdx = text.indexOf(pathStr, baseIdx);
+          if (pathIdx !== -1 && !spans.some((s) => s.start < pathIdx + pathStr.length && s.end > pathIdx)) {
+            spans.push({
+              start: pathIdx,
+              end: pathIdx + pathStr.length,
+              isSearch: false,
+              isActiveSearch: false,
+              customStyle: {
+                color: 'inherit',
+                bold: true, // Soft bold for diff path
+                italic: false,
+              },
+            });
+          }
+
+          const numIdx = text.indexOf(numStr, pathIdx + pathStr.length);
+          if (numIdx !== -1 && !spans.some((s) => s.start < numIdx + numStr.length && s.end > numIdx)) {
+            spans.push({
+              start: numIdx,
+              end: numIdx + numStr.length,
+              isSearch: false,
+              isActiveSearch: false,
+              customStyle: {
+                color: '#0284c7', // Distinct color for change count
+                bold: true,
+                italic: false,
+              },
+            });
+          }
+
+          const barIdx = text.indexOf(barStr, numIdx + numStr.length);
+          if (barIdx !== -1) {
+            let currentIdx = barIdx;
+            let i = 0;
+            while (i < barStr.length) {
+              const char = barStr[i];
+              let j = i;
+              while (j < barStr.length && barStr[j] === char) j++;
+              const segment = barStr.substring(i, j);
+              const segStart = currentIdx;
+              const segEnd = currentIdx + segment.length;
+              if (!spans.some((s) => s.start < segEnd && s.end > segStart)) {
+                spans.push({
+                  start: segStart,
+                  end: segEnd,
+                  isSearch: false,
+                  isActiveSearch: false,
+                  customStyle: {
+                    color: char === '+' ? '#16a34a' : '#dc2626', // Green for +, Red for -
+                    bold: true,
+                    italic: false,
+                  },
+                });
+              }
+              currentIdx += segment.length;
+              i = j;
             }
-            currentIdx += segment.length;
-            i = j;
           }
         }
       }
     }
 
     // 4e. Git Diff Summary Lines (e.g. 5 files changed, 17 insertions(+), 1 deletion(-))
-    const sumRegex = /(\d+)\s+(files?\s+changed)|(\d+)\s+(insertions?\(\+\))|(\d+)\s+(deletions?\(-\))/g;
-    let sm: RegExpExecArray | null;
-    while ((sm = sumRegex.exec(text)) !== null) {
+    if (text.includes('changed') || text.includes('insertions') || text.includes('deletions')) {
+      GIT_DIFF_SUM_REGEX.lastIndex = 0;
+      let sm: RegExpExecArray | null;
+      while ((sm = GIT_DIFF_SUM_REGEX.exec(text)) !== null) {
       if (sm[1]) {
         const numStart = sm.index;
         const numEnd = numStart + sm[1].length;
@@ -583,6 +607,7 @@ export function splitTextWithSearchAndHighlights(
         }
       }
     }
+  }
   }
 
   // Sort spans by start position

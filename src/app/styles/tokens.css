@@ -22,6 +22,7 @@
   --text-faint: #8c8c91;
   --border: #ececeb;
   --border-strong: #dcdcda;
+  --line-separator-default: #c4c4c2;
   --hover: rgba(20, 20, 30, 0.05);
   --active: rgba(20, 20, 30, 0.085);
   --accent: #c0582f;
@@ -50,6 +51,7 @@
   --text-faint: #8a8a8a;
   --border: #2e2e2e;
   --border-strong: #3c3c3c;
+  --line-separator-default: #3c3c3c;
   --hover: rgba(255, 255, 255, 0.055);
   --active: rgba(255, 255, 255, 0.09);
   --accent: #e27d50;
