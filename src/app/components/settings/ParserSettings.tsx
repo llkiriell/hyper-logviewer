@@ -284,13 +284,13 @@ export function ParserSettings() {
         </SettingRow>
 
         <SettingRow
-          label={t('settings.parser.removeInfoBg')}
-          help={t('settings.parser.removeInfoBgHelp')}
+          label={t('settings.parser.showSeverityBg')}
+          help={t('settings.parser.showSeverityBgHelp')}
         >
           <Switch
-            checked={prefs.removeInfoBg}
-            onChange={(removeInfoBg) => setPreferences({ removeInfoBg })}
-            label={t('settings.parser.removeInfoBg')}
+            checked={prefs.showSeverityBackground}
+            onChange={(showSeverityBackground) => setPreferences({ showSeverityBackground })}
+            label={t('settings.parser.showSeverityBg')}
           />
         </SettingRow>
 

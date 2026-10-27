@@ -10,6 +10,7 @@ import type { SupportedLocale } from '../i18n/types.ts';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 export type AccentColor = 'ember' | 'ocean' | 'aqua' | 'violet';
+export type FocusBackgroundMode = 'transparent' | 'severity' | 'custom';
 export type ActiveLineIconType =
   | 'hand'
   | 'arrow'
@@ -70,10 +71,12 @@ export interface Preferences {
   highlightActiveLine: boolean;
   activeLineColor: string;
   activeLineIcon: ActiveLineIconType;
+  focusBackgroundMode: FocusBackgroundMode;
+  customFocusBackgroundColor: string;
   // Git & Pipeline Highlights (branches, merges, conflicts)
   highlightGitPipeline: boolean;
   // Log parsing filters
-  removeInfoBg: boolean;
+  showSeverityBackground: boolean;
   // Recent files
   recentFiles: RecentFileItem[];
 }
@@ -107,8 +110,10 @@ export const DEFAULT_PREFERENCES: Preferences = {
   highlightActiveLine: true,
   activeLineColor: '#0ea5e9',
   activeLineIcon: 'hand',
+  focusBackgroundMode: 'transparent',
+  customFocusBackgroundColor: 'rgba(14, 165, 233, 0.15)',
   highlightGitPipeline: true,
-  removeInfoBg: true,
+  showSeverityBackground: true,
   recentFiles: [],
 };
 
@@ -148,8 +153,14 @@ function load(): Preferences {
       activeLineIcon: ['hand', 'arrow', 'chevron', 'caret', 'chevrons', 'target', 'dot', 'bookmark', 'star'].includes(parsed.activeLineIcon as string)
         ? (parsed.activeLineIcon as ActiveLineIconType)
         : DEFAULT_PREFERENCES.activeLineIcon,
+      focusBackgroundMode: ['transparent', 'severity', 'custom'].includes(parsed.focusBackgroundMode as string)
+        ? (parsed.focusBackgroundMode as FocusBackgroundMode)
+        : DEFAULT_PREFERENCES.focusBackgroundMode,
+      customFocusBackgroundColor: typeof parsed.customFocusBackgroundColor === 'string'
+        ? parsed.customFocusBackgroundColor
+        : DEFAULT_PREFERENCES.customFocusBackgroundColor,
       highlightGitPipeline: typeof parsed.highlightGitPipeline === 'boolean' ? parsed.highlightGitPipeline : DEFAULT_PREFERENCES.highlightGitPipeline,
-      removeInfoBg: typeof parsed.removeInfoBg === 'boolean' ? parsed.removeInfoBg : DEFAULT_PREFERENCES.removeInfoBg,
+      showSeverityBackground: typeof parsed.showSeverityBackground === 'boolean' ? parsed.showSeverityBackground : DEFAULT_PREFERENCES.showSeverityBackground,
       recentFiles: Array.isArray(parsed.recentFiles) ? parsed.recentFiles : DEFAULT_PREFERENCES.recentFiles,
     };
   } catch {

@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { ComponentType } from 'react';
 import {
   IconAdjustmentsHorizontal,
+  IconAlertTriangle,
   IconArrowDownCircle,
   IconArrowRight,
   IconBookmarkFilled,
   IconCaretRightFilled,
+  IconCheck,
   IconChevronRight,
   IconChevronsRight,
   IconCircleDot,
@@ -20,16 +22,19 @@ import {
   IconTarget,
   IconX,
 } from '@tabler/icons-react';
+import { checkWcagContrast } from '../../../core/accessibility.ts';
 import { SUPPORTED_LOCALES, useTranslation } from '../../i18n/index.ts';
 import type { SupportedLocale, TranslationKey } from '../../i18n/types.ts';
 import {
   DEFAULT_PREFERENCES,
+  resolvedTheme,
   setPreferences,
   usePreferences,
 } from '../../platform/preferences.ts';
 import type {
   AccentColor,
   ActiveLineIconType,
+  FocusBackgroundMode,
   ThemePreference,
 } from '../../platform/preferences.ts';
 import { Dialog, Segmented, Select, Switch } from '../primitives.tsx';
@@ -71,6 +76,16 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
   const prefs = usePreferences();
   const [section, setSection] = useState<SettingsSection>('general');
 
+  const isDark = resolvedTheme(prefs.theme) === 'dark';
+  const currentTextColor = isDark ? '#ececec' : '#1d1d1f';
+  const wcagResult = useMemo(() => {
+    return checkWcagContrast(
+      prefs.customFocusBackgroundColor,
+      currentTextColor,
+      isDark ? 'dark' : 'light',
+    );
+  }, [prefs.customFocusBackgroundColor, currentTextColor, isDark]);
+
   return (
     <Dialog title={t('settings.title')} onClose={onClose} size="large" hideTitle>
       <div className="settings-layout">
@@ -93,23 +108,16 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
         </aside>
 
         <section className="settings-content">
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '12px',
-            }}
-          >
-            <h2 style={{ fontSize: '18px', fontWeight: 600 }}>
+          <div className="settings-content-header">
+            <h2 style={{ fontSize: '18px', fontWeight: 600, margin: 0 }}>
               {t(SECTIONS.find((s) => s.id === section)?.labelKey ?? 'settings.title')}
             </h2>
             <button
               type="button"
               className="dialog-close"
               onClick={onClose}
-              title="Close (Esc)"
-              aria-label="Close"
+              title={`${t('common.close')} (Esc)`}
+              aria-label={t('common.close')}
             >
               <IconX size={18} stroke={1.5} />
             </button>
@@ -299,7 +307,8 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
               </SettingRow>
 
               {prefs.highlightActiveLine && (
-                <SettingRow
+                <>
+                  <SettingRow
                   label={t('settings.appearance.activeLineIcon')}
                   help={t('settings.appearance.activeLineIconHelp')}
                 >
@@ -356,7 +365,107 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
                     onChange={(activeLineIcon) => setPreferences({ activeLineIcon })}
                   />
                 </SettingRow>
-              )}
+
+                <SettingRow
+                  label={t('settings.appearance.focusBackground')}
+                  help={t('settings.appearance.focusBackgroundHelp')}
+                >
+                  <Select<FocusBackgroundMode>
+                    value={prefs.focusBackgroundMode || 'transparent'}
+                    label={t('settings.appearance.focusBackground')}
+                    options={[
+                      {
+                        value: 'transparent',
+                        label: t('settings.appearance.focusBgTransparent'),
+                      },
+                      {
+                        value: 'severity',
+                        label: t('settings.appearance.focusBgSeverity'),
+                      },
+                      {
+                        value: 'custom',
+                        label: t('settings.appearance.focusBgCustom'),
+                      },
+                    ]}
+                    onChange={(focusBackgroundMode) => setPreferences({ focusBackgroundMode })}
+                  />
+                </SettingRow>
+
+                {prefs.focusBackgroundMode === 'custom' && (
+                  <div className="custom-focus-bg-container">
+                    <div className="custom-focus-bg-row">
+                      <span className="setting-label">{t('settings.appearance.customFocusBgColor')}</span>
+                      <div className="custom-focus-bg-controls">
+                        <input
+                          type="color"
+                          className="custom-focus-color-input"
+                          value={
+                            prefs.customFocusBackgroundColor.startsWith('#') &&
+                            prefs.customFocusBackgroundColor.length === 7
+                              ? prefs.customFocusBackgroundColor
+                              : '#2563eb'
+                          }
+                          onChange={(e) =>
+                            setPreferences({ customFocusBackgroundColor: e.target.value })
+                          }
+                          title="Color"
+                        />
+                        <input
+                          type="text"
+                          className="input text-input custom-focus-text-input"
+                          value={prefs.customFocusBackgroundColor}
+                          onChange={(e) =>
+                            setPreferences({ customFocusBackgroundColor: e.target.value })
+                          }
+                          placeholder="rgba(14, 165, 233, 0.15) / #2563eb"
+                        />
+                        <button
+                          type="button"
+                          className="button button-xs button-ghost"
+                          onClick={() =>
+                            setPreferences({
+                              focusBackgroundMode: 'transparent',
+                              customFocusBackgroundColor: DEFAULT_PREFERENCES.customFocusBackgroundColor,
+                            })
+                          }
+                          title={t('settings.appearance.resetFocusBg')}
+                        >
+                          <IconRotate2 size={13} stroke={1.5} />
+                          <span>{t('common.reset')}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* WCAG 2.1 Contrast Feedback Banner */}
+                    <div
+                      className={`wcag-contrast-badge ${
+                        wcagResult.isAaCompliant ? 'is-compliant' : 'is-warning'
+                      }`}
+                    >
+                      {wcagResult.isAaCompliant ? (
+                        <>
+                          <IconCheck size={14} stroke={2} className="wcag-icon" />
+                          <span>
+                            {t('settings.appearance.wcagCompliant', {
+                              ratio: wcagResult.ratio,
+                            })}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <IconAlertTriangle size={15} stroke={2} className="wcag-icon" />
+                          <span>
+                            {t('settings.appearance.wcagWarning', {
+                              ratio: wcagResult.ratio,
+                            })}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
             </SettingsGroup>
           )}
 
