@@ -8,6 +8,7 @@ import {
   IconFilter,
   IconPin,
   IconPinFilled,
+  IconSearch,
   IconX,
 } from '@tabler/icons-react';
 import { parseLogContent } from '../../core/parser.ts';
@@ -83,6 +84,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
   const lastActiveRawIndexRef = useRef<number | null>(null);
   const [highlightedRawIndex, setHighlightedRawIndex] = useState<number | null>(null);
   const [selectedRawIndex, setSelectedRawIndex] = useState<number | null>(null);
+  const [selectedRawIndices, setSelectedRawIndices] = useState<Set<number>>(new Set());
 
   // Compute filtered log lines
   const filteredLines = useMemo(() => {
@@ -108,6 +110,62 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     setCurrentMatchIndex(0);
   }, [searchQuery, isRegex, caseSensitive, filterMatchesOnly, levelFilter, dateFilter]);
 
+  // Virtualizer setup with per-item key tracking and real DOM measurements
+  const rowVirtualizer = useVirtualizer({
+    count: filteredLines.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => (wordWrap ? 48 : 24),
+    overscan: 25,
+    getItemKey: (index) => {
+      const line = filteredLines[index];
+      return `${line?.rawIndex ?? index}-${wordWrap ? 'w' : 'nw'}`;
+    },
+    measureElement: (element, entry) => {
+      if (!element) return 24;
+      if (entry?.borderBoxSize?.[0]) {
+        return Math.round(entry.borderBoxSize[0].blockSize);
+      }
+      return Math.ceil(element.getBoundingClientRect().height) || (element as HTMLElement).offsetHeight || 24;
+    },
+  });
+
+  const virtualItems = rowVirtualizer.getVirtualItems();
+
+  // Helper to re-measure all row wrappers currently mounted in DOM
+  const remeasureMountedRows = useCallback(() => {
+    if (!parentRef.current) return;
+    const elements = parentRef.current.querySelectorAll<HTMLElement>('.viewer-virtual-row-wrapper');
+    elements.forEach((el) => {
+      const idxAttr = el.getAttribute('data-index');
+      if (idxAttr !== null) {
+        const idx = Number(idxAttr);
+        const height = Math.ceil(el.getBoundingClientRect().height) || el.offsetHeight;
+        if (height > 0) {
+          rowVirtualizer.resizeItem(idx, height);
+        }
+      }
+    });
+  }, [rowVirtualizer]);
+
+  // Invalidate virtualizer cache when wordWrap, filter, or line count changes (not on every search query keystroke)
+  useLayoutEffect(() => {
+    rowVirtualizer.measure();
+    requestAnimationFrame(() => {
+      remeasureMountedRows();
+    });
+  }, [wordWrap, filterMatchesOnly, filteredLines.length, prefs.fontSize, rowVirtualizer, remeasureMountedRows]);
+
+  // Recalculate heights on scroller width resize when word wrap is enabled
+  useEffect(() => {
+    if (!wordWrap || !parentRef.current) return;
+    const observer = new ResizeObserver(() => {
+      rowVirtualizer.measure();
+      remeasureMountedRows();
+    });
+    observer.observe(parentRef.current);
+    return () => observer.disconnect();
+  }, [wordWrap, rowVirtualizer, remeasureMountedRows]);
+
   // Auto-focus on first match when searching without funnel filter
   const prevSearchTriggerRef = useRef<{
     query: string;
@@ -121,33 +179,6 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     caseSensitive: false,
   });
 
-  // Virtualizer setup with per-item key tracking to avoid search overlapping
-  const rowVirtualizer = useVirtualizer({
-    count: filteredLines.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 24,
-    overscan: 25,
-    getItemKey: (index) => filteredLines[index]?.rawIndex ?? index,
-  });
-
-  const virtualItems = rowVirtualizer.getVirtualItems();
-
-  // Invalidate virtualizer cache when wordWrap, filter, search or lines change so heights adapt immediately before paint
-  useLayoutEffect(() => {
-    rowVirtualizer.measure();
-  }, [wordWrap, filterMatchesOnly, searchQuery, filteredLines, prefs.fontSize, rowVirtualizer]);
-
-  // Recalculate heights on scroller width resize when word wrap is enabled
-  useEffect(() => {
-    if (!wordWrap || !parentRef.current) return;
-    const observer = new ResizeObserver(() => {
-      rowVirtualizer.measure();
-    });
-    observer.observe(parentRef.current);
-    return () => observer.disconnect();
-  }, [wordWrap, rowVirtualizer]);
-
-  // Auto-focus on first match when searching without funnel filter
   useEffect(() => {
     const prev = prevSearchTriggerRef.current;
     const queryChanged = prev.query !== searchQuery;
@@ -172,6 +203,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
         const targetLine = filteredLines[firstLoc.lineIndex];
         if (targetLine) {
           setSelectedRawIndex(targetLine.rawIndex);
+          setSelectedRawIndices(new Set([targetLine.rawIndex]));
           setCurrentMatchIndex(0);
           rowVirtualizer.scrollToIndex(firstLoc.lineIndex, { align: 'center' });
         }
@@ -202,6 +234,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
       const targetLine = filteredLines[loc.lineIndex];
       if (targetLine) {
         setSelectedRawIndex(targetLine.rawIndex);
+        setSelectedRawIndices(new Set([targetLine.rawIndex]));
         lastActiveRawIndexRef.current = targetLine.rawIndex;
       }
     }
@@ -218,6 +251,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
       const targetLine = filteredLines[loc.lineIndex];
       if (targetLine) {
         setSelectedRawIndex(targetLine.rawIndex);
+        setSelectedRawIndices(new Set([targetLine.rawIndex]));
         lastActiveRawIndexRef.current = targetLine.rawIndex;
       }
     }
@@ -246,7 +280,40 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     [searchQuery, selectedRawIndex, lines, rowVirtualizer],
   );
 
-  // Toggle word wrap preserving focused or geometrical center line on screen
+  // Toggle filterMatchesOnly (embudo) sharing the identical focus and scroll preservation logic as search clear
+  const handleToggleFilterMatchesOnly = useCallback(() => {
+    const turningOff = filterMatchesOnly;
+    const targetRawIndex = selectedRawIndex ?? lastActiveRawIndexRef.current;
+
+    setFilterMatchesOnly((prev) => !prev);
+
+    if (turningOff && targetRawIndex !== null) {
+      setHighlightedRawIndex(targetRawIndex);
+      requestAnimationFrame(() => {
+        const targetIndex = lines.findIndex((l) => l.rawIndex === targetRawIndex);
+        if (targetIndex !== -1) {
+          rowVirtualizer.scrollToIndex(targetIndex, { align: 'center' });
+        }
+      });
+      setTimeout(() => setHighlightedRawIndex(null), 3000);
+    } else if (!turningOff) {
+      requestAnimationFrame(() => {
+        if (targetRawIndex !== null) {
+          const matchIndexInFiltered = filteredLines.findIndex((l) => l.rawIndex === targetRawIndex);
+          if (matchIndexInFiltered !== -1) {
+            rowVirtualizer.scrollToIndex(matchIndexInFiltered, { align: 'center' });
+            return;
+          }
+        }
+        if (searchIndex.totalMatches > 0 && searchIndex.locations[0]) {
+          const firstLoc = searchIndex.locations[0];
+          rowVirtualizer.scrollToIndex(firstLoc.lineIndex, { align: 'center' });
+        }
+      });
+    }
+  }, [filterMatchesOnly, selectedRawIndex, lines, filteredLines, searchIndex, rowVirtualizer]);
+
+  // Toggle word wrap preserving focused or geometrical center line on screen and re-measuring accurately
   const handleToggleWordWrap = useCallback(() => {
     let targetIndex = -1;
 
@@ -274,16 +341,46 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
 
     setWordWrap((prev) => !prev);
 
-    if (targetIndex !== -1) {
-      requestAnimationFrame(() => {
-        rowVirtualizer.measure();
+    requestAnimationFrame(() => {
+      rowVirtualizer.measure();
+      remeasureMountedRows();
+      if (targetIndex !== -1) {
         rowVirtualizer.scrollToIndex(targetIndex, { align: 'center', behavior: 'auto' });
         requestAnimationFrame(() => {
+          remeasureMountedRows();
           rowVirtualizer.scrollToIndex(targetIndex, { align: 'center', behavior: 'auto' });
         });
-      });
-    }
-  }, [selectedRawIndex, filteredLines, rowVirtualizer]);
+      }
+    });
+  }, [selectedRawIndex, filteredLines, rowVirtualizer, remeasureMountedRows]);
+
+  // Multi-selection line handler supporting Ctrl/Cmd key
+  const handleSelectLine = useCallback(
+    (line: ParsedLogLine, event?: React.MouseEvent) => {
+      if (event?.ctrlKey || event?.metaKey) {
+        setSelectedRawIndices((prev) => {
+          const next = new Set(prev);
+          if (next.has(line.rawIndex)) {
+            next.delete(line.rawIndex);
+            if (selectedRawIndex === line.rawIndex) {
+              const remaining = Array.from(next);
+              setSelectedRawIndex(remaining[remaining.length - 1] ?? null);
+            }
+          } else {
+            next.add(line.rawIndex);
+            setSelectedRawIndex(line.rawIndex);
+            lastActiveRawIndexRef.current = line.rawIndex;
+          }
+          return next;
+        });
+      } else {
+        setSelectedRawIndices(new Set([line.rawIndex]));
+        setSelectedRawIndex(line.rawIndex);
+        lastActiveRawIndexRef.current = line.rawIndex;
+      }
+    },
+    [selectedRawIndex],
+  );
 
   // Jump to specific line number
   const handleGoToLine = useCallback(
@@ -377,6 +474,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     setAutoScroll(false);
     if (filteredLines.length > 0 && filteredLines[0]) {
       setSelectedRawIndex(filteredLines[0].rawIndex);
+      setSelectedRawIndices(new Set([filteredLines[0].rawIndex]));
       rowVirtualizer.scrollToIndex(0, { align: 'start' });
     }
   }, [filteredLines, rowVirtualizer]);
@@ -386,6 +484,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
       const lastLine = filteredLines[filteredLines.length - 1];
       if (lastLine) {
         setSelectedRawIndex(lastLine.rawIndex);
+        setSelectedRawIndices(new Set([lastLine.rawIndex]));
         rowVirtualizer.scrollToIndex(filteredLines.length - 1, { align: 'end' });
       }
     }
@@ -417,6 +516,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     const targetLine = filteredLines[nextIdx];
     if (targetLine) {
       setSelectedRawIndex(targetLine.rawIndex);
+      setSelectedRawIndices(new Set([targetLine.rawIndex]));
       rowVirtualizer.scrollToIndex(nextIdx, { align: 'auto' });
     }
   }, [filteredLines, selectedRawIndex, rowVirtualizer]);
@@ -449,6 +549,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     const targetLine = filteredLines[nextIdx];
     if (targetLine) {
       setSelectedRawIndex(targetLine.rawIndex);
+      setSelectedRawIndices(new Set([targetLine.rawIndex]));
       rowVirtualizer.scrollToIndex(nextIdx, { align: 'auto' });
     }
   }, [filteredLines, selectedRawIndex, rowVirtualizer]);
@@ -456,8 +557,6 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
   // Physical keyboard arrow navigation (line by line without browser window scroll)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
-
       const target = e.target as HTMLElement | null;
       if (
         target &&
@@ -468,6 +567,24 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
       ) {
         return;
       }
+
+      // Copy multi-selected lines on Ctrl+C / Cmd+C when no browser text selection exists
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+        const nativeSel = window.getSelection()?.toString();
+        if (!nativeSel && selectedRawIndices.size > 0) {
+          const selectedText = filteredLines
+            .filter((l) => selectedRawIndices.has(l.rawIndex))
+            .map((l) => l.raw)
+            .join('\n');
+          if (selectedText) {
+            e.preventDefault();
+            void navigator.clipboard.writeText(selectedText);
+          }
+        }
+        return;
+      }
+
+      if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
 
       if (detailModalLine !== null || filteredLines.length === 0) return;
 
@@ -494,6 +611,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
             const line = filteredLines[chosen.index];
             if (line) {
               setSelectedRawIndex(line.rawIndex);
+              setSelectedRawIndices(new Set([line.rawIndex]));
               rowVirtualizer.scrollToIndex(chosen.index, { align: 'auto' });
             }
           }
@@ -507,6 +625,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
             const line = filteredLines[chosen.index];
             if (line) {
               setSelectedRawIndex(line.rawIndex);
+              setSelectedRawIndices(new Set([line.rawIndex]));
               rowVirtualizer.scrollToIndex(chosen.index, { align: 'auto' });
             }
           }
@@ -517,6 +636,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
           const targetIdx = curIdx > 0 ? curIdx - 1 : 0;
           if (filteredLines[targetIdx]) {
             setSelectedRawIndex(filteredLines[targetIdx].rawIndex);
+            setSelectedRawIndices(new Set([filteredLines[targetIdx].rawIndex]));
             rowVirtualizer.scrollToIndex(targetIdx, { align: 'auto' });
           }
         } else if (e.key === 'ArrowDown') {
@@ -526,6 +646,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
               : filteredLines.length - 1;
           if (filteredLines[targetIdx]) {
             setSelectedRawIndex(filteredLines[targetIdx].rawIndex);
+            setSelectedRawIndices(new Set([filteredLines[targetIdx].rawIndex]));
             rowVirtualizer.scrollToIndex(targetIdx, { align: 'auto' });
           }
         }
@@ -534,7 +655,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [detailModalLine, filteredLines, selectedRawIndex, rowVirtualizer]);
+  }, [detailModalLine, filteredLines, selectedRawIndex, selectedRawIndices, rowVirtualizer]);
 
   // Extract by date to a brand new tab
   const handleExtractDateToTab = useCallback(
@@ -635,6 +756,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     const line = contextMenu.line;
     const isPinned = pinnedLine?.rawIndex === line.rawIndex;
     const hasSelection = !!contextMenu.selectedText && contextMenu.selectedText.length > 0;
+    const isMultiple = selectedRawIndices.size > 1;
 
     const entries: ContextMenuEntry[] = [
       {
@@ -648,11 +770,34 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
         },
       },
       {
-        label: t('contextMenu.copyLine'),
-        icon: IconClipboardText,
-        shortcut: 'Ctrl+C',
-        onSelect: () => void navigator.clipboard.writeText(line.raw),
+        label: t('contextMenu.searchSelection'),
+        icon: IconSearch,
+        disabled: !hasSelection,
+        onSelect: () => {
+          if (contextMenu.selectedText) {
+            handleSearchChange(contextMenu.selectedText);
+          }
+        },
       },
+      isMultiple
+        ? {
+            label: t('contextMenu.copySelectedLines', { count: selectedRawIndices.size }),
+            icon: IconClipboardText,
+            shortcut: 'Ctrl+C',
+            onSelect: () => {
+              const selectedText = filteredLines
+                .filter((l) => selectedRawIndices.has(l.rawIndex))
+                .map((l) => l.raw)
+                .join('\n');
+              void navigator.clipboard.writeText(selectedText);
+            },
+          }
+        : {
+            label: t('contextMenu.copyLine'),
+            icon: IconClipboardText,
+            shortcut: 'Ctrl+C',
+            onSelect: () => void navigator.clipboard.writeText(line.raw),
+          },
       {
         label: isPinned ? t('contextMenu.unpinLine') : t('contextMenu.pinLine'),
         icon: isPinned ? IconPinFilled : IconPin,
@@ -689,7 +834,16 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     }
 
     return entries;
-  }, [contextMenu, pinnedLine, t, handleTogglePin, handleExtractDateToTab]);
+  }, [
+    contextMenu,
+    pinnedLine,
+    selectedRawIndices,
+    filteredLines,
+    t,
+    handleTogglePin,
+    handleExtractDateToTab,
+    handleSearchChange,
+  ]);
 
   const inlineSeverityConfig = useMemo(() => {
     if (!prefs.colorizeInlineSeverity) return undefined;
@@ -711,7 +865,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
         caseSensitive={caseSensitive}
         onToggleCaseSensitive={() => setCaseSensitive((prev) => !prev)}
         filterMatchesOnly={filterMatchesOnly}
-        onToggleFilterMatchesOnly={() => setFilterMatchesOnly((prev) => !prev)}
+        onToggleFilterMatchesOnly={handleToggleFilterMatchesOnly}
         totalMatches={searchIndex.totalMatches}
         currentMatchIndex={currentMatchIndex}
         onNextMatch={handleNextMatch}
@@ -785,7 +939,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
                 wordWrap={wordWrap}
                 fontSize={prefs.fontSize}
                 isPinned={true}
-                isSelected={prefs.highlightActiveLine && selectedRawIndex === pinnedLine.rawIndex}
+                isSelected={prefs.highlightActiveLine && selectedRawIndices.has(pinnedLine.rawIndex)}
                 activeLineIcon={prefs.activeLineIcon}
                 focusBackgroundMode={prefs.focusBackgroundMode}
                 customFocusBackgroundColor={prefs.customFocusBackgroundColor}
@@ -794,7 +948,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
                 onTogglePin={handleTogglePin}
                 onContextMenu={handleContextMenu}
                 onInspectLine={(l) => setDetailModalLine(l)}
-                onSelectLine={(l) => setSelectedRawIndex(l.rawIndex)}
+                onSelectLine={handleSelectLine}
               />
             </div>
           </div>
@@ -848,6 +1002,25 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
                 const isPinned = pinnedLine?.rawIndex === line.rawIndex;
                 const isTarget = contextMenu?.line.rawIndex === line.rawIndex;
                 const isHighlighted = highlightedRawIndex === line.rawIndex;
+                const isSelected = prefs.highlightActiveLine && selectedRawIndices.has(line.rawIndex);
+
+                let selectionBlockPosition: 'single' | 'top' | 'middle' | 'bottom' | null = null;
+                if (isSelected) {
+                  const prevLine = filteredLines[virtualRow.index - 1];
+                  const nextLine = filteredLines[virtualRow.index + 1];
+                  const isPrevSelected = prevLine ? selectedRawIndices.has(prevLine.rawIndex) : false;
+                  const isNextSelected = nextLine ? selectedRawIndices.has(nextLine.rawIndex) : false;
+
+                  if (!isPrevSelected && !isNextSelected) {
+                    selectionBlockPosition = 'single';
+                  } else if (!isPrevSelected && isNextSelected) {
+                    selectionBlockPosition = 'top';
+                  } else if (isPrevSelected && isNextSelected) {
+                    selectionBlockPosition = 'middle';
+                  } else {
+                    selectionBlockPosition = 'bottom';
+                  }
+                }
 
                 return (
                   <div
@@ -881,17 +1054,18 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
                       isPinned={isPinned}
                       isContextMenuTarget={isTarget}
                       isHighlighted={isHighlighted}
-                      isSelected={prefs.highlightActiveLine && selectedRawIndex === line.rawIndex}
+                      isSelected={isSelected}
+                      selectionBlockPosition={selectionBlockPosition}
                       activeLineIcon={prefs.activeLineIcon}
                       focusBackgroundMode={prefs.focusBackgroundMode}
                       customFocusBackgroundColor={prefs.customFocusBackgroundColor}
-                      isDeferredLoading={rowVirtualizer.isScrolling && filteredLines.length > 1500}
+                      isDeferredLoading={!wordWrap && rowVirtualizer.isScrolling && filteredLines.length > 1500}
                       rainbowBrackets={prefs.rainbowBrackets}
                       highlightGitPipeline={prefs.highlightGitPipeline}
                       onTogglePin={handleTogglePin}
                       onContextMenu={handleContextMenu}
                       onInspectLine={(l) => setDetailModalLine(l)}
-                      onSelectLine={(l) => setSelectedRawIndex(l.rawIndex)}
+                      onSelectLine={handleSelectLine}
                     />
                   </div>
                 );
@@ -912,7 +1086,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
             caseSensitive={caseSensitive}
             onToggleCaseSensitive={() => setCaseSensitive((prev) => !prev)}
             filterMatchesOnly={filterMatchesOnly}
-            onToggleFilterMatchesOnly={() => setFilterMatchesOnly((prev) => !prev)}
+            onToggleFilterMatchesOnly={handleToggleFilterMatchesOnly}
             totalMatches={searchIndex.totalMatches}
             currentMatchIndex={currentMatchIndex}
             onNextMatch={handleNextMatch}

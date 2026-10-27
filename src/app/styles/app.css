@@ -1184,6 +1184,24 @@ select {
   box-sizing: border-box;
 }
 
+/* Multi-selection contiguous block unified focus borders */
+.log-row.is-selected-line.selection-block-top::after {
+  border-bottom: none !important;
+}
+
+.log-row.is-selected-line.selection-block-middle::after {
+  border-top: none !important;
+  border-bottom: none !important;
+}
+
+.log-row.is-selected-line.selection-block-bottom::after {
+  border-top: none !important;
+}
+
+.log-row.is-selected-line.selection-block-single::after {
+  border: 1.5px solid var(--selected-line-border, var(--accent));
+}
+
 /* Retained focus highlight when search filter is cleared */
 .log-row.is-highlighted-focus {
   outline: 2px solid var(--accent);

@@ -47,6 +47,7 @@ interface VirtualLogRowProps {
   isContextMenuTarget?: boolean;
   isHighlighted?: boolean;
   isSelected?: boolean;
+  selectionBlockPosition?: 'single' | 'top' | 'middle' | 'bottom' | null;
   activeLineIcon?: ActiveLineIconType;
   focusBackgroundMode?: FocusBackgroundMode;
   customFocusBackgroundColor?: string;
@@ -56,7 +57,7 @@ interface VirtualLogRowProps {
   onTogglePin: (line: ParsedLogLine) => void;
   onContextMenu: (event: React.MouseEvent, line: ParsedLogLine) => void;
   onInspectLine?: (line: ParsedLogLine) => void;
-  onSelectLine?: (line: ParsedLogLine) => void;
+  onSelectLine?: (line: ParsedLogLine, event?: React.MouseEvent) => void;
 }
 
 function renderContentWithBrackets(
@@ -169,6 +170,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
   isContextMenuTarget = false,
   isHighlighted = false,
   isSelected = false,
+  selectionBlockPosition = null,
   activeLineIcon = 'hand',
   focusBackgroundMode = 'transparent',
   customFocusBackgroundColor = 'rgba(14, 165, 233, 0.15)',
@@ -330,8 +332,8 @@ export const VirtualLogRow = memo(function VirtualLogRow({
     }
   }, [line.level, line.customLevelTag, levelColor]);
 
-  // High-performance deferred skeleton row during rapid momentum scroll on heavy logs
-  if (isDeferredLoading) {
+  // High-performance deferred skeleton row during rapid momentum scroll on heavy logs (only when nowrap to avoid breaking variable heights)
+  if (!wordWrap && isDeferredLoading) {
     return (
       <div
         className="log-row skeleton-log-row"
@@ -357,7 +359,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
 
   return (
     <div
-      className={`log-row log-row-${line.level} ${line.isContinuation ? 'is-continuation' : ''} ${wordWrap ? 'is-wrapped' : ''} ${isPinned ? 'is-pinned-row' : ''} ${isContextMenuTarget ? 'is-context-target' : ''} ${isHighlighted ? 'is-highlighted-focus' : ''} ${isSelected ? 'is-selected-line' : ''} ${isSelected && !effectiveRowBg ? 'is-focus-transparent' : ''}`}
+      className={`log-row log-row-${line.level} ${line.isContinuation ? 'is-continuation' : ''} ${wordWrap ? 'is-wrapped' : ''} ${isPinned ? 'is-pinned-row' : ''} ${isContextMenuTarget ? 'is-context-target' : ''} ${isHighlighted ? 'is-highlighted-focus' : ''} ${isSelected ? 'is-selected-line' : ''} ${isSelected && selectionBlockPosition ? `selection-block-${selectionBlockPosition}` : ''} ${isSelected && !effectiveRowBg ? 'is-focus-transparent' : ''}`}
       style={{
         fontSize: `${fontSize}px`,
         backgroundColor: effectiveRowBg,
@@ -372,7 +374,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
             } as React.CSSProperties)
           : {}),
       }}
-      onClick={() => onSelectLine?.(line)}
+      onClick={(e) => onSelectLine?.(line, e)}
       onContextMenu={(e) => onContextMenu(e, line)}
     >
       {/* Sticky Pin Button (Always 100% solid background) */}
