@@ -108,6 +108,19 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     setCurrentMatchIndex(0);
   }, [searchQuery, isRegex, caseSensitive, filterMatchesOnly, levelFilter, dateFilter]);
 
+  // Auto-focus on first match when searching without funnel filter
+  const prevSearchTriggerRef = useRef<{
+    query: string;
+    filterOnly: boolean;
+    isRegex: boolean;
+    caseSensitive: boolean;
+  }>({
+    query: '',
+    filterOnly: false,
+    isRegex: false,
+    caseSensitive: false,
+  });
+
   // Virtualizer setup with per-item key tracking to avoid search overlapping
   const rowVirtualizer = useVirtualizer({
     count: filteredLines.length,
@@ -119,10 +132,52 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
 
   const virtualItems = rowVirtualizer.getVirtualItems();
 
-  // Invalidate virtualizer cache when wordWrap, search or lines change so heights adapt immediately before paint
+  // Invalidate virtualizer cache when wordWrap, filter, search or lines change so heights adapt immediately before paint
   useLayoutEffect(() => {
     rowVirtualizer.measure();
-  }, [wordWrap, searchQuery, filteredLines.length, prefs.fontSize, rowVirtualizer]);
+  }, [wordWrap, filterMatchesOnly, searchQuery, filteredLines, prefs.fontSize, rowVirtualizer]);
+
+  // Recalculate heights on scroller width resize when word wrap is enabled
+  useEffect(() => {
+    if (!wordWrap || !parentRef.current) return;
+    const observer = new ResizeObserver(() => {
+      rowVirtualizer.measure();
+    });
+    observer.observe(parentRef.current);
+    return () => observer.disconnect();
+  }, [wordWrap, rowVirtualizer]);
+
+  // Auto-focus on first match when searching without funnel filter
+  useEffect(() => {
+    const prev = prevSearchTriggerRef.current;
+    const queryChanged = prev.query !== searchQuery;
+    const filterChanged = prev.filterOnly !== filterMatchesOnly;
+    const regexChanged = prev.isRegex !== isRegex;
+    const caseChanged = prev.caseSensitive !== caseSensitive;
+
+    prevSearchTriggerRef.current = {
+      query: searchQuery,
+      filterOnly: filterMatchesOnly,
+      isRegex,
+      caseSensitive,
+    };
+
+    if (
+      (queryChanged || filterChanged || regexChanged || caseChanged) &&
+      searchQuery.trim().length > 0 &&
+      !filterMatchesOnly
+    ) {
+      if (searchIndex.totalMatches > 0 && searchIndex.locations[0]) {
+        const firstLoc = searchIndex.locations[0];
+        const targetLine = filteredLines[firstLoc.lineIndex];
+        if (targetLine) {
+          setSelectedRawIndex(targetLine.rawIndex);
+          setCurrentMatchIndex(0);
+          rowVirtualizer.scrollToIndex(firstLoc.lineIndex, { align: 'center' });
+        }
+      }
+    }
+  }, [searchQuery, filterMatchesOnly, isRegex, caseSensitive, searchIndex, filteredLines, rowVirtualizer]);
 
   // Search match navigation handlers
   const activeLocation = searchIndex.locations[currentMatchIndex];
@@ -320,14 +375,21 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
   // Scroll handlers
   const handleScrollToTop = useCallback(() => {
     setAutoScroll(false);
-    rowVirtualizer.scrollToIndex(0, { align: 'start' });
-  }, [rowVirtualizer]);
+    if (filteredLines.length > 0 && filteredLines[0]) {
+      setSelectedRawIndex(filteredLines[0].rawIndex);
+      rowVirtualizer.scrollToIndex(0, { align: 'start' });
+    }
+  }, [filteredLines, rowVirtualizer]);
 
   const handleScrollToBottom = useCallback(() => {
     if (filteredLines.length > 0) {
-      rowVirtualizer.scrollToIndex(filteredLines.length - 1, { align: 'end' });
+      const lastLine = filteredLines[filteredLines.length - 1];
+      if (lastLine) {
+        setSelectedRawIndex(lastLine.rawIndex);
+        rowVirtualizer.scrollToIndex(filteredLines.length - 1, { align: 'end' });
+      }
     }
-  }, [filteredLines.length, rowVirtualizer]);
+  }, [filteredLines, rowVirtualizer]);
 
   // Step navigation line-by-line handlers (single click on up/down toolbar buttons)
   const handleNavLineUp = useCallback(() => {
@@ -752,7 +814,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
             }
             setScrollTop(currentTop);
           }}
-          className={`viewer-scroller ${wordWrap ? 'is-wrapped' : 'is-nowrap'}`}
+          className={`viewer-scroller ${wordWrap ? 'is-wrapped' : 'is-nowrap'} ${!effectiveShowSeverityBg ? 'hide-severity-bg' : ''}`}
         >
           {filteredLines.length === 0 ? (
             <div className="viewer-empty">
@@ -789,7 +851,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
 
                 return (
                   <div
-                    key={line.rawIndex}
+                    key={`${line.rawIndex}-${virtualRow.index}-${wordWrap ? 'w' : 'nw'}`}
                     ref={rowVirtualizer.measureElement}
                     data-index={virtualRow.index}
                     className="viewer-virtual-row-wrapper"

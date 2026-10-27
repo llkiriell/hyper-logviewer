@@ -83,3 +83,7 @@ When modifying, generating, or refactoring code, every agent must respect:
 3. **Preserve Design System Integrity:** Use native CSS variables (`var(--bg)`, `var(--text)`, `var(--accent)`, `var(--border)`). Do not install unapproved CSS libraries.
 4. **Virtualization First:** Always virtualize log lines; never map an unbounded array into React DOM nodes.
 5. **Clean IPC Boundaries:** Keep native OS interactions (file dialogs, raw file reading, clipboard access) strictly inside `electron/` and expose them via safe contextBridge channels in `electron/preload.cts`.
+6. **Virtualizer Dynamic Heights & Filtering Overlap Prevention:** When rendering virtualized log rows with dynamic heights (e.g. `wordWrap` enabled, line filtering with funnel, search query changes):
+   * Always use composite keys on row wrapper elements that incorporate the raw index, virtual index, and wrap state: `key={`${line.rawIndex}-${virtualRow.index}-${wordWrap ? 'w' : 'nw'}`}`. Reusing DOM elements across shifted virtual indices bypasses TanStack Virtualizer's internal resize measurements and causes row overlapping.
+   * Call `rowVirtualizer.measure()` in `useLayoutEffect` whenever filtering (`filterMatchesOnly`), queries, line counts, or font sizes change.
+   * Attach a `ResizeObserver` on the scroll container when `wordWrap` is active to remeasure row heights on window or panel resize.
