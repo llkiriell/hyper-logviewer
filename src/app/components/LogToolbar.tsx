@@ -6,6 +6,8 @@ import {
   IconCalendar,
   IconChevronDown,
   IconChevronUp,
+  IconColorSwatch,
+  IconFilter,
   IconLetterCase,
   IconRegex,
   IconSearch,
@@ -22,6 +24,8 @@ interface LogSearchBarProps {
   onToggleRegex: () => void;
   caseSensitive: boolean;
   onToggleCaseSensitive: () => void;
+  filterMatchesOnly?: boolean;
+  onToggleFilterMatchesOnly?: () => void;
   totalMatches: number;
   currentMatchIndex: number;
   onNextMatch: () => void;
@@ -36,6 +40,8 @@ export function LogSearchBar({
   onToggleRegex,
   caseSensitive,
   onToggleCaseSensitive,
+  filterMatchesOnly = false,
+  onToggleFilterMatchesOnly,
   totalMatches,
   currentMatchIndex,
   onNextMatch,
@@ -93,6 +99,17 @@ export function LogSearchBar({
       )}
 
       <div className="search-tools">
+        {onToggleFilterMatchesOnly && (
+          <button
+            type="button"
+            className={`search-tool-btn ${filterMatchesOnly ? 'is-active' : ''}`}
+            onClick={onToggleFilterMatchesOnly}
+            title={t('viewer.filterMatchingLines')}
+          >
+            <IconFilter size={15} stroke={1.5} />
+          </button>
+        )}
+
         <button
           type="button"
           className={`search-tool-btn ${caseSensitive ? 'is-active' : ''}`}
@@ -133,6 +150,8 @@ interface LogToolbarProps {
   onToggleRegex: () => void;
   caseSensitive: boolean;
   onToggleCaseSensitive: () => void;
+  filterMatchesOnly?: boolean;
+  onToggleFilterMatchesOnly?: () => void;
   totalMatches: number;
   currentMatchIndex: number;
   onNextMatch: () => void;
@@ -144,8 +163,12 @@ interface LogToolbarProps {
   onOpenDateFilter: (anchor: HTMLElement) => void;
   wordWrap: boolean;
   onToggleWordWrap: () => void;
+  showSeverityBg: boolean;
+  onToggleSeverityBg: () => void;
   showLineSeparator: boolean;
   onToggleLineSeparator: () => void;
+  onNavLineUp: () => void;
+  onNavLineDown: () => void;
   onScrollToTop: () => void;
   onScrollToBottom: () => void;
   hideSearchBar?: boolean;
@@ -158,6 +181,8 @@ export function LogToolbar({
   onToggleRegex,
   caseSensitive,
   onToggleCaseSensitive,
+  filterMatchesOnly,
+  onToggleFilterMatchesOnly,
   totalMatches,
   currentMatchIndex,
   onNextMatch,
@@ -169,8 +194,12 @@ export function LogToolbar({
   onOpenDateFilter,
   wordWrap,
   onToggleWordWrap,
+  showSeverityBg,
+  onToggleSeverityBg,
   showLineSeparator,
   onToggleLineSeparator,
+  onNavLineUp,
+  onNavLineDown,
   onScrollToTop,
   onScrollToBottom,
   hideSearchBar = false,
@@ -190,6 +219,8 @@ export function LogToolbar({
           onToggleRegex={onToggleRegex}
           caseSensitive={caseSensitive}
           onToggleCaseSensitive={onToggleCaseSensitive}
+          filterMatchesOnly={filterMatchesOnly}
+          onToggleFilterMatchesOnly={onToggleFilterMatchesOnly}
           totalMatches={totalMatches}
           currentMatchIndex={currentMatchIndex}
           onNextMatch={onNextMatch}
@@ -288,6 +319,16 @@ export function LogToolbar({
           {isDateFilterActive && <span className="toolbar-indicator-dot" />}
         </button>
 
+        {/* Toggle Verb Background Colors (Temporary) */}
+        <button
+          type="button"
+          className={`toolbar-btn ${!showSeverityBg ? 'is-active' : ''}`}
+          onClick={onToggleSeverityBg}
+          title={t('viewer.toggleSeverityBg')}
+        >
+          <IconColorSwatch size={16} stroke={1.5} />
+        </button>
+
         {/* Word Wrap Toggle */}
         <button
           type="button"
@@ -308,22 +349,24 @@ export function LogToolbar({
           <IconBorderHorizontal size={16} stroke={1.5} />
         </button>
 
-        {/* Jump to top */}
+        {/* Navigate Up / Double click: Jump to top */}
         <button
           type="button"
           className="toolbar-btn"
-          onClick={onScrollToTop}
-          title={t('viewer.jumpToTop')}
+          onClick={onNavLineUp}
+          onDoubleClick={onScrollToTop}
+          title={t('viewer.navUpTooltip')}
         >
           <IconArrowUp size={16} stroke={1.5} />
         </button>
 
-        {/* Jump to bottom */}
+        {/* Navigate Down / Double click: Jump to bottom */}
         <button
           type="button"
           className="toolbar-btn"
-          onClick={onScrollToBottom}
-          title={t('viewer.jumpToBottom')}
+          onClick={onNavLineDown}
+          onDoubleClick={onScrollToBottom}
+          title={t('viewer.navDownTooltip')}
         >
           <IconArrowDown size={16} stroke={1.5} />
         </button>
