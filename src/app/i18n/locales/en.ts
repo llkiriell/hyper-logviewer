@@ -193,8 +193,6 @@ export const en = {
       resetSeparatorWidth: 'Reset separator thickness to default',
       jsonTheme: 'JSON Block Theme',
       jsonThemeHelp: 'Select the syntax highlighting palette for detected JSON.',
-      bottomSearchBar: 'Bottom Search Bar',
-      bottomSearchBarHelp: 'Place search bar at the bottom spanning full window width.',
       rainbowBrackets: 'Rainbow Brackets & Match Highlight',
       rainbowBracketsHelp: 'Colorize braces {} and brackets [] by nesting depth and highlight matching pair on hover/click.',
       highlightActiveLine: 'Highlight Selected Line',

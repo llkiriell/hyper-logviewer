@@ -91,7 +91,13 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
   }, [prefs.customFocusBackgroundColor, currentTextColor, isDark]);
 
   return (
-    <Dialog title={t('settings.title')} onClose={onClose} size="large" hideTitle>
+    <Dialog
+      title={t('settings.title')}
+      onClose={onClose}
+      size="large"
+      hideTitle
+      closeOnScrimClick={false}
+    >
       <div className="settings-layout">
         <aside className="settings-sidebar">
           {SECTIONS.map((sec) => {
@@ -306,17 +312,6 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
                     ['insomnia', 'Insomnia'],
                   ]}
                   onChange={(jsonTheme) => setPreferences({ jsonTheme })}
-                />
-              </SettingRow>
-
-              <SettingRow
-                label={t('settings.appearance.bottomSearchBar')}
-                help={t('settings.appearance.bottomSearchBarHelp')}
-              >
-                <Switch
-                  checked={prefs.bottomSearchBar}
-                  onChange={(bottomSearchBar) => setPreferences({ bottomSearchBar })}
-                  label={t('settings.appearance.bottomSearchBar')}
                 />
               </SettingRow>
 

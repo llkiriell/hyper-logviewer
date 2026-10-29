@@ -1,7 +1,5 @@
 import { useRef, useState } from 'react';
 import {
-  IconArrowDown,
-  IconArrowUp,
   IconBorderHorizontal,
   IconCalendar,
   IconChevronDown,
@@ -255,18 +253,6 @@ export function LogSearchBar({
 }
 
 interface LogToolbarProps {
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-  isRegex: boolean;
-  onToggleRegex: () => void;
-  caseSensitive: boolean;
-  onToggleCaseSensitive: () => void;
-  filterMatchesOnly?: boolean;
-  onToggleFilterMatchesOnly?: () => void;
-  totalMatches: number;
-  currentMatchIndex: number;
-  onNextMatch: () => void;
-  onPrevMatch: () => void;
   levelFilter: LogLevel | 'all';
   onLevelFilterChange: (level: LogLevel | 'all') => void;
   stats: LogStats;
@@ -278,24 +264,9 @@ interface LogToolbarProps {
   onToggleSeverityBg: () => void;
   showLineSeparator: boolean;
   onToggleLineSeparator: () => void;
-  onScrollToTop: () => void;
-  onScrollToBottom: () => void;
-  hideSearchBar?: boolean;
 }
 
 export function LogToolbar({
-  searchQuery,
-  onSearchChange,
-  isRegex,
-  onToggleRegex,
-  caseSensitive,
-  onToggleCaseSensitive,
-  filterMatchesOnly,
-  onToggleFilterMatchesOnly,
-  totalMatches,
-  currentMatchIndex,
-  onNextMatch,
-  onPrevMatch,
   levelFilter,
   onLevelFilterChange,
   stats,
@@ -307,36 +278,15 @@ export function LogToolbar({
   onToggleSeverityBg,
   showLineSeparator,
   onToggleLineSeparator,
-  onScrollToTop,
-  onScrollToBottom,
-  hideSearchBar = false,
 }: LogToolbarProps) {
   const { t } = useTranslation();
   const dateBtnRef = useRef<HTMLButtonElement>(null);
   const errorCount = stats.error + stats.fatal;
 
   return (
-    <div className={`log-toolbar ${hideSearchBar ? 'has-bottom-search' : ''}`}>
-      {/* Search Bar in top toolbar if not placed at bottom */}
-      {!hideSearchBar && (
-        <LogSearchBar
-          searchQuery={searchQuery}
-          onSearchChange={onSearchChange}
-          isRegex={isRegex}
-          onToggleRegex={onToggleRegex}
-          caseSensitive={caseSensitive}
-          onToggleCaseSensitive={onToggleCaseSensitive}
-          filterMatchesOnly={filterMatchesOnly}
-          onToggleFilterMatchesOnly={onToggleFilterMatchesOnly}
-          totalMatches={totalMatches}
-          currentMatchIndex={currentMatchIndex}
-          onNextMatch={onNextMatch}
-          onPrevMatch={onPrevMatch}
-        />
-      )}
-
-      {/* Severity Filter Chips (aligned to start if search is at bottom) */}
-      <div className={`log-severity-chips ${hideSearchBar ? 'is-aligned-start' : ''}`}>
+    <div className="log-toolbar has-bottom-search">
+      {/* Severity Filter Chips */}
+      <div className="log-severity-chips is-aligned-start">
         <button
           type="button"
           className={`chip chip-all ${levelFilter === 'all' ? 'is-selected' : ''}`}
@@ -454,26 +404,6 @@ export function LogToolbar({
           title={t('viewer.toggleLineSeparator')}
         >
           <IconBorderHorizontal size={16} stroke={1.5} />
-        </button>
-
-        {/* Jump to top */}
-        <button
-          type="button"
-          className="toolbar-btn"
-          onClick={onScrollToTop}
-          title={t('viewer.jumpToTop')}
-        >
-          <IconArrowUp size={16} stroke={1.5} />
-        </button>
-
-        {/* Jump to bottom */}
-        <button
-          type="button"
-          className="toolbar-btn"
-          onClick={onScrollToBottom}
-          title={t('viewer.jumpToBottom')}
-        >
-          <IconArrowDown size={16} stroke={1.5} />
         </button>
       </div>
     </div>

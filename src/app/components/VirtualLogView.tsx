@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import {
+  IconArrowDown,
+  IconArrowUp,
   IconClipboardText,
   IconCopy,
   IconEye,
@@ -490,8 +492,8 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
 
     if (prefs.autoScrollMode === 'continuous') {
       let animId: number;
-      const speedMap = { slow: 0.72, medium: 1.8, fast: 4.2 };
-      const pxPerFrame = speedMap[prefs.autoScrollSpeed] ?? 1.8;
+      const speedMap = { slow: 0.80, medium: 1.98, fast: 4.62 };
+      const pxPerFrame = speedMap[prefs.autoScrollSpeed] ?? 1.98;
 
       const step = () => {
         if (!parentRef.current) return;
@@ -878,20 +880,8 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
 
   return (
     <div className="viewer-container">
-      {/* Top Toolbar (chips align to start if bottom search bar is enabled) */}
+      {/* Top Toolbar */}
       <LogToolbar
-        searchQuery={searchQuery}
-        onSearchChange={handleSearchChange}
-        isRegex={isRegex}
-        onToggleRegex={() => setIsRegex((prev) => !prev)}
-        caseSensitive={caseSensitive}
-        onToggleCaseSensitive={() => setCaseSensitive((prev) => !prev)}
-        filterMatchesOnly={filterMatchesOnly}
-        onToggleFilterMatchesOnly={handleToggleFilterMatchesOnly}
-        totalMatches={searchIndex.totalMatches}
-        currentMatchIndex={currentMatchIndex}
-        onNextMatch={handleNextMatch}
-        onPrevMatch={handlePrevMatch}
         levelFilter={levelFilter}
         onLevelFilterChange={handleLevelFilterChange}
         stats={stats}
@@ -905,9 +895,6 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
         onToggleLineSeparator={() =>
           setPreferences({ showLineSeparator: !prefs.showLineSeparator })
         }
-        onScrollToTop={handleScrollToTop}
-        onScrollToBottom={handleScrollToBottom}
-        hideSearchBar={prefs.bottomSearchBar}
       />
 
       {/* Viewport wrapper with relative positioning */}
@@ -1097,9 +1084,9 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
         </div>
       </div>
 
-      {/* Optional Full-width Bottom Search Bar */}
-      {prefs.bottomSearchBar && (
-        <div className="bottom-search-wrapper">
+      {/* Bottom Search Bar & Navigation (Always present at the bottom) */}
+      <div className="bottom-search-wrapper">
+        <div className="bottom-search-row">
           <LogSearchBar
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
@@ -1115,8 +1102,28 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
             onPrevMatch={handlePrevMatch}
             isBottom={true}
           />
+          <div className="bottom-search-nav-actions">
+            <button
+              type="button"
+              className="bottom-scroll-btn"
+              onClick={handleScrollToTop}
+              title={t('viewer.jumpToTop')}
+              aria-label={t('viewer.jumpToTop')}
+            >
+              <IconArrowUp size={16} stroke={1.5} />
+            </button>
+            <button
+              type="button"
+              className="bottom-scroll-btn"
+              onClick={handleScrollToBottom}
+              title={t('viewer.jumpToBottom')}
+              aria-label={t('viewer.jumpToBottom')}
+            >
+              <IconArrowDown size={16} stroke={1.5} />
+            </button>
+          </div>
         </div>
-      )}
+      </div>
 
       {/* Status Bar */}
       <StatusBar

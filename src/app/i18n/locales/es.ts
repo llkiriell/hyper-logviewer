@@ -195,8 +195,6 @@ export const es: TranslationSchema = {
       resetSeparatorWidth: 'Restablecer grosor del separador por defecto',
       jsonTheme: 'Tema del visor JSON',
       jsonThemeHelp: 'Selecciona el esquema de colores inspirado en Postman o Insomnia.',
-      bottomSearchBar: 'Barra de búsqueda inferior',
-      bottomSearchBarHelp: 'Mover la barra de búsqueda a la parte inferior a todo lo ancho.',
       rainbowBrackets: 'Corchetes y llaves arcoíris (Rainbow Brackets)',
       rainbowBracketsHelp: 'Colorea llaves {} y corchetes [] por nivel de anidación y resalta pares coincidentes al pasar el cursor o hacer clic.',
       highlightActiveLine: 'Resaltar línea seleccionada',

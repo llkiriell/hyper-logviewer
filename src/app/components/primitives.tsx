@@ -31,6 +31,7 @@ interface DialogProps {
   children: ReactNode;
   size?: 'small' | 'medium' | 'large';
   hideTitle?: boolean;
+  closeOnScrimClick?: boolean;
 }
 
 export function Dialog({
@@ -39,6 +40,7 @@ export function Dialog({
   children,
   size = 'medium',
   hideTitle = false,
+  closeOnScrimClick = true,
 }: DialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -57,7 +59,7 @@ export function Dialog({
     <div
       className="dialog-scrim"
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (closeOnScrimClick && e.target === e.currentTarget) onClose();
       }}
     >
       <div
