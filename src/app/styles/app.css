@@ -1006,7 +1006,6 @@ select {
 /* Wrapping overrides */
 .viewer-virtual-row-wrapper {
   box-sizing: border-box;
-  contain: layout style;
 }
 
 .viewer-scroller.is-wrapped .viewer-virtual-canvas {

@@ -111,44 +111,59 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
     setCurrentMatchIndex(0);
   }, [searchQuery, isRegex, caseSensitive, filterMatchesOnly, levelFilter, dateFilter]);
 
-  // Virtualizer setup with per-item key tracking and real DOM measurements
+  // Track scroller container width to project line wrap counts mathematically (VS Code style)
+  const [scrollerWidth, setScrollerWidth] = useState<number>(() => {
+    return typeof window !== 'undefined' ? window.innerWidth - 80 : 1200;
+  });
+
+  useEffect(() => {
+    if (!parentRef.current) return;
+    const updateWidth = () => {
+      if (parentRef.current) {
+        const w = parentRef.current.clientWidth;
+        if (w > 0) {
+          setScrollerWidth((prev) => (Math.abs(prev - w) > 4 ? w : prev));
+        }
+      }
+    };
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(parentRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Virtualizer setup with deterministic character-grid wrap projection (like Monaco / VS Code)
   const rowVirtualizer = useVirtualizer({
     count: filteredLines.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 24,
+    estimateSize: (index) => {
+      if (!wordWrap) return 24;
+      const line = filteredLines[index];
+      if (!line || !line.raw) return 24;
+      const len = line.raw.length;
+      if (len <= 80) return 24;
+
+      // Deterministic character grid projection
+      const approxCharWidth = prefs.fontSize * 0.605;
+      const availableTextWidth = Math.max(200, scrollerWidth - 190);
+      const charsPerLine = Math.max(15, Math.floor(availableTextWidth / approxCharWidth));
+      const visualLines = Math.max(1, Math.ceil(len / charsPerLine));
+      const singleLineHeight = Math.max(24, Math.round(prefs.fontSize * 1.6));
+      return visualLines * singleLineHeight;
+    },
     overscan: filteredLines.length > 1500 ? 50 : 35,
     getItemKey: (index) => {
       const line = filteredLines[index];
       return `${line?.rawIndex ?? index}-${wordWrap ? 'w' : 'nw'}`;
     },
-    measureElement: (element, entry) => {
-      if (!element) return 24;
-      if (entry?.borderBoxSize?.[0]) {
-        const size = Math.round(entry.borderBoxSize[0].blockSize);
-        if (size > 0) return size;
-      }
-      const rectHeight = Math.ceil(element.getBoundingClientRect().height);
-      if (rectHeight > 0) return rectHeight;
-      return (element as HTMLElement).offsetHeight || 24;
-    },
   });
 
   const virtualItems = rowVirtualizer.getVirtualItems();
 
-  // Invalidate virtualizer cache ONLY when wordWrap or font size changes (never on search or line filtering)
+  // Invalidate virtualizer cache when wordWrap, font size or scroller width changes
   useLayoutEffect(() => {
     rowVirtualizer.measure();
-  }, [wordWrap, prefs.fontSize, rowVirtualizer]);
-
-  // Recalculate heights on scroller width resize when word wrap is enabled
-  useEffect(() => {
-    if (!wordWrap || !parentRef.current) return;
-    const observer = new ResizeObserver(() => {
-      rowVirtualizer.measure();
-    });
-    observer.observe(parentRef.current);
-    return () => observer.disconnect();
-  }, [wordWrap, rowVirtualizer]);
+  }, [wordWrap, prefs.fontSize, scrollerWidth, rowVirtualizer]);
 
   // Auto-focus on first match when searching without funnel filter
   const prevSearchTriggerRef = useRef<{
@@ -961,8 +976,16 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
 
                 return (
                   <div
-                    key={`${line.rawIndex}-${virtualRow.index}-${wordWrap ? 'w' : 'nw'}`}
-                    ref={rowVirtualizer.measureElement}
+                    key={virtualRow.key}
+                    ref={(node) => {
+                      rowVirtualizer.measureElement(node);
+                      if (node && wordWrap) {
+                        const h = node.offsetHeight;
+                        if (h > 0) {
+                          rowVirtualizer.resizeItem(virtualRow.index, h);
+                        }
+                      }
+                    }}
                     data-index={virtualRow.index}
                     className="viewer-virtual-row-wrapper"
                     style={{
