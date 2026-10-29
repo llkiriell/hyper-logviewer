@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.0-beta.3] - 2026-10-29
+
+Third beta release of **Hyper LogViewer**, introducing deterministic character-grid word wrapping (VS Code Monaco-style), home view as a native tab, dedicated element extraction patterns with live double regex workbench, full-width bottom search bar, and refined viewing ergonomics.
+
+### Added
+- **Deterministic Word Wrap Engine (VS Code Style):** Mathematical character-grid projection in memory that eliminates line overlapping and vertical jumpiness on large multiline logs and JSON payloads.
+- **Home View as a Native Tab (`kind: 'home'`):** Unified tab architecture where the initial screen and the `+` button open native Home tabs, cleanly transforming into log viewers upon file selection.
+- **Dedicated Element Extraction Menu:** Independent settings section with double regex support (primary capture + secondary transform/filter) and live test workbench with instant chip preview.
+- **Persistent Full-width Bottom Search Bar:** Search bar permanently positioned at the bottom of the viewer, flanked by instant "Jump to top" and "Jump to bottom" navigation buttons.
+- **Severity Filter Scroll Preservation:** Remembers focused log entries and restores exact scroll position when clearing or toggling severity level filters.
+- **Defensive Truncation in Modals & Recents:** Long URLs and file paths truncate gracefully with ellipses to prevent modal overflow.
+- **Hover Illumination & Cursor:** Interactive pointer cursor and persistent hover illumination across lines and sticky columns.
+
+### Changed & Improved
+- **Default Word Wrap:** Now enabled by default for all newly loaded files with automated v2 preferences migration.
+- **Subtle Separators:** Line separator thickness default and minimum set to `0.10 px`.
+- **Dynamic Entities Limit:** Extracted URLs, UUIDs, and paths capped to 2 occurrences per line.
+- **Faster Auto-scroll:** Continuous scroll speed increased by 10% (1.98 px/frame by default).
+- **Settings Modal Ergonomics:** Outside scrim clicks no longer close the settings dialog accidentally.
+
+---
+
 ## [0.1.0-beta.2] - 2026-10-29
 
 Second beta release of **Hyper LogViewer**, delivering advanced line search filtering, accessibility improvements with WCAG 2.1 compliance, multi-line selection, customizable line separators, and performance optimizations.

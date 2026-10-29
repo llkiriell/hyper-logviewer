@@ -6,7 +6,7 @@ import { SettingRow, SettingsGroup } from './SettingsRows.tsx';
 
 export function AboutSettings() {
   const { t } = useTranslation();
-  const version = desktop?.version ?? '0.1.0-beta.1';
+  const version = desktop?.version ?? '0.1.0-beta.3';
 
   return (
     <>
