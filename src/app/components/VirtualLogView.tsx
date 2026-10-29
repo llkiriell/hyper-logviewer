@@ -86,6 +86,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
   const [selectedRawIndices, setSelectedRawIndices] = useState<Set<number>>(new Set());
   const pendingFunnelToggleRef = useRef<{ activeRawIndex: number | null } | null>(null);
   const pendingSearchClearRef = useRef<{ targetRawIndex: number | null } | null>(null);
+  const pendingLevelFilterRef = useRef<{ targetRawIndex: number | null } | null>(null);
 
   // Compute filtered log lines
   const filteredLines = useMemo(() => {
@@ -336,6 +337,68 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
       });
     }
   }, [filterMatchesOnly, filteredLines, rowVirtualizer]);
+
+  // Handle severity level filter change with focus and scroll preservation
+  const handleLevelFilterChange = useCallback(
+    (newLevel: LogLevel | 'all') => {
+      let targetRawIndex = selectedRawIndex ?? lastActiveRawIndexRef.current;
+
+      // Si no hay línea seleccionada explícitamente, capturar la línea visible en el centro geométrico
+      if (targetRawIndex === null && parentRef.current) {
+        const scroller = parentRef.current;
+        const centerY = scroller.scrollTop + scroller.clientHeight / 2;
+        const items = rowVirtualizer.getVirtualItems();
+        const centerItem =
+          items.find((v) => centerY >= v.start && centerY <= v.start + v.size) ??
+          items[Math.floor(items.length / 2)];
+        if (centerItem) {
+          const centerLine = filteredLines[centerItem.index];
+          if (centerLine) {
+            targetRawIndex = centerLine.rawIndex;
+          }
+        }
+      }
+
+      pendingLevelFilterRef.current = { targetRawIndex };
+      setLevelFilter(newLevel);
+    },
+    [selectedRawIndex, filteredLines, rowVirtualizer],
+  );
+
+  // Synchronize focus and scroll when levelFilter changes (e.g. going back to 'all')
+  useEffect(() => {
+    if (!pendingLevelFilterRef.current) return;
+    const { targetRawIndex } = pendingLevelFilterRef.current;
+    pendingLevelFilterRef.current = null;
+
+    if (filteredLines.length === 0) return;
+
+    if (targetRawIndex !== null) {
+      let targetIdx = filteredLines.findIndex((l) => l.rawIndex === targetRawIndex);
+      // Si la fila exacta no existe en el nuevo nivel, buscar la más cercana por rawIndex
+      if (targetIdx === -1) {
+        targetIdx = filteredLines.findIndex((l) => l.rawIndex >= targetRawIndex);
+        if (targetIdx === -1) {
+          targetIdx = filteredLines.length - 1;
+        }
+      }
+
+      if (targetIdx >= 0 && targetIdx < filteredLines.length) {
+        const targetLine = filteredLines[targetIdx];
+        if (targetLine) {
+          if (targetLine.rawIndex === targetRawIndex) {
+            setSelectedRawIndex(targetLine.rawIndex);
+            setSelectedRawIndices(new Set([targetLine.rawIndex]));
+            lastActiveRawIndexRef.current = targetLine.rawIndex;
+          }
+          rowVirtualizer.scrollToIndex(targetIdx, { align: 'center', behavior: 'auto' });
+          requestAnimationFrame(() => {
+            rowVirtualizer.scrollToIndex(targetIdx, { align: 'center', behavior: 'auto' });
+          });
+        }
+      }
+    }
+  }, [levelFilter, filteredLines, rowVirtualizer]);
 
   // Toggle word wrap preserving focused or geometrical center line on screen and re-measuring accurately
   const handleToggleWordWrap = useCallback(() => {
@@ -830,7 +893,7 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
         onNextMatch={handleNextMatch}
         onPrevMatch={handlePrevMatch}
         levelFilter={levelFilter}
-        onLevelFilterChange={setLevelFilter}
+        onLevelFilterChange={handleLevelFilterChange}
         stats={stats}
         isDateFilterActive={dateFilter.enabled}
         onOpenDateFilter={(anchor) => setDateAnchor(anchor)}

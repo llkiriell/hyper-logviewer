@@ -83,6 +83,15 @@ export function LogDetailModal({ line, allLines, onClose }: LogDetailModalProps)
     return extractCustomEntities(fullRawMessage, prefs.customEntityPatterns);
   }, [fullRawMessage, prefs.customEntityPatterns]);
 
+  const hasExtractedEntities = useMemo(() => {
+    return (
+      detectedEntities.uuids.length > 0 ||
+      detectedEntities.filePaths.length > 0 ||
+      detectedEntities.urls.length > 0 ||
+      customEntities.length > 0
+    );
+  }, [detectedEntities, customEntities]);
+
   const [copiedEntityKey, setCopiedEntityKey] = useState<string | null>(null);
 
   const handleCopyEntity = async (value: string, key: string) => {
@@ -164,127 +173,135 @@ export function LogDetailModal({ line, allLines, onClose }: LogDetailModalProps)
         <div className="dialog-body log-detail-body">
           {/* Metadata Grid */}
           <div className="log-detail-meta">
-            {line.timestamp && (
+            {/* Primary Fixed Row (Timestamp, Line Number, Level) */}
+            <div className="detail-meta-primary-row">
+              {line.timestamp && (
+                <div className="detail-meta-item">
+                  <span className="detail-meta-label">{t('detail.timestamp')}:</span>
+                  <span className="detail-meta-value">{line.timestamp}</span>
+                </div>
+              )}
               <div className="detail-meta-item">
-                <span className="detail-meta-label">{t('detail.timestamp')}:</span>
-                <span className="detail-meta-value">{line.timestamp}</span>
+                <span className="detail-meta-label">{t('detail.lineNumber')}:</span>
+                <span className="detail-meta-value">#{line.lineNumber}</span>
+              </div>
+              <div className="detail-meta-item">
+                <span className="detail-meta-label">{t('detail.level')}:</span>
+                <span className="detail-meta-value">
+                  {line.customLevelTag ? line.customLevelTag.toUpperCase() : line.level.toUpperCase()}
+                </span>
+              </div>
+            </div>
+
+            {/* Extracted Entities List (50% less vertical spacing between rows) */}
+            {hasExtractedEntities && (
+              <div className="detail-meta-secondary-rows">
+                {/* Extracted UUIDs */}
+                {detectedEntities.uuids.map((uuid, i) => {
+                  const label = detectedEntities.uuids.length === 1 ? 'UUID' : `UUID ${i + 1}`;
+                  const copyKey = `uuid-${i}`;
+                  return (
+                    <div key={copyKey} className="detail-meta-item detail-meta-item-copyable">
+                      <span className="detail-meta-label">{label}:</span>
+                      <div className="detail-meta-value-container">
+                        <span className="detail-meta-value" title={uuid}>{uuid}</span>
+                        <button
+                          type="button"
+                          className="detail-copy-btn"
+                          onClick={() => handleCopyEntity(uuid, copyKey)}
+                          title={t('common.copy')}
+                        >
+                          {copiedEntityKey === copyKey ? (
+                            <IconCheck size={12} stroke={1.5} className="copy-success-icon" />
+                          ) : (
+                            <IconCopy size={12} stroke={1.5} />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Extracted File Paths (Rendered full width so long paths never truncate) */}
+                {detectedEntities.filePaths.map((filePath, i) => {
+                  const label = detectedEntities.filePaths.length === 1
+                    ? t('detail.filePath')
+                    : `${t('detail.filePath')} ${i + 1}`;
+                  const copyKey = `path-${i}`;
+                  return (
+                    <div key={copyKey} className="detail-meta-item detail-meta-item-copyable detail-meta-item-fullwidth">
+                      <span className="detail-meta-label">{label}:</span>
+                      <div className="detail-meta-value-container">
+                        <span className="detail-meta-value" title={filePath}>{filePath}</span>
+                        <button
+                          type="button"
+                          className="detail-copy-btn"
+                          onClick={() => handleCopyEntity(filePath, copyKey)}
+                          title={t('common.copy')}
+                        >
+                          {copiedEntityKey === copyKey ? (
+                            <IconCheck size={12} stroke={1.5} className="copy-success-icon" />
+                          ) : (
+                            <IconCopy size={12} stroke={1.5} />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Extracted URLs (Truncated so they NEVER exceed the modal width) */}
+                {detectedEntities.urls.map((url, i) => {
+                  const label = detectedEntities.urls.length === 1 ? 'URL' : `URL ${i + 1}`;
+                  const copyKey = `url-${i}`;
+                  return (
+                    <div key={copyKey} className="detail-meta-item detail-meta-item-copyable detail-meta-item-url detail-meta-item-fullwidth">
+                      <span className="detail-meta-label">{label}:</span>
+                      <div className="detail-meta-value-container">
+                        <span className="detail-meta-value detail-meta-value-url" title={url}>{url}</span>
+                        <button
+                          type="button"
+                          className="detail-copy-btn"
+                          onClick={() => handleCopyEntity(url, copyKey)}
+                          title={t('common.copy')}
+                        >
+                          {copiedEntityKey === copyKey ? (
+                            <IconCheck size={12} stroke={1.5} className="copy-success-icon" />
+                          ) : (
+                            <IconCopy size={12} stroke={1.5} />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Extracted Custom Configured Entities */}
+                {customEntities.map((entity, i) => {
+                  const copyKey = `custom-${entity.id}-${i}`;
+                  return (
+                    <div key={copyKey} className="detail-meta-item detail-meta-item-copyable detail-meta-item-fullwidth">
+                      <span className="detail-meta-label">{entity.label}:</span>
+                      <div className="detail-meta-value-container">
+                        <span className="detail-meta-value" title={entity.value}>{entity.value}</span>
+                        <button
+                          type="button"
+                          className="detail-copy-btn"
+                          onClick={() => handleCopyEntity(entity.value, copyKey)}
+                          title={t('common.copy')}
+                        >
+                          {copiedEntityKey === copyKey ? (
+                            <IconCheck size={12} stroke={1.5} className="copy-success-icon" />
+                          ) : (
+                            <IconCopy size={12} stroke={1.5} />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
-            <div className="detail-meta-item">
-              <span className="detail-meta-label">{t('detail.lineNumber')}:</span>
-              <span className="detail-meta-value">#{line.lineNumber}</span>
-            </div>
-            <div className="detail-meta-item">
-              <span className="detail-meta-label">{t('detail.level')}:</span>
-              <span className="detail-meta-value">
-                {line.customLevelTag ? line.customLevelTag.toUpperCase() : line.level.toUpperCase()}
-              </span>
-            </div>
-
-            {/* Extracted UUIDs */}
-            {detectedEntities.uuids.map((uuid, i) => {
-              const label = detectedEntities.uuids.length === 1 ? 'UUID' : `UUID ${i + 1}`;
-              const copyKey = `uuid-${i}`;
-              return (
-                <div key={copyKey} className="detail-meta-item detail-meta-item-copyable">
-                  <span className="detail-meta-label">{label}:</span>
-                  <div className="detail-meta-value-container">
-                    <span className="detail-meta-value" title={uuid}>{uuid}</span>
-                    <button
-                      type="button"
-                      className="detail-copy-btn"
-                      onClick={() => handleCopyEntity(uuid, copyKey)}
-                      title={t('common.copy')}
-                    >
-                      {copiedEntityKey === copyKey ? (
-                        <IconCheck size={12} stroke={1.5} className="copy-success-icon" />
-                      ) : (
-                        <IconCopy size={12} stroke={1.5} />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Extracted File Paths (Rendered full width so long paths never truncate) */}
-            {detectedEntities.filePaths.map((filePath, i) => {
-              const label = detectedEntities.filePaths.length === 1
-                ? t('detail.filePath')
-                : `${t('detail.filePath')} ${i + 1}`;
-              const copyKey = `path-${i}`;
-              return (
-                <div key={copyKey} className="detail-meta-item detail-meta-item-copyable detail-meta-item-fullwidth">
-                  <span className="detail-meta-label">{label}:</span>
-                  <div className="detail-meta-value-container">
-                    <span className="detail-meta-value" title={filePath}>{filePath}</span>
-                    <button
-                      type="button"
-                      className="detail-copy-btn"
-                      onClick={() => handleCopyEntity(filePath, copyKey)}
-                      title={t('common.copy')}
-                    >
-                      {copiedEntityKey === copyKey ? (
-                        <IconCheck size={12} stroke={1.5} className="copy-success-icon" />
-                      ) : (
-                        <IconCopy size={12} stroke={1.5} />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Extracted URLs */}
-            {detectedEntities.urls.map((url, i) => {
-              const label = detectedEntities.urls.length === 1 ? 'URL' : `URL ${i + 1}`;
-              const copyKey = `url-${i}`;
-              return (
-                <div key={copyKey} className="detail-meta-item detail-meta-item-copyable">
-                  <span className="detail-meta-label">{label}:</span>
-                  <div className="detail-meta-value-container">
-                    <span className="detail-meta-value" title={url}>{url}</span>
-                    <button
-                      type="button"
-                      className="detail-copy-btn"
-                      onClick={() => handleCopyEntity(url, copyKey)}
-                      title={t('common.copy')}
-                    >
-                      {copiedEntityKey === copyKey ? (
-                        <IconCheck size={12} stroke={1.5} className="copy-success-icon" />
-                      ) : (
-                        <IconCopy size={12} stroke={1.5} />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Extracted Custom Configured Entities */}
-            {customEntities.map((entity, i) => {
-              const copyKey = `custom-${entity.id}-${i}`;
-              return (
-                <div key={copyKey} className="detail-meta-item detail-meta-item-copyable detail-meta-item-fullwidth">
-                  <span className="detail-meta-label">{entity.label}:</span>
-                  <div className="detail-meta-value-container">
-                    <span className="detail-meta-value" title={entity.value}>{entity.value}</span>
-                    <button
-                      type="button"
-                      className="detail-copy-btn"
-                      onClick={() => handleCopyEntity(entity.value, copyKey)}
-                      title={t('common.copy')}
-                    >
-                      {copiedEntityKey === copyKey ? (
-                        <IconCheck size={12} stroke={1.5} className="copy-success-icon" />
-                      ) : (
-                        <IconCopy size={12} stroke={1.5} />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
           </div>
 
           {/* 1. Formatted JSON Blocks (Rendered FIRST if detected) */}

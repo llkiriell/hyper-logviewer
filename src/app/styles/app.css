@@ -1886,19 +1886,36 @@ select {
 
 .log-detail-meta {
   display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-  padding: 12px 18px;
+  flex-direction: column;
+  padding: 10px 16px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-size: var(--text-sm);
+  gap: 8px;
+}
+
+.detail-meta-primary-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  column-gap: 24px;
+  row-gap: 8px;
+}
+
+.detail-meta-secondary-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px; /* Reducción de ~50% del espacio vertical entre filas secundarias */
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
 }
 
 .detail-meta-item {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-height: 22px;
 }
 
 .detail-meta-item-copyable .detail-meta-value-container {
@@ -1924,7 +1941,39 @@ select {
   align-items: flex-start;
 }
 
-.detail-meta-item-copyable.detail-meta-item-fullwidth .detail-meta-value-container {
+/* Extracted URLs: Guaranteed truncation so they NEVER overflow the modal */
+.detail-meta-item.detail-meta-item-url,
+.detail-meta-item-copyable.detail-meta-item-url {
+  flex-basis: 100%;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.detail-meta-item-copyable.detail-meta-item-url .detail-meta-value-container {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  max-width: calc(100% - 60px);
+  overflow: hidden;
+}
+
+.detail-meta-item-copyable.detail-meta-item-url .detail-meta-value,
+.detail-meta-value-url {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  word-break: normal !important;
+  display: block;
+  max-width: 100%;
+  flex: 1;
+  min-width: 0;
+}
+
+.detail-meta-item-copyable.detail-meta-item-fullwidth:not(.detail-meta-item-url) .detail-meta-value-container {
   max-width: 100%;
   width: fit-content;
   display: inline-flex;
@@ -1932,7 +1981,7 @@ select {
   flex: 0 1 auto;
 }
 
-.detail-meta-item-copyable.detail-meta-item-fullwidth .detail-meta-value {
+.detail-meta-item-copyable.detail-meta-item-fullwidth:not(.detail-meta-item-url) .detail-meta-value {
   overflow: visible;
   text-overflow: unset;
   white-space: pre-wrap;
