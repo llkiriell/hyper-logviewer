@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.0-beta.2] - 2026-10-29
+
+Second beta release of **Hyper LogViewer**, delivering advanced line search filtering, accessibility improvements with WCAG 2.1 compliance, multi-line selection, customizable line separators, and performance optimizations.
+
+### Added
+- **Match Funnel Filtering:** Fast match-filtering mode (`Filtro de coincidencias`) that isolates and displays only matching log entries with immediate line navigation and zero scroll desynchronization.
+- **WCAG 2.1 Contrast & Accessibility Suite:**
+  - Real-time relative luminance and contrast ratio calculations.
+  - Interactive contrast indicator previews with compliance badges (AA / AAA).
+  - Configurable focus indicators and customizable severity background strip modes for maximum legibility in low and high-contrast environments.
+- **Contiguous Multi-Row Selection:**
+  - `Ctrl`/`Cmd` + click multi-line selection supporting non-contiguous and block selections.
+  - Unified contiguous focus border rendering across multi-selected rows without visual breaks.
+- **Customizable Line Separators:**
+  - Dedicated configuration for line separator thickness (`0.5px` to `3px`) and custom accent or subtle colors.
+- **Custom Parser Highlight Patterns:**
+  - User-configurable regex pattern matching and custom badge tags (e.g., JPA, Token, HTTP) with live preview directly in the parser settings dialog.
+- **Enhanced Search Context Menu:** Contextual actions on search match highlights to copy tokens, filter, or inspect records.
+- **Physical Keyboard Step Navigation:** Precise line-by-line keyboard arrow navigation without browser window scrolling.
+
+### Fixed & Improved
+- **Word Wrap & Virtualizer Synchronization:** Eliminated dynamic row height overlaps during word wrap toggling and container resizing by stabilizing TanStack Virtualizer cache invalidation.
+- **Optimized High-Volume Log Scrolling:** Removed fixed-height skeleton placeholders during momentum scrolling on large log files (>1500 lines) for instantaneous, artifact-free virtual rendering.
+- **JSON Parser Refinements:** Restrict inline JSON array extraction strictly to arrays of objects, preventing false positives on primitive numeric or string arrays.
+- **OS File Association & Initial File Loading:** Improved launch argument parsing and single-instance messaging on Windows.
+
+---
+
 ## [0.1.0-beta.1] - 2026-10-25
 
 First public beta release of **Hyper LogViewer**, a high-performance, local-first desktop `.log` viewer engineered with Electron, React 19, TypeScript, and Vite.

@@ -2,7 +2,7 @@
   "name": "hyper-logviewer",
   "productName": "Hyper LogViewer",
   "private": true,
-  "version": "0.1.0-beta.1",
+  "version": "0.1.0-beta.2",
   "description": "High-performance, local-first log file viewer.",
   "author": "Antonny k. <akecsc@gmail.com>",
   "license": "Apache-2.0",
