@@ -286,9 +286,9 @@ export function extractLogEntities(rawLine: string): ExtractedLogEntities {
   }
 
   return {
-    uuids,
-    filePaths,
-    urls,
+    uuids: uuids.slice(0, 2),
+    filePaths: filePaths.slice(0, 2),
+    urls: urls.slice(0, 2),
   };
 }
 
@@ -401,8 +401,21 @@ export function extractCustomEntities(
       let match: RegExpExecArray | null;
       let count = 0;
       while ((match = rx.exec(rawLine)) !== null) {
-        const val = match[0].trim();
+        let val = match[0].trim();
         if (val) {
+          // Aplicar regex secundario de transformación / extracción si está definido
+          if (pat.transformPattern && pat.transformPattern.trim()) {
+            try {
+              const subRx = new RegExp(pat.transformPattern.trim(), 'i');
+              const subMatch = subRx.exec(val);
+              if (subMatch) {
+                val = (subMatch[1] ?? subMatch[0]).trim();
+              }
+            } catch {
+              // si el regex secundario falla se conserva el valor capturado
+            }
+          }
+
           count++;
           results.push({
             id: pat.id,
@@ -413,7 +426,7 @@ export function extractCustomEntities(
           });
         }
         if (rx.lastIndex === match.index) rx.lastIndex++;
-        if (count >= 20) break;
+        if (count >= 2) break; // Máximo 2 ocurrencias por patrón
       }
     } catch {
       // ignore invalid regex

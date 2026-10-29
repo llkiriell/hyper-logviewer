@@ -37,13 +37,9 @@ import type { ContextMenuEntry } from './ContextMenu.tsx';
 
 export function TabBar({
   onNewTabClick,
-  onGoHome,
-  isHomeActive = false,
   onTabSelect,
 }: {
   onNewTabClick?: () => void;
-  onGoHome?: () => void;
-  isHomeActive?: boolean;
   onTabSelect?: () => void;
 }) {
   const { t } = useTranslation();
@@ -164,19 +160,6 @@ export function TabBar({
         </button>
       )}
 
-      {/* Home button to return to Hero screen */}
-      {onGoHome && (
-        <button
-          type="button"
-          className={`tab-home-btn ${isHomeActive ? 'is-active' : ''}`}
-          onClick={onGoHome}
-          title={t('common.home')}
-          aria-label={t('common.home')}
-        >
-          <IconHome size={15} stroke={1.5} />
-        </button>
-      )}
-
       <div
         ref={stripRef}
         className="tab-strip"
@@ -186,11 +169,13 @@ export function TabBar({
         {tabs.map((tab: TabItem, index: number) => {
           const isActive = tab.id === activeId;
           const Icon =
-            tab.kind === 'clipboard'
-              ? IconClipboard
-              : tab.kind === 'segment'
-                ? IconCalendar
-                : IconFileText;
+            tab.kind === 'home'
+              ? IconHome
+              : tab.kind === 'clipboard'
+                ? IconClipboard
+                : tab.kind === 'segment'
+                  ? IconCalendar
+                  : IconFileText;
 
           return (
             <div

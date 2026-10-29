@@ -18,6 +18,7 @@ import {
   IconKeyboard,
   IconPalette,
   IconRotate2,
+  IconSparkles,
   IconStarFilled,
   IconTarget,
   IconX,
@@ -40,6 +41,7 @@ import type {
 import { Dialog, Segmented, Select, Switch } from '../primitives.tsx';
 import { AboutSettings } from './AboutSettings.tsx';
 import { AutoscrollSettings } from './AutoscrollSettings.tsx';
+import { ElementPatternsSettings } from './ElementPatternsSettings.tsx';
 import { ParserSettings } from './ParserSettings.tsx';
 import { SettingRow, SettingsGroup } from './SettingsRows.tsx';
 import { WatchedFoldersSettings } from './WatchedFoldersSettings.tsx';
@@ -48,6 +50,7 @@ type SettingsSection =
   | 'general'
   | 'appearance'
   | 'parser'
+  | 'patterns'
   | 'folders'
   | 'autoscroll'
   | 'shortcuts'
@@ -63,6 +66,7 @@ const SECTIONS: SectionDef[] = [
   { id: 'general', labelKey: 'settings.sections.general', icon: IconAdjustmentsHorizontal },
   { id: 'appearance', labelKey: 'settings.sections.appearance', icon: IconPalette },
   { id: 'parser', labelKey: 'settings.sections.parser', icon: IconCode },
+  { id: 'patterns', labelKey: 'settings.sections.patterns', icon: IconSparkles },
   { id: 'folders', labelKey: 'settings.sections.folders', icon: IconFolder },
   { id: 'autoscroll', labelKey: 'settings.sections.autoscroll', icon: IconArrowDownCircle },
   { id: 'shortcuts', labelKey: 'settings.sections.shortcuts', icon: IconKeyboard },
@@ -257,13 +261,13 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
                       <div className="separator-width-control" title={t('settings.appearance.separatorWidth')}>
                         <input
                           type="number"
-                          min={0.25}
+                          min={0.10}
                           max={5}
-                          step={0.25}
+                          step={0.05}
                           value={prefs.lineSeparatorWidth}
                           onChange={(e) => {
                             const val = parseFloat(e.target.value);
-                            if (!isNaN(val) && val > 0) {
+                            if (!isNaN(val) && val >= 0.10) {
                               setPreferences({ lineSeparatorWidth: Math.round(val * 100) / 100 });
                             }
                           }}
@@ -514,6 +518,8 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
           )}
 
           {section === 'parser' && <ParserSettings />}
+
+          {section === 'patterns' && <ElementPatternsSettings />}
 
           {section === 'folders' && <WatchedFoldersSettings />}
 

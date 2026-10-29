@@ -1000,6 +1000,7 @@ select {
   min-width: 100%;
   width: max-content; /* Stretches background across all horizontal scroll! */
   background: var(--bg);
+  cursor: pointer;
 }
 
 /* Wrapping overrides */
@@ -1137,8 +1138,8 @@ select {
 .log-row:hover .log-pointer-cell,
 .log-row:hover .log-gutter,
 .log-row:hover .log-level-badge {
-  background-color: var(--bg);
-  background-image: linear-gradient(var(--hover), var(--hover));
+  background-color: var(--hover) !important;
+  background-image: none !important;
 }
 
 /* Sticky columns compose background dynamically via inline styles (stickySolidStyle) */
@@ -1200,7 +1201,7 @@ select {
 }
 
 .log-row:hover {
-  background: var(--hover);
+  background-color: var(--hover) !important;
 }
 
 .log-row-fatal,
@@ -2522,6 +2523,114 @@ select {
   white-space: nowrap;
 }
 
+.pattern-chip-transform {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--surface-hover);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs, 2px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Pattern Test Workbench & Preview Styles */
+.pattern-workbench-card {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pattern-workbench-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pattern-sample-input {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 6px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  box-sizing: border-box;
+}
+
+.pattern-sample-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.pattern-preview-results {
+  padding-top: 4px;
+}
+
+.pattern-preview-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pattern-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.pattern-step-label {
+  color: var(--text-muted);
+  font-size: 11px;
+  min-width: 130px;
+  flex: none;
+}
+
+.pattern-step-code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--surface-hover);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs, 2px);
+  color: var(--text);
+  word-break: break-all;
+}
+
+.pattern-step-code.is-final {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.pattern-step-chip-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+.pattern-preview-nomatch {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-style: italic;
+  margin: 0;
+}
+
 .pattern-chip-actions {
   display: flex;
   align-items: center;
@@ -2948,6 +3057,9 @@ select {
   border-radius: var(--radius);
   cursor: pointer;
   transition: all 0.12s ease;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .recent-file-card:hover {
@@ -2963,6 +3075,7 @@ select {
   gap: 10px;
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .recent-file-icon {
@@ -2973,7 +3086,9 @@ select {
 .recent-file-texts {
   display: flex;
   flex-direction: column;
+  flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .recent-file-name {
@@ -2992,6 +3107,7 @@ select {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 100%;
 }
 
 .recent-file-meta {

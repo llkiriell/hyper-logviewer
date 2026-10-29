@@ -264,7 +264,7 @@ export const VirtualLogRow = memo(function VirtualLogRow({
     return 'var(--line-separator-default, #c4c4c2)';
   }, [showSeparator, isSelected, separatorColor]);
 
-  const effectiveSeparatorWidth = separatorWidth && separatorWidth > 0 ? separatorWidth : 0.75;
+  const effectiveSeparatorWidth = separatorWidth && separatorWidth >= 0.10 ? separatorWidth : 0.10;
 
   // Fully opaque solid composite background for sticky columns (prevents any bleed-through on horizontal scroll)
   const stickySolidStyle = useMemo(() => {

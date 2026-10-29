@@ -4,8 +4,6 @@ import {
   IconClock,
   IconFileText,
   IconFolderOpen,
-  IconLayoutSidebar,
-  IconLayoutSidebarLeftCollapse,
   IconMoon,
   IconSettings,
   IconSun,
@@ -21,14 +19,8 @@ import {
   openNativeFileDialog,
   pasteClipboardAsTab,
 } from './platform/fileLoader.ts';
-import {
-  clearRecentFiles,
-  removeRecentFile,
-  resolvedTheme,
-  setPreferences,
-  usePreferences,
-} from './platform/preferences.ts';
-import { getActiveTab, useTabs } from './tabs.ts';
+import { clearRecentFiles, removeRecentFile, resolvedTheme, setPreferences, usePreferences } from './platform/preferences.ts';
+import { createHomeTab, getActiveTab, useTabs } from './tabs.ts';
 import { DropZone } from './components/DropZone.tsx';
 import { GlobalTooltip } from './components/GlobalTooltip.tsx';
 import { Logo } from './components/primitives.tsx';
@@ -36,6 +28,21 @@ import { SettingsDialog } from './components/settings/SettingsDialog.tsx';
 import { TabBar } from './components/TabBar.tsx';
 import { VirtualLogView } from './components/VirtualLogView.tsx';
 import { WatchedFoldersSidebar } from './components/WatchedFoldersSidebar.tsx';
+
+function truncateMiddlePath(filePath: string, maxLength = 45): string {
+  if (!filePath || filePath.length <= maxLength) return filePath;
+  const sep = filePath.includes('\\') ? '\\' : '/';
+  const parts = filePath.split(sep);
+  if (parts.length <= 2) return `...${filePath.slice(-maxLength)}`;
+  const first = parts[0] + sep;
+  const last = parts[parts.length - 1];
+  const secondLast = parts.length > 2 ? parts[parts.length - 2] + sep : '';
+  const right = `${secondLast}${last}`;
+  if (first.length + right.length + 3 <= maxLength) {
+    return `${first}...${sep}${right}`;
+  }
+  return `${first}...${sep}${last}`;
+}
 
 function useThemeManager() {
   const prefs = usePreferences();
@@ -61,10 +68,9 @@ function useThemeManager() {
 export function App() {
   const { t } = useTranslation();
   const prefs = usePreferences();
-  const { tabs } = useTabs();
+  useTabs();
   const activeTab = getActiveTab();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [showHome, setShowHome] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useThemeManager();
@@ -75,14 +81,12 @@ export function App() {
 
     void desktop.getInitialFile?.().then((initialFile) => {
       if (initialFile) {
-        setShowHome(false);
         void openFileByPath(initialFile);
       }
     });
 
     const unsubscribe = desktop.onOpenFile?.((filePath) => {
       if (filePath) {
-        setShowHome(false);
         void openFileByPath(filePath);
       }
     });
@@ -100,7 +104,6 @@ export function App() {
   }, []);
 
   const handleOpenFile = async () => {
-    setShowHome(false);
     if (desktop?.openFileDialog) {
       await openNativeFileDialog();
     } else if (fileInputRef.current) {
@@ -109,13 +112,11 @@ export function App() {
   };
 
   const handlePasteLog = async () => {
-    setShowHome(false);
     await pasteClipboardAsTab(t('common.pasteLog'));
   };
 
   const handleFileInputChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
-      setShowHome(false);
       await openFileObjects(event.target.files);
       event.target.value = '';
     }
@@ -192,44 +193,13 @@ export function App() {
           )}
 
           <div className="app-main-pane">
-            {/* Tabs Bar or Empty State Tab-Strip Toggle */}
-            {tabs.length > 0 ? (
-              <TabBar
-                onNewTabClick={handleOpenFile}
-                onGoHome={() => setShowHome(true)}
-                isHomeActive={showHome || !activeTab}
-                onTabSelect={() => setShowHome(false)}
-              />
-            ) : (
-              prefs.sidebarEnabled && (
-                <div className="empty-tabs-bar">
-                  <button
-                    type="button"
-                    className="tab-sidebar-toggle-btn"
-                    onClick={() =>
-                      setPreferences({
-                        sidebarCollapsed: !prefs.sidebarCollapsed,
-                      })
-                    }
-                    title={
-                      prefs.sidebarCollapsed
-                        ? t('sidebar.expand')
-                        : t('sidebar.collapse')
-                    }
-                    aria-label="Toggle sidebar"
-                  >
-                    {prefs.sidebarCollapsed ? (
-                      <IconLayoutSidebar size={15} stroke={1.5} />
-                    ) : (
-                      <IconLayoutSidebarLeftCollapse size={15} stroke={1.5} />
-                    )}
-                  </button>
-                </div>
-              )
-            )}
+            {/* Tabs Bar */}
+            <TabBar
+              onNewTabClick={() => createHomeTab(t('common.home'))}
+            />
 
-            {/* Main Content Area */}
-            {activeTab && !showHome ? (
+            {/* Main Content Area: If tab is 'home' or no tab, render Hero View */}
+            {activeTab && activeTab.kind !== 'home' ? (
               <VirtualLogView
                 tab={activeTab}
                 onOpenSettings={() => setSettingsOpen(true)}
@@ -294,7 +264,6 @@ export function App() {
                                 key={item.filePath}
                                 className="recent-file-card"
                                 onClick={() => {
-                                  setShowHome(false);
                                   void openFileByPath(item.filePath);
                                 }}
                                 title={item.filePath}
@@ -309,8 +278,8 @@ export function App() {
                                     <span className="recent-file-name">
                                       {item.fileName}
                                     </span>
-                                    <span className="recent-file-path">
-                                      {item.filePath}
+                                    <span className="recent-file-path" title={item.filePath}>
+                                      {truncateMiddlePath(item.filePath)}
                                     </span>
                                   </div>
                                 </div>

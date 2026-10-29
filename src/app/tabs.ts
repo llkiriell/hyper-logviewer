@@ -4,7 +4,7 @@ import { desktop } from './platform/desktop.ts';
 export interface TabItem {
   id: string;
   title: string;
-  kind: 'file' | 'clipboard' | 'segment';
+  kind: 'file' | 'clipboard' | 'segment' | 'home';
   filePath?: string;
   size: number;
   content: string;
@@ -30,9 +30,21 @@ function countLines(text: string): number {
   return count;
 }
 
+export const INITIAL_HOME_TAB_ID = 'tab_home_initial';
+
 let state: TabState = {
-  tabs: [],
-  activeId: null,
+  tabs: [
+    {
+      id: INITIAL_HOME_TAB_ID,
+      title: 'Inicio',
+      kind: 'home',
+      size: 0,
+      content: '',
+      linesCount: 0,
+      isPinned: false,
+    },
+  ],
+  activeId: INITIAL_HOME_TAB_ID,
 };
 
 function notify(): void {
@@ -51,7 +63,7 @@ export function getActiveTab(): TabItem | null {
 export function createTab(params: {
   title: string;
   content: string;
-  kind?: 'file' | 'clipboard' | 'segment';
+  kind?: 'file' | 'clipboard' | 'segment' | 'home';
   filePath?: string;
   size?: number;
   isPinned?: boolean;
@@ -79,6 +91,45 @@ export function createTab(params: {
 
   notify();
   return newTab;
+}
+
+export function createHomeTab(title = 'Inicio'): TabItem {
+  return createTab({
+    title,
+    kind: 'home',
+    content: '',
+    size: 0,
+  });
+}
+
+export function openFileInTab(params: {
+  title: string;
+  content: string;
+  kind?: 'file' | 'clipboard' | 'segment';
+  filePath?: string;
+  size?: number;
+}): TabItem {
+  const activeTab = getActiveTab();
+  // Si la pestaña activa actual es de inicio ('home'), se transforma directamente en el archivo abierto
+  if (activeTab && activeTab.kind === 'home') {
+    const linesCount = countLines(params.content);
+    const updated: TabItem = {
+      ...activeTab,
+      title: params.title,
+      kind: params.kind ?? 'file',
+      filePath: params.filePath,
+      size: params.size ?? new Blob([params.content]).size,
+      content: params.content,
+      linesCount,
+    };
+    state = {
+      ...state,
+      tabs: state.tabs.map((t) => (t.id === activeTab.id ? updated : t)),
+    };
+    notify();
+    return updated;
+  }
+  return createTab(params);
 }
 
 export function updateTab(id: string, partial: Partial<TabItem>): void {
@@ -133,16 +184,25 @@ export function closeTab(id: string): void {
   const index = state.tabs.findIndex((t) => t.id === id);
   if (index === -1) return;
 
-  const nextTabs = state.tabs.filter((t) => t.id !== id);
+  let nextTabs = state.tabs.filter((t) => t.id !== id);
   let nextActiveId = state.activeId;
 
-  if (state.activeId === id) {
-    if (nextTabs.length > 0) {
-      const nextIndex = Math.min(index, nextTabs.length - 1);
-      nextActiveId = nextTabs[nextIndex]!.id;
-    } else {
-      nextActiveId = null;
-    }
+  if (nextTabs.length === 0) {
+    // Si se cierran todas las pestañas, se vuelve a abrir automáticamente una pestaña de Inicio
+    const homeTab: TabItem = {
+      id: `tab_home_${Date.now().toString(36)}`,
+      title: 'Inicio',
+      kind: 'home',
+      size: 0,
+      content: '',
+      linesCount: 0,
+      isPinned: false,
+    };
+    nextTabs = [homeTab];
+    nextActiveId = homeTab.id;
+  } else if (state.activeId === id) {
+    const nextIndex = Math.min(index, nextTabs.length - 1);
+    nextActiveId = nextTabs[nextIndex]!.id;
   }
 
   state = {

@@ -62,6 +62,7 @@ export interface CustomHighlightRule {
 export interface CustomLogEntityPattern {
   id: string;
   pattern: string; // regex pattern
+  transformPattern?: string; // regex secundario para extraer o limpiar el texto mostrado
   label: string;   // label displayed in visor
   enabled: boolean;
 }

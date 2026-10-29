@@ -1,4 +1,4 @@
-import { createTab } from '../tabs.ts';
+import { openFileInTab } from '../tabs.ts';
 import { desktop } from './desktop.ts';
 import { addRecentFile } from './preferences.ts';
 
@@ -24,7 +24,7 @@ export async function openFileByPath(filePath: string): Promise<boolean> {
   const fileName = filePath.split(/[/\\]/).pop() ?? 'log.log';
   const size = new Blob([res.content]).size;
 
-  createTab({
+  openFileInTab({
     title: fileName,
     content: res.content,
     kind: 'file',
@@ -85,7 +85,7 @@ export async function openFileObjects(files: FileList | File[]): Promise<number>
     // Fallback: read directly through HTML5 File API
     try {
       const content = await file.text();
-      createTab({
+      openFileInTab({
         title: file.name,
         content,
         kind: 'file',
@@ -117,7 +117,7 @@ export async function pasteClipboardAsTab(placeholderLabel = 'Clipboard'): Promi
   if (!text) return false;
 
   const title = `${placeholderLabel} #${clipboardCounter++}`;
-  createTab({
+  openFileInTab({
     title,
     content: text,
     kind: 'clipboard',
