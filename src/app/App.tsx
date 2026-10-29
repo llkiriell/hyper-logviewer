@@ -201,6 +201,7 @@ export function App() {
             {/* Main Content Area: If tab is 'home' or no tab, render Hero View */}
             {activeTab && activeTab.kind !== 'home' ? (
               <VirtualLogView
+                key={`${activeTab.id}-${activeTab.filePath ?? activeTab.title}`}
                 tab={activeTab}
                 onOpenSettings={() => setSettingsOpen(true)}
               />

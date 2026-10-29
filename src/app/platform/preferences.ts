@@ -122,19 +122,49 @@ export const DEFAULT_PREFERENCES: Preferences = {
   recentFiles: [],
 };
 
+const PREFERENCES_VERSION_KEY = 'hyper-logviewer:preferences_version';
+const CURRENT_PREFERENCES_VERSION = 2; // v2: wordWrap: true por defecto, lineSeparatorWidth: 0.10 por defecto
+
 const listeners = new Set<() => void>();
 
 function load(): Preferences {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_PREFERENCES;
+    const savedVersion = parseInt(localStorage.getItem(PREFERENCES_VERSION_KEY) || '1', 10);
+    if (!raw) {
+      try {
+        localStorage.setItem(PREFERENCES_VERSION_KEY, String(CURRENT_PREFERENCES_VERSION));
+      } catch {
+        // ignore
+      }
+      return DEFAULT_PREFERENCES;
+    }
     const parsed = JSON.parse(raw) as Partial<Preferences>;
+
+    // Migración v1 -> v2: wordWrap siempre activo por defecto al actualizar o cargar
+    const isV2OrHigher = savedVersion >= CURRENT_PREFERENCES_VERSION;
+    const wordWrap = !isV2OrHigher
+      ? true
+      : (typeof parsed.wordWrap === 'boolean' ? parsed.wordWrap : DEFAULT_PREFERENCES.wordWrap);
+
+    if (savedVersion < CURRENT_PREFERENCES_VERSION) {
+      try {
+        localStorage.setItem(PREFERENCES_VERSION_KEY, String(CURRENT_PREFERENCES_VERSION));
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ ...parsed, wordWrap: true }),
+        );
+      } catch {
+        // ignore
+      }
+    }
+
     return {
       theme: parsed.theme ?? DEFAULT_PREFERENCES.theme,
       accent: parsed.accent ?? DEFAULT_PREFERENCES.accent,
       locale: parsed.locale ?? DEFAULT_PREFERENCES.locale,
       fontSize: typeof parsed.fontSize === 'number' ? parsed.fontSize : DEFAULT_PREFERENCES.fontSize,
-      wordWrap: typeof parsed.wordWrap === 'boolean' ? parsed.wordWrap : DEFAULT_PREFERENCES.wordWrap,
+      wordWrap,
       fontFamily: parsed.fontFamily ?? DEFAULT_PREFERENCES.fontFamily,
       showLineSeparator: typeof parsed.showLineSeparator === 'boolean' ? parsed.showLineSeparator : DEFAULT_PREFERENCES.showLineSeparator,
       lineSeparatorColor: parsed.lineSeparatorColor ?? DEFAULT_PREFERENCES.lineSeparatorColor,
@@ -185,6 +215,7 @@ export function setPreferences(patch: Partial<Preferences>): void {
   currentPreferences = { ...currentPreferences, ...patch };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(currentPreferences));
+    localStorage.setItem(PREFERENCES_VERSION_KEY, String(CURRENT_PREFERENCES_VERSION));
   } catch {
     // ignore quota errors
   }

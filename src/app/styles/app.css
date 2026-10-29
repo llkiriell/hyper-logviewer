@@ -1223,16 +1223,35 @@ select {
 }
 
 /* When severity background is toggled off (or temporarily disabled via toolbar button) */
-.viewer-scroller.hide-severity-bg .log-row {
+.viewer-scroller.hide-severity-bg .log-row:not(:hover):not(.is-selected-line) {
   background-color: transparent !important;
   background-image: none !important;
 }
 
-.viewer-scroller.hide-severity-bg .log-pin-btn,
-.viewer-scroller.hide-severity-bg .log-pointer-cell,
-.viewer-scroller.hide-severity-bg .log-gutter,
-.viewer-scroller.hide-severity-bg .log-level-badge {
+.viewer-scroller.hide-severity-bg .log-row:not(:hover):not(.is-selected-line) .log-pin-btn,
+.viewer-scroller.hide-severity-bg .log-row:not(:hover):not(.is-selected-line) .log-pointer-cell,
+.viewer-scroller.hide-severity-bg .log-row:not(:hover):not(.is-selected-line) .log-gutter,
+.viewer-scroller.hide-severity-bg .log-row:not(:hover):not(.is-selected-line) .log-level-badge {
   background-color: var(--bg) !important;
+  background-image: none !important;
+}
+
+/* Hover background is ALWAYS active, even when severity background is temporarily or permanently hidden */
+.viewer-scroller .log-row:hover,
+.viewer-scroller.hide-severity-bg .log-row:hover {
+  background-color: var(--hover) !important;
+  background-image: none !important;
+}
+
+.viewer-scroller .log-row:hover .log-pin-btn,
+.viewer-scroller .log-row:hover .log-pointer-cell,
+.viewer-scroller .log-row:hover .log-gutter,
+.viewer-scroller .log-row:hover .log-level-badge,
+.viewer-scroller.hide-severity-bg .log-row:hover .log-pin-btn,
+.viewer-scroller.hide-severity-bg .log-row:hover .log-pointer-cell,
+.viewer-scroller.hide-severity-bg .log-row:hover .log-gutter,
+.viewer-scroller.hide-severity-bg .log-row:hover .log-level-badge {
+  background-color: var(--hover) !important;
   background-image: none !important;
 }
 

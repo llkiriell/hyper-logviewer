@@ -76,8 +76,8 @@ export function VirtualLogView({ tab, onOpenSettings }: VirtualLogViewProps) {
   // Single line inspection modal state
   const [detailModalLine, setDetailModalLine] = useState<ParsedLogLine | null>(null);
 
-  // Viewer options
-  const [wordWrap, setWordWrap] = useState(prefs.wordWrap);
+  // Viewer options (wordWrap active by default when opening/loading logs)
+  const [wordWrap, setWordWrap] = useState(prefs.wordWrap !== false);
   const [autoScroll, setAutoScroll] = useState(prefs.autoScrollDefault);
 
   // Retain position and active focus across filters and search
